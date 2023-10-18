@@ -1,0 +1,9 @@
+options(radian.auto_match = FALSE)
+options(radian.auto_indentation = FALSE)
+options(radian.complete_while_typing = FALSE)
+options(radian.insert_new_line = TRUE)
+# options(
+#     radian.ctrl_key_map = list(
+#         list(key = "m", value = " %>% ")
+#     )
+# )
