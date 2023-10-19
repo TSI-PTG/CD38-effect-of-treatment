@@ -92,7 +92,7 @@ Group <- df00$Group
 Felz <- df00$Felz
 Group_Felz <- df00$Group_Felz
 
-# res <- betadisper(dist(PBTs), df_PBT_popmean$BLADgrade_1yr)
+# res <- betadisper(dist(df_features), df00$Group_Felz)
 # permutest(res, pairwise = T) # less bad
 # pstat <- permutest(res, pairwise = TRUE) %>% permustats()
 # densityplot(pstat, scales = list(x = list(relation = "free")))
