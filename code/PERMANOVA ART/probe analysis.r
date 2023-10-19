@@ -49,6 +49,7 @@ load("Z:/DATA/Datalocks/Other data/affymap219_21Oct2019_1306_JR.RData")
 # DEFINE SEED ####
 seed <- 42
 
+
 # DEFINE FEATURES ####
 features <- Vienna44 %>% featureNames()
 
@@ -57,9 +58,8 @@ features <- Vienna44 %>% featureNames()
 set <- Vienna44 %>% tidy(addPheno = TRUE)
 
 
-
 # WRANGLE THE PHENOTYPE DATA ####
-df00 <- set  %>% 
+df00 <- set %>%
     dplyr::rename(
         Patient = STUDY_EVALUATION_ID,
         Felz = Felzartamab_presumed
@@ -76,7 +76,7 @@ df00 <- set  %>%
         CEL, Patient, Center, Group, Felz, Group_Felz, TxBx, gene, value
     ) %>%
     tibble() %>%
-        pivot_wider(names_from = gene, values_from = value)
+    pivot_wider(names_from = gene, values_from = value)
 
 
 # PERMANOVA ####
@@ -97,7 +97,7 @@ Group_Felz <- df00$Group_Felz
 # looks like there are some outliers
 
 # adonis
-set.seed(42)
+set.seed(seed)
 res_adonis_interaction <- adonis2(
     df_features ~ Group * Felz,
     data = df00,
@@ -106,7 +106,7 @@ res_adonis_interaction <- adonis2(
     permutations = 100000
 )
 
-# set.seed(42)
+# set.seed(seed)
 # res_adonis <- adonis2(
 #     df_features ~ Group + Felz,
 #     data = df00,
@@ -116,7 +116,7 @@ res_adonis_interaction <- adonis2(
 # )
 
 # pairwise adonis
-set.seed(42)
+set.seed(seed)
 res_pairwise_adonis <- pairwise.adonis(
     df_features,
     Group_Felz,
@@ -131,8 +131,8 @@ res_pairwise_adonis <- pairwise.adonis(
 title_adonis <- paste("Table i. PERMANOVA of transcript expression in biopsies from treated vs untreated patients")
 
 res_adonis_flextable <- res_adonis_interaction %>%
-        tidy() %>%
-        suppressWarnings()%>%
+    tidy() %>%
+    suppressWarnings() %>%
     dplyr::filter(term %nin% c("Residual", "Total")) %>%
     dplyr::select(-df, -SumOfSqs) %>%
     mutate(p.value = p.value %>% formatC(digits = 3, format = "g")) %>%
@@ -150,7 +150,7 @@ res_adonis_flextable <- res_adonis_interaction %>%
     flextable::border(border = fp_border(), part = "all") %>%
     flextable::autofit()
 
-res_adonis_flextable  %>% print(preview = "docx")
+res_adonis_flextable %>% print(preview = "docx")
 
 
 # PRODUCE TABLE OF PAIRWISE ADONIS RESULTS ####
@@ -161,12 +161,12 @@ res_pairwise_adonis_flextable <- res_pairwise_adonis %>%
     dplyr::rename("F-value" = F.Model, FDR = p.adjusted) %>%
     mutate(FDR = FDR %>% formatC(digits = 3, format = "g")) %>%
     arrange(p.value) %>%
-        flextable::flextable() %>%
-        flextable::add_header_row(values = rep(title_adonis_pairwise, ncol_keys(.))) %>%
-        flextable::merge_h(part = "header") %>%
-        flextable::fontsize(size = 8, part = "all") %>%
-        flextable::align(align = "center", part = "all") %>%
-            flextable::bg(bg = "white", part = "all") %>%
+    flextable::flextable() %>%
+    flextable::add_header_row(values = rep(title_adonis_pairwise, ncol_keys(.))) %>%
+    flextable::merge_h(part = "header") %>%
+    flextable::fontsize(size = 8, part = "all") %>%
+    flextable::align(align = "center", part = "all") %>%
+    flextable::bg(bg = "white", part = "all") %>%
     flextable::bg(i = ~ FDR %>% as.numeric() < 0.05, bg = "#fbff00") %>%
     flextable::colformat_double(j = 2:3, digits = 2) %>%
     flextable::border_remove() %>%
@@ -188,17 +188,17 @@ df01 <- df00 %>%
         values_to = "value"
     ) %>%
     group_by(AffyID) %>%
-        nest() %>%
-        tibble() %>%
-        right_join(
-            affymap219 %>%
-                dplyr::select(AffyID, Symb, Gene, PBT),
-            .,
-            by = "AffyID"
-        ) %>%
-        tibble() %>%
-            mutate(id = row_number())
-        
+    nest() %>%
+    tibble() %>%
+    right_join(
+        affymap219 %>%
+            dplyr::select(AffyID, Symb, Gene, PBT),
+        .,
+        by = "AffyID"
+    ) %>%
+    tibble() %>%
+    mutate(id = row_number())
+
 
 # FUNCTION TO ITERATE UNIVARIATE NONPARAMETRIC TESTS ####
 artF <- function(data, AffyID, p) {
@@ -209,7 +209,7 @@ artF <- function(data, AffyID, p) {
             p(sprintf("probe=%g", AffyID))
             set.seed(seed)
             out <- art(value ~ Group * Felz + (1 | Patient), data = data)
-            out_aov <- out  %>% anova(type ="II")
+            out_aov <- out %>% anova(type = "II")
             out_aov$part_eta_sq <- with(out_aov, `F` * `Df` / (`F` * `Df` + `Df.res`))
             return(out_aov)
         },
@@ -218,17 +218,17 @@ artF <- function(data, AffyID, p) {
 }
 
 
-
 # RUN ART #####
 # SET UP PARALLEL PROCESSING
 # n_workers <- detectCores()
 plan(multisession, workers = 10) # select the number of workers/cores
 
 cat("can take some time to initialize")
-res_art00 <- df01  %>% mutate(art = artF(data, id))
+res_art00 <- df01 %>% mutate(art = artF(data, id))
 
 # FREE WORKERS FROM PARALLEL PROCESSING
 plan(sequential)
 
-res_art00$art[[1]]  
 
+
+res_art00$art[[1]]

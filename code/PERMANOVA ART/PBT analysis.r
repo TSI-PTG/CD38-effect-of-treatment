@@ -31,6 +31,9 @@ options(dplyr.summarise.inform = FALSE)
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg CD38 Vienna/G_Rstuff/data/Vienna44_18Oct23.RData")
 
 
+# DEFINE SEED ####
+seed <- 42
+
 
 # DEFINE CATEGORIES FOR FEATURES ####
 Rejectionrelated <- c("GRIT3", "Rej-RAT")
@@ -100,7 +103,7 @@ Group_Felz <- df00$Group_Felz
 # looks like there are some outliers
 
 # adonis
-set.seed(42)
+set.seed(seed)
 res_adonis_interaction <- adonis2(
     df_features ~ Group * Felz,
     data = df00,
@@ -109,7 +112,7 @@ res_adonis_interaction <- adonis2(
     permutations = 100000
 )
 
-# set.seed(42)
+# set.seed(seed)
 # res_adonis <- adonis2(
 #     df_features ~ Group + Felz,
 #     data = df00,
@@ -119,7 +122,7 @@ res_adonis_interaction <- adonis2(
 # )
 
 # pairwise adonis
-set.seed(42)
+set.seed(seed)
 res_pairwise_adonis <- pairwise.adonis(
     df_features,
     Group_Felz,
