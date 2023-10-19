@@ -206,7 +206,7 @@ artF <- function(data, AffyID, p) {
     future_pmap(
         list(data, AffyID),
         function(data, AffyID) {
-            p(sprintf("probe=%g", AffyID))
+            p(sprintf("probe=%s", AffyID))
             set.seed(seed)
             out <- art(value ~ Group * Felz + (1 | Patient), data = data)
             out_aov <- out %>% anova(type = "II")
@@ -223,12 +223,12 @@ artF <- function(data, AffyID, p) {
 # n_workers <- detectCores()
 plan(multisession, workers = 10) # select the number of workers/cores
 
-cat("can take some time to initialize")
-res_art00 <- df01 %>% mutate(art = artF(data, id))
+message("can take some time to initialize\n")
+res_art00 <- df01 %>% mutate(art_aov = artF(data, AffyID))
 
 # FREE WORKERS FROM PARALLEL PROCESSING
 plan(sequential)
 
 
 
-res_art00$art[[1]]
+res_art00$art_aov  %>% tidy
