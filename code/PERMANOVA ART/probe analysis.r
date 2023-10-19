@@ -210,7 +210,8 @@ artF <- function(data, AffyID, p) {
             set.seed(seed)
             out <- art(value ~ Group * Felz + (1 | Patient), data = data)
             out_aov <- out  %>% anova(type ="II")
-            out_aov$part_eta_sq = with(out_aov, `F` * `Df` / (`F` * `Df` + `Df.res`))
+            out_aov$part_eta_sq <- with(out_aov, `F` * `Df` / (`F` * `Df` + `Df.res`))
+            return(out_aov)
         },
         .options = furrr_options(seed = TRUE)
     )
@@ -229,5 +230,5 @@ res_art00 <- df01  %>% mutate(art = artF(data, id))
 # FREE WORKERS FROM PARALLEL PROCESSING
 plan(sequential)
 
-# res_art00$art[[1]]  
+res_art00$art[[1]]  
 
