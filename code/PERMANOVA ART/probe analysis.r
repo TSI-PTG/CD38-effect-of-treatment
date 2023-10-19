@@ -223,6 +223,7 @@ artF <- function(data, AffyID, p) {
 # n_workers <- detectCores()
 plan(multisession, workers = 10) # select the number of workers/cores
 
+cat("can take some time to initialize")
 res_art00 <- df01  %>% mutate(art = artF(data, id))
 
 # FREE WORKERS FROM PARALLEL PROCESSING
