@@ -188,6 +188,7 @@ df01 <- df00 %>%
         names_to = "AffyID",
         values_to = "value"
     ) %>%
+    dplyr::select(Patient, Group, Felz, Group_Felz, AffyID, value) %>%
     group_by(AffyID) %>%
     nest() %>%
     tibble() %>%
@@ -199,6 +200,8 @@ df01 <- df00 %>%
     ) %>%
     tibble() %>%
     mutate(id = row_number())
+
+
 
 
 # FUNCTION TO ITERATE ALIGNED RANK TRANSFORM ANOVA ####
@@ -217,37 +220,58 @@ artF <- function(data, AffyID, p) {
 
 
 # FUNCTION TO ITERATE ANOVA TABLE ON ART MODEL ####
-art_aovF <- function(art, AffyID, p) {
+art_aovF <- function(data, AffyID, p) {
     p <- progressor(along = AffyID)
     future_pmap(
-        list(art, AffyID),
-        function(art, AffyID) {
+        list(data, AffyID),
+        function(data, AffyID) {
             p(sprintf("probe=%s", AffyID))
             set.seed(seed)
-            art_aov <- art %>% anova(type = "II")
-            art_aov$part_eta_sq <- with(art_aov, `F` * `Df` / (`F` * `Df` + `Df.res`))
-            art_aov %>% tibble
+            art(value ~ Group * Felz + (1 | Patient), data = data) %>%
+                anova(type = "II") %>%
+                tibble() %>%
+                mutate(part_eta_sq = F * Df / (F * Df + Df.res))
         },
         .options = furrr_options(seed = TRUE)
     )
 }
 
 
-# FUNCTION TO ITERATE ESTIMATED EFFECTS OF INTERACTION TERM ####
-art_lmF <- function(art, AffyID, p) {
+# FUNCTION TO ITERATE GROUPWISE MEANS ####
+art_lmF <- function(data, AffyID, p) {
     p <- progressor(along = AffyID)
     future_pmap(
-        list(art, AffyID),
-        function(art, AffyID) {
+        list(data, AffyID),
+        function(data, AffyID) {
             p(sprintf("probe=%s", AffyID))
             set.seed(seed)
-            art %>%
+            art(value ~ Group * Felz + (1 | Patient), data = data) %>%
                 artlm(term = "Group:Felz", response = "aligned") %>%
                 summary() %>%
                 pluck("coefficients") %>%
                 as.data.frame() %>%
                 rownames_to_column("Term_lm") %>%
                 dplyr::filter(Term_lm != "(Intercept)")
+        },
+        .options = furrr_options(seed = TRUE)
+    )
+}
+
+# FUNCTION TO ITERATE ESTIMATED EFFECTS OF INTERACTION TERM ####
+meansF <- function(data, AffyID, p) {
+    p <- progressor(along = AffyID)
+    future_pmap(
+        list(data, AffyID),
+        function(data, AffyID) {
+            p(sprintf("probe=%s", AffyID))
+            set.seed(seed)
+            groupwiseMean(
+                value ~ Group + Felz,
+                data = data
+            ) %>%
+                mutate(Group_Felz = paste(Group, Felz, sep = "_")) %>%
+                dplyr::select(Group_Felz, Mean) %>%
+                pivot_wider(names_from = Group_Felz, values_from = Mean)
         },
         .options = furrr_options(seed = TRUE)
     )
@@ -262,8 +286,9 @@ plan(multisession, workers = 10) # select the number of workers/cores
 
 message("can take some time to initialize\n")
 res_art00 <- df01 %>% mutate(art = artF(data, AffyID))
-res_art01 <- res_art00 %>% mutate(art_aov_tidy = art_aovF(art, AffyID))
-res_art02 <- res_art01 %>% mutate(art_lm = art_lmF(art, AffyID))
+res_art01 <- res_art00 %>% mutate(art_aov = art_aovF(data, AffyID))
+res_art02 <- res_art01 %>% mutate(art_lm = art_lmF(data, AffyID))
+res_art03 <- res_art02 %>% mutate(means = meansF(data, AffyID))
 
 # FREE WORKERS FROM PARALLEL PROCESSING
 plan(sequential)
@@ -272,20 +297,27 @@ plan(sequential)
 
 
 # FORMAT THE UNIVARIATE RESULTS ####
-res_art_table <- res_art02 %>%
-    dplyr::select(AffyID, Symb, Gene, PBT, art_aov_tidy, art_lm) %>%
+res_art_table <- res_art03 %>%
+    dplyr::select(AffyID, Symb, Gene, PBT, means, art_aov, art_lm) %>%
     unnest(everything()) %>%
     dplyr::filter(Term %>% str_detect(":")) %>%
-    dplyr::rename(p.value = `Pr(>F)`) %>%
-    dplyr::select(AffyID, Symb, Gene, PBT, Term, Estimate, F, p.value, part_eta_sq) %>%
+    dplyr::rename(
+        p.value = `Pr(>F)`
+    ) %>%
+    dplyr::select(
+        AffyID, Symb, Gene, PBT,
+        Index_NoFelz, Index_Felz, FU1_NoFelz, FU1_Felz,
+        Term, Estimate, F, p.value, part_eta_sq
+    ) %>%
     arrange(p.value) %>%
     mutate(
         Term = "Interaction",
         p.value = ifelse(
-        p.value < 0.001,
-        formatC(p.value, digits = 1, format = "e"),
-        round(p.value, 4)
-    )) %>%
+            p.value < 0.001,
+            formatC(p.value, digits = 1, format = "e"),
+            round(p.value, 4)
+        )
+    ) %>%
     mutate_if(
         is.numeric, ~ round(., 2)
     )
@@ -294,14 +326,38 @@ res_art_table <- res_art02 %>%
 
 # MAKE FLEXTABLE OF UNIVARIATE RESULTS ####
 title <- paste("Table i. Top 20 probesets affected by Felzartamab treatment (by non-parametric ANOVA p-value)")
-cellWidths <- c(2, 2, 8, 4, rep(1.5, 4))
+cellWidths <- c(2, 2, 8, 4, rep(1.5, 9))
+
+header1 <- c(
+    "AffyID", "Symb", "Gene", "PBT",
+    rep("Mean expression", 4),
+    "Term", "Estimate", "F", "p.value", "part_eta_sq"
+)
+
+header2 <- c(
+    "AffyID", "Symb", "Gene", "PBT",
+    "NoFelz", "NoFelz", "Felz", "Felz",
+    "Term", "Estimate", "F", "p.value", "part_eta_sq"
+)
+
+header3 <- c(
+    "AffyID", "Symb", "Gene", "PBT",
+    "Index", "FU1", "Index", "FU1",
+    "Term", "Estimate", "F", "p.value", "part_eta_sq"
+)
 
 
 res_art_flextable <- res_art_table %>%
     dplyr::slice(1:20) %>%
     flextable::flextable() %>%
+    flextable::delete_part("header") %>% 
+    flextable::add_header_row(top = TRUE, values = header3) %>%
+    flextable::add_header_row(top = TRUE, values = header2) %>%
+    flextable::add_header_row(top = TRUE, values = header1) %>%
     flextable::add_header_row(top = TRUE, values = rep(title, ncol_keys(.))) %>%
     flextable::merge_h(part = "header") %>%
+        flextable::merge_v(part = "header") %>%
+
     flextable::border_remove() %>%
     flextable::border(part = "header", border = fp_border()) %>%
     flextable::border(part = "body", border = fp_border()) %>%
@@ -314,7 +370,6 @@ res_art_flextable <- res_art_table %>%
     flextable::padding(padding = 0, part = "all") %>%
     flextable::width(width = cellWidths, unit = "cm") %>%
     flextable::width(., width = dim(.)$widths * 26.25 / (flextable_dim(.)$widths), unit = "cm")
-
 
 res_art_flextable %>% print(preview = "pptx")
 
