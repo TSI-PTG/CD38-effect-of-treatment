@@ -257,6 +257,7 @@ art_lmF <- function(data, AffyID, p) {
     )
 }
 
+
 # FUNCTION TO ITERATE ESTIMATED EFFECTS OF INTERACTION TERM ####
 meansF <- function(data, AffyID, p) {
     p <- progressor(along = AffyID)
@@ -295,7 +296,6 @@ plan(sequential)
 
 
 
-
 # FORMAT THE UNIVARIATE RESULTS ####
 res_art_table <- res_art03 %>%
     dplyr::select(AffyID, Symb, Gene, PBT, means, art_aov, art_lm) %>%
@@ -320,8 +320,23 @@ res_art_table <- res_art03 %>%
     ) %>%
     mutate_if(
         is.numeric, ~ round(., 2)
-    )
-
+    ) %>%
+    expand_grid(direction = c("all", "negative", "positive")) %>%
+        group_by(direction) %>%
+        nest() %>%
+        tibble() %>%
+        mutate(data = pmap(
+            list(direction, data),
+            function(direction, data) {
+                if (direction == "all") {
+                    data
+                } else if (direction == "negative") {
+                    data %>% dplyr::filter(Estimate < 0)
+                } else if (direction == "positive") {
+                    data %>% dplyr::filter(Estimate > 0)
+                }
+            }
+        ))
 
 
 # MAKE FLEXTABLE OF UNIVARIATE RESULTS ####
@@ -346,33 +361,52 @@ header3 <- c(
     "Term", "Estimate", "F", "p.value", "part_eta_sq"
 )
 
-
 res_art_flextable <- res_art_table %>%
-    dplyr::slice(1:20) %>%
-    flextable::flextable() %>%
-    flextable::delete_part("header") %>% 
-    flextable::add_header_row(top = TRUE, values = header3) %>%
-    flextable::add_header_row(top = TRUE, values = header2) %>%
-    flextable::add_header_row(top = TRUE, values = header1) %>%
-    flextable::add_header_row(top = TRUE, values = rep(title, ncol_keys(.))) %>%
-    flextable::merge_h(part = "header") %>%
-        flextable::merge_v(part = "header") %>%
+    mutate(flextable = pmap(
+        list(direction, data),
+        function(direction, data) {
+            data %>%
+                dplyr::slice(1:20) %>%
+                flextable::flextable() %>%
+                flextable::delete_part("header") %>%
+                flextable::add_header_row(top = TRUE, values = header3) %>%
+                flextable::add_header_row(top = TRUE, values = header2) %>%
+                flextable::add_header_row(top = TRUE, values = header1) %>%
+                flextable::add_header_row(top = TRUE, values = rep(title, ncol_keys(.))) %>%
+                flextable::merge_h(part = "header") %>%
+                flextable::merge_v(part = "header") %>%
+                flextable::border_remove() %>%
+                flextable::border(part = "header", border = fp_border()) %>%
+                flextable::border(part = "body", border = fp_border()) %>%
+                flextable::align(align = "center", part = "all") %>%
+                flextable::font(fontname = "Arial", part = "all") %>%
+                flextable::fontsize(size = 8, part = "all") %>%
+                flextable::fontsize(i = 1, size = 12, part = "header") %>%
+                flextable::bold(part = "header") %>%
+                flextable::bg(bg = "white", part = "all") %>%
+                flextable::padding(padding = 0, part = "all") %>%
+                flextable::width(width = cellWidths, unit = "cm") %>%
+                flextable::width(., width = dim(.)$widths * 26.25 / (flextable_dim(.)$widths), unit = "cm")
+        }
+    ))
 
-    flextable::border_remove() %>%
-    flextable::border(part = "header", border = fp_border()) %>%
-    flextable::border(part = "body", border = fp_border()) %>%
-    flextable::align(align = "center", part = "all") %>%
-    flextable::font(fontname = "Arial", part = "all") %>%
-    flextable::fontsize(size = 8, part = "all") %>%
-    flextable::fontsize(i = 1, size = 12, part = "header") %>%
-    flextable::bold(part = "header") %>%
-    flextable::bg(bg = "white", part = "all") %>%
-    flextable::padding(padding = 0, part = "all") %>%
-    flextable::width(width = cellWidths, unit = "cm") %>%
-    flextable::width(., width = dim(.)$widths * 26.25 / (flextable_dim(.)$widths), unit = "cm")
-
-res_art_flextable %>% print(preview = "pptx")
+res_art_flextable %>%
+    dplyr::filter(direction == "negative") %>%
+    pull(flextable)  %>% 
+    print(preview = "pptx")
 
 
-# SAVE THE EXCEL FILE ####
-write.xlsx(res_art_table, file = "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg CD38 Vienna/G_Rstuff/output/all_probes_ANOVAs_Vienna44_18Oct23.xlsx")
+
+# EXPORT THE DATA AS AN EXCEL SHEET ####
+savedir1 <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg CD38 Vienna/G_Rstuff/output/"
+
+names(res_art_table$data) <- res_art_table$direction
+openxlsx::write.xlsx(res_art_table$data,
+    asTable = TRUE,
+    file = paste(savedir1, "all_probes_ANOVAs_Vienna44_18Oct23 ",
+        # Sys.Date(),
+        # format(Sys.time(), "_%I%M%p"),
+        ".xlsx",
+        sep = ""
+    )
+)
