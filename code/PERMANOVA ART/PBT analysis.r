@@ -15,6 +15,7 @@ library(emmeans) # install.packages("emmeans") #for post-hoc testing and CLD
 library(multcomp) # install.packages("multcomp") #for for CLD
 library(ARTool) # install.packages("ARTool") #for non-parametric anova (aligned-rank test) and post-hoc
 library(rcompanion) # install.packages("rcompanion") #for non-parametric anova (aligned-rank test) and post-hoc
+library(ggrepel)
 # Bioconductor libraries
 library(Biobase) # BiocManager::install("Biobase")
 # Custom operators, functions, and datasets
@@ -36,8 +37,8 @@ seed <- 42
 
 
 # DEFINE CATEGORIES FOR FEATURES ####
-Rejectionrelated <- c("GRIT3", "Rej-RAT")
-ABMRrelated <- c("DSAST", "NKB", "ABMRpm", "ggt0", "cggt0", "ptcgt0")
+Rejectionrelated <- c("GRIT3", "Rej-RAT", "RejAA_NR")
+ABMRrelated <- c("DSAST", "NKB", "ABMRpm", "ggt0", "cggt0", "ptcgt0", "RejAA_EABMR", "RejAA_FABMR", "RejAA_LABMR")
 TCMRrelated <- c("TCMR-RAT", "QCAT", "TCB", "TCMRt", "tgt1", "igt1")
 Endothelium <- c("ENDAT")
 Parenchyma <- c("KT1", "KT2")
@@ -145,8 +146,8 @@ title_adonis <- paste("Table i. PERMANOVA of molecular scores in biopsies from t
 #         suppressWarnings()
 # ) %>%
 res_adonis_flextable <- res_adonis_interaction %>%
-        tidy() %>%
-        suppressWarnings() %>%
+    tidy() %>%
+    suppressWarnings() %>%
     dplyr::filter(term %nin% c("Residual", "Total")) %>%
     dplyr::select(-df, -SumOfSqs) %>%
     mutate(p.value = p.value %>% formatC(digits = 3, format = "fg")) %>%
@@ -164,7 +165,7 @@ res_adonis_flextable <- res_adonis_interaction %>%
     flextable::border(border = fp_border(), part = "all") %>%
     flextable::autofit()
 
-res_adonis_flextable  %>% print(preview = "docx")
+# res_adonis_flextable %>% print(preview = "docx")
 
 
 # PRODUCE TABLE OF PAIRWISE ADONIS RESULTS ####
@@ -178,12 +179,12 @@ res_pairwise_adonis_flextable <- res_pairwise_adonis %>%
         FDR = FDR %>% formatC(digits = 0, format = "e"),
     ) %>%
     arrange(p.value) %>%
-        flextable::flextable() %>%
-        flextable::add_header_row(values = rep(title_adonis_pairwise, ncol_keys(.))) %>%
-        flextable::merge_h(part = "header") %>%
-        flextable::fontsize(size = 8, part = "all") %>%
-        flextable::align(align = "center", part = "all") %>%
-            flextable::bg(bg = "white", part = "all") %>%
+    flextable::flextable() %>%
+    flextable::add_header_row(values = rep(title_adonis_pairwise, ncol_keys(.))) %>%
+    flextable::merge_h(part = "header") %>%
+    flextable::fontsize(size = 8, part = "all") %>%
+    flextable::align(align = "center", part = "all") %>%
+    flextable::bg(bg = "white", part = "all") %>%
     flextable::bg(i = ~ FDR %>% as.numeric() < 0.05, bg = "#fbff00") %>%
     flextable::colformat_double(j = 2:3, digits = 2) %>%
     flextable::border_remove() %>%
@@ -192,7 +193,7 @@ res_pairwise_adonis_flextable <- res_pairwise_adonis %>%
     flextable::border(border = fp_border(), part = "all") %>%
     flextable::autofit()
 
-res_pairwise_adonis_flextable %>% print(preview = "docx")
+# res_pairwise_adonis_flextable %>% print(preview = "docx")
 
 
 # WRANGLE THE DATA FOR UNIVARIATE TESTS ####
@@ -211,10 +212,11 @@ df01 <- df00 %>%
         variable = variable %>%
             factor(
                 levels = c(
-                    "Rej-RAT", "GRIT3", "ptcgt0", "BAT",
-                    "ABMRpm", "ggt0", "cggt0", "NKB", "DSAST",
+                    "Rej-RAT", "GRIT3", "RejAA_NR",
+                    "ABMRpm", "ggt0", "cggt0", "ptcgt0", "NKB", "DSAST",
+                    "RejAA_EABMR", "RejAA_FABMR", "RejAA_LABMR",
                     "TCMRt", "tgt1", "igt1", "TCB", "TCMR-RAT", "QCAT",
-                    "AMAT1", "QCMAT",
+                    "AMAT1", "QCMAT", "BAT",
                     "FICOL", "IRRAT30", "IRITD3", "IRITD5",
                     "cigt1", "ctgt1", "IGT", "MCAT",
                     "KT1", "KT2"
@@ -273,7 +275,11 @@ df01 <- df00 %>%
             variable == "BAT" ~ "B cell–associated transcripts (BAT)",
             variable == "MCAT" ~ "Mast cell-associated transcripts (MCAT)",
             variable == "KT1" ~ "Kidney parenchymal transcripts (KT1)",
-            variable == "KT2" ~ "Kindey parenchymal transcripts - no solute carriers (KT2)"
+            variable == "KT2" ~ "Kindey parenchymal transcripts - no solute carriers (KT2)",
+            variable == "RejAA_NR" ~ "Archetypal No Rejection score (NR)",
+            variable == "RejAA_EABMR" ~ "Archetypal Early ABMR score (EABMR)",
+            variable == "RejAA_FABMR" ~ "Archetypal Full ABMR score (FABMR)",
+            variable == "RejAA_LABMR" ~ "Archetypal Late ABMR score (LABMR)",
         ), .before = 1
     ) %>%
     arrange(annotation, variable)
@@ -314,7 +320,7 @@ df02 <- df01 %>%
                     )
             }
         ),
-        art = map(data, ~ art(value ~ Group*Felz + (1 | Patient), data = .)),
+        art = map(data, ~ art(value ~ Group * Felz + (1 | Patient), data = .)),
         art_aov = map(art, ~ anova(., type = "II")),
         art_aov_tidy = map(art_aov, . %>% tidy()) %>% suppressWarnings(),
         art_con = map(art, ~ art.con(.x, "Group:Felz", adjust = "none")),
@@ -355,7 +361,7 @@ res_art_flextable <- df02 %>%
     flextable::merge_v(j = 1:2) %>%
     flextable::fontsize(size = 8, part = "all") %>%
     flextable::align(align = "center", part = "all") %>%
-        flextable::bg(bg = "white", part = "all") %>%
+    flextable::bg(bg = "white", part = "all") %>%
     flextable::bg(i = ~ FDR < 0.05 & Term == "Group:Felz", j = 3:6, bg = "#fbff00") %>%
     flextable::colformat_double(j = 2:3, digits = 2) %>%
     flextable::colformat_double(j = 4:ncol_keys(.), digits = 3) %>%
@@ -365,7 +371,7 @@ res_art_flextable <- df02 %>%
     flextable::border(border = fp_border(), part = "all") %>%
     flextable::autofit()
 
-res_art_flextable %>% print(preview = "pptx")
+# res_art_flextable %>% print(preview = "pptx")
 
 
 # FORMAT TABLES OF PAIRWISE ART MODELS ####
@@ -446,12 +452,93 @@ res_art_pairwise_flextable <- res_art_pairwise_formatted %>%
     flextable::padding(padding = 0, part = "all") %>%
     flextable::width(width = cellWidths, unit = "cm") %>%
     flextable::width(., width = dim(.)$widths * 26.25 / (flextable_dim(.)$widths), unit = "cm")
-
-res_art_pairwise_flextable
+# res_art_pairwise_flextable
 
 
 # PRINT THE FLEXTABLES ####
-res_art_pairwise_flextable %>% print(preview = "pptx")
+# res_art_pairwise_flextable %>% print(preview = "pptx")
 
 
 
+# PLOTTING GLOBALS ####
+dodge <- 0.3
+
+
+# MAKE PLOTS ####
+df_plot <- df02 %>%
+    mutate(gg_line = pmap(
+        list(data, variable),
+        function(data, variable) {
+            data %>%
+                mutate(
+                    variable = variable,
+                    Felz = Felz %>% factor(labels = c("No Felzartamab", "Felzartamab"))
+                ) %>%
+                ggplot(
+                    aes(
+                        x = Group,
+                        y = value,
+                        col = Patient,
+                        group = Patient,
+                        linetype = Felz
+                    )
+                ) +
+                geom_point(size = 5, position = position_dodge(width = dodge)) +
+                geom_line(
+                    linewidth = 0.75, 
+                    position = position_dodge(width = dodge),
+                show.legend = FALSE
+                ) +
+                    # geom_label_repel(
+                    #     aes(label = Patient),
+                    #     size = 2,
+                    #     fill = "white",
+                    #     show.legend = FALSE,
+                    #     min.segment.length = 0.1
+                    # ) +
+                geom_text(
+                    aes(label = Patient), 
+                    size = 4, 
+                    col = "black", 
+                    show.legend = FALSE,
+                     position = position_dodge(width = dodge)) +
+                labs(
+                    # title = annotation,
+                    x = NULL,
+                    y = paste(variable, "score") %>%
+                        str_replace("gt0", ">0[Prob]") %>%
+                        str_replace("gt1", ">1[Prob]"),
+                    parse = TRUE
+                ) +
+                coord_cartesian(xlim = c(1.3, 1.7)) +
+                theme_bw() +
+                theme(
+                    axis.title = element_text(size = 15),
+                    axis.text = element_text(size = 12),
+                    panel.grid = element_blank(),
+                    legend.position = "top",
+                    plot.title = element_text(colour = "red", size = 20, face = "bold")
+                ) +
+                facet_wrap(Felz) +
+                guides(col = guide_legend(nrow = 2))
+        }
+    ))
+
+
+# MAKE JOINT PLOTS ####
+plot_panel <- df_plot %>%
+    pull(gg_line) %>%
+    ggarrange(plotlist = ., common.legend = TRUE, ncol = 4, nrow = 3)
+
+
+# SAVE THE PLOTS ####
+saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg CD38 Vienna/G_Rstuff/output/"
+ggsave(
+    filename = paste(saveDir, "Felzartamab effect of treatemnt patient data.png"),
+    plot = plot_panel,
+    dpi = 300,
+    width = 50,
+    height = 25,
+    units = "cm",
+    bg = "white"
+)
