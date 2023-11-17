@@ -6,8 +6,8 @@ library(officer) # install.packages("officer")
 library(openxlsx) # install.packages("openxlsx")
 # Bioconductor libraries
 library(Biobase) # BiocManager::install("Biobase")
+library(genefilter) # BiocManager::install("genefilter")
 library(limma) # BiocManager::install("limma")
-library(biobroom) # BiocManager::install("biobroom")
 # Custom operators, functions, and datasets
 "%nin%" <- function(a, b) match(a, b, nomatch = 0) == 0
 # load reference set
@@ -16,12 +16,21 @@ load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg CD38 Vienna/
 load("Z:/DATA/Datalocks/Other data/affymap219_21Oct2019_1306_JR.RData")
 
 
+# IQR FILTER THE DATA ####
+f1 <- function(x) (IQR(x) > 0.5)
+ff <- filterfun(f1)
+if (!exists("selected")) {
+    selected <- genefilter(Vienna44, ff)
+}
+set00 <- Vienna44[selected, ]
+
+
 # DEFINE SEED ####
 seed <- 42
 
 
 # DEFINE THE SET ####
-set <- Vienna44
+set <- set00
 
 
 # WRANGLE THE PHENOTYPE DATA ####
@@ -50,7 +59,7 @@ pData(set) <- set %>%
 Group_Felz <- set$Group_Felz
 design_block <- model.matrix(~ 0 + Group_Felz)
 contrast_block_01 <- makeContrasts(
-    "x =  (Group_FelzIndex_NoFelz-Group_FelzFU1_NoFelz)/2 - (Group_FelzIndex_Felz-Group_FelzFU1_Felz)/2",
+    "x =  (Group_FelzFU1_Felz-Group_FelzIndex_Felz)/2 -(Group_FelzFU1_NoFelz -Group_FelzIndex_NoFelz)/2",
     levels = design_block
 )
 
@@ -163,7 +172,7 @@ savedir1 <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg CD38 
 names(limma_tables$table) <- limma_tables$design
 openxlsx::write.xlsx(limma_tables$table,
     asTable = TRUE,
-    file = paste(savedir1, "all_probes_limma_Vienna44_16Nov23 ",
+    file = paste(savedir1, "IQR_filtered_probes_limma_Vienna44_16Nov23  ",
         # Sys.Date(),
         # format(Sys.time(), "_%I%M%p"),
         ".xlsx",

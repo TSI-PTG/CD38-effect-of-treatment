@@ -38,8 +38,8 @@ seed <- 42
 
 # DEFINE CATEGORIES FOR FEATURES ####
 Rejectionrelated <- c("GRIT3", "Rej-RAT", "RejAA_NR")
-ABMRrelated <- c("DSAST", "NKB", "ABMRpm", "ggt0", "cggt0", "ptcgt0", "RejAA_EABMR", "RejAA_FABMR", "RejAA_LABMR")
-TCMRrelated <- c("TCMR-RAT", "QCAT", "TCB", "TCMRt", "tgt1", "igt1")
+ABMRrelated <- c("DSAST", "NKB", "ABMRpm", "ggt0", "cggt0", "ptcgt0") # , "RejAA_EABMR", "RejAA_FABMR", "RejAA_LABMR")
+TCMRrelated <- c("QCAT", "TCB", "TCMRt", "tgt1", "igt1") # , "TCMR-RAT", )
 Endothelium <- c("ENDAT")
 Parenchyma <- c("KT1", "KT2")
 Macrophage <- c("AMAT1", "QCMAT")
@@ -48,7 +48,7 @@ Injurylate <- c("IGT", "MCAT", "BAT", "cigt1", "ctgt1")
 
 
 # DEFINE FEATURES ####
-features <- c(Rejectionrelated, ABMRrelated)
+features <- c(Rejectionrelated, ABMRrelated, Macrophage)
 
 
 # DEFINE THE SET ####
@@ -70,89 +70,95 @@ df00 <- set %>%
         Group_Felz = paste(Group, Felz, sep = ":") %>%
             factor(levels = c("Index:NoFelz", "FU1:NoFelz", "Index:Felz", "FU1:Felz"))
     ) %>%
-                        dplyr::select(
+    expand_grid(category = c("ABMR", "TCMR", "Macrophage")) %>%
+    group_by(category) %>%
+    nest() %>%
+    tibble() %>%
+    mutate(
+        features = map(
+            category,
+            function(category) {
+                if (category == "ABMR") {
+                    ABMRrelated
+                } else if (category == "TCMR") {
+                    TCMRrelated
+                } else if (category == "Macrophage") Macrophage
+            }
+        ),
+        data = pmap(
+            list(features, data),
+            function(features, data) {
+                data %>%
+                    dplyr::select(
                         CEL, Patient, Center, Group, Felz, Group_Felz, TxBx,
                         all_of(features)
-                    ) %>%
-    tibble()
-
-
-# COMPARE THE MEAN variable SCORES ####
-df00 %>%
-    group_by(Group_Felz) %>%
-    reframe_at(vars(all_of(features)), mean) %>%
-    column_to_rownames("Group_Felz") %>%
-    t() %>%
-    round(3)
+                    )
+            }
+        )
+    )
 
 
 # PERMANOVA ####
-# permanova assumptions
-# df_PBT_popmean %>%
-#     dplyr::select(all_of(wanted_pbts)) %>%
-#     boxplot()
-df_features <- df00 %>% dplyr::select(all_of(features))
-Group <- df00$Group
-Felz <- df00$Felz
-Group_Felz <- df00$Group_Felz
-
-# res <- betadisper(dist(df_features), df00$Group_Felz)
-# permutest(res, pairwise = T) # less bad
-# pstat <- permutest(res, pairwise = TRUE) %>% permustats()
-# densityplot(pstat, scales = list(x = list(relation = "free")))
-# qqmath(pstat, scales = list(relation = "free"))
-# looks like there are some outliers
-
-# adonis
+df01 <- df00 %>%
+    mutate(
+        permanova = pmap(
+            list(data, features),
+            function(data, features) {
                 set.seed(seed)
-                res_adonis_interaction <- adonis2(
-                    df_features ~ Group * Felz,
-                    data = df00,
+                features <- data %>% dplyr::select(all_of(features))
+                Group <- data$Group
+                Felz <- data$Felz
+                adonis2(
+                    features ~ Group * Felz,
+                    data = data,
                     method = "euclidean",
                     # by = "margin", only specific margin if the sample sizes are unequal
                     permutations = 100000
                 )
-            
-# set.seed(seed)
-# res_adonis <- adonis2(
-#     df_features ~ Group + Felz,
-#     data = df00,
-#     method = "euclidean",
-#     # by = "margin",
-#     permutations = 10000
-# )
+            }
+        )
+    )
+df01$permanova
 
-# pairwise adonis
+
+# PAIRWISE PERMANOVA ####
+df02 <- df01 %>%
+    mutate(
+        permanova_pairwise = pmap(
+            list(data, features),
+            function(data, features) {
                 set.seed(seed)
-                res_pairwise_adonis <- pairwise.adonis(
-                    df_features,
+                features <- data %>% dplyr::select(all_of(features))
+                Group_Felz <- data$Group_Felz
+                pairwise.adonis(
+                    features,
                     Group_Felz,
                     reduce = "Group|Felz",
                     sim.method = "euclidean",
                     p.adjust.m = "fdr",
                     perm = 10000
                 )
-            
+            }
+        )
+    )
+df02$permanova_pairwise
 
-# PRODUCE TABLE OF ADONIS RESULTS ####
-title_adonis <- paste("Table i. PERMANOVA of molecular scores in biopsies from treated vs untreated patients")
-                
-# res_adonis_flextable <- bind_rows(
-#     res_adonis %>%
-#         tidy() %>%
-#         suppressWarnings(),
-#     res_adonis_interaction %>%
-#         tidy() %>%
-#         suppressWarnings()
-# ) %>%
-res_adonis_flextable <- res_adonis_interaction %>%
+
+# PRODUCE TABLE OF PERMANOVA RESULTS ####
+df03 <- df02 %>%
+    mutate(
+        permanova_flextable = pmap(
+            list(permanova),
+            function(permanova) {
+                title <- paste("Table i. PERMANOVA of molecular scores in biopsies from treated vs untreated patients")
+                permanova %>%
                     tidy() %>%
                     suppressWarnings() %>%
                     dplyr::filter(term %nin% c("Residual", "Total")) %>%
                     dplyr::select(-df, -SumOfSqs) %>%
                     mutate(p.value = p.value %>% formatC(digits = 3, format = "fg")) %>%
                     flextable::flextable() %>%
-                    flextable::add_header_row(values = rep(title_adonis, ncol_keys(.))) %>%
+                    flextable::add_header_row(values = rep(title, ncol_keys(.))) %>%
                     flextable::merge_h(part = "header") %>%
                     flextable::fontsize(size = 8, part = "all") %>%
                     flextable::align(align = "center", part = "all") %>%
@@ -164,14 +170,20 @@ res_adonis_flextable <- res_adonis_interaction %>%
                     flextable::padding(padding = 0, part = "all") %>%
                     flextable::border(border = fp_border(), part = "all") %>%
                     flextable::autofit()
-            
-# res_adonis_flextable %>% print(preview = "docx")
+            }
+        )
+    )
+# df03$permanova_flextable
 
 
 # PRODUCE TABLE OF PAIRWISE ADONIS RESULTS ####
-title_adonis_pairwise <- paste("Table i. Pairwise PERMANOVA of molecular scores in biopsies from treated vs untreated patients")
-                
-res_pairwise_adonis_flextable <- res_pairwise_adonis %>%
+df04 <- df03 %>%
+    mutate(
+        permanova_pairwise_flextable = pmap(
+            list(permanova_pairwise),
+            function(permanova_pairwise) {
+                title <- paste("Table i. Pairwise PERMANOVA of molecular scores in biopsies from treated vs untreated patients")
+                permanova_pairwise %>%
                     dplyr::select(-Df, -sig, -SumsOfSqs) %>%
                     dplyr::rename("F-value" = F.Model, FDR = p.adjusted) %>%
                     mutate(
@@ -180,7 +192,7 @@ res_pairwise_adonis_flextable <- res_pairwise_adonis %>%
                     ) %>%
                     arrange(p.value) %>%
                     flextable::flextable() %>%
-                    flextable::add_header_row(values = rep(title_adonis_pairwise, ncol_keys(.))) %>%
+                    flextable::add_header_row(values = rep(title, ncol_keys(.))) %>%
                     flextable::merge_h(part = "header") %>%
                     flextable::fontsize(size = 8, part = "all") %>%
                     flextable::align(align = "center", part = "all") %>%
@@ -192,16 +204,22 @@ res_pairwise_adonis_flextable <- res_pairwise_adonis %>%
                     flextable::padding(padding = 0, part = "all") %>%
                     flextable::border(border = fp_border(), part = "all") %>%
                     flextable::autofit()
-            
-# res_pairwise_adonis_flextable %>% print(preview = "docx")
+            }
+        )
+    )
+# df04$permanova_pairwise_flextable
+# df04$permanova_pairwise_flextable  %>% print(preview = "docx")
 
 
 # WRANGLE THE DATA FOR UNIVARIATE TESTS ####
-df01 <- df00 %>%
+df_univariate_00 <- df04 %>%
+    mutate(
+        data_univariate = pmap(
+            list(data, features),
+            function(data, features) {
+                data %>%
                     pivot_longer(
-                        cols = c(
-            all_of(features)
-        ),
+                        cols = all_of(features),
                         names_to = "variable",
                         values_to = "value"
                     ) %>%
@@ -283,19 +301,24 @@ df01 <- df00 %>%
                         ), .before = 1
                     ) %>%
                     arrange(annotation, variable)
-            df01 %>% print(n = "all")
+            }
+        )
+    ) %>%
+    dplyr::select(category, data_univariate) %>%
+    unnest(data_univariate)
 
 
-# UNIVARIATE NONPARAMETRIC TESTS ####
-# univariate tests
-df02 <- df01 %>%
+# UNIVARIATE MEANS AND MEDIANS ####
+df_univariate_01 <- df_univariate_00 %>%
+    mutate(
+        n_cat = score %>% unique() %>% length(), .by = category, .after = variable
+    ) %>%
     mutate(
         means = map(
             data,
             function(data) {
                 data %>%
-                    group_by(Group_Felz) %>%
-                    reframe(mean = mean(value), se = se(value)) %>%
+                    reframe(mean = mean(value), se = se(value), .by = Group_Felz) %>%
                     arrange(
                         Group_Felz %>%
                             factor(levels = c(
@@ -307,10 +330,9 @@ df02 <- df01 %>%
         ),
         medians = map(
             data,
-            function(x) {
-                x %>%
-                    group_by(Group_Felz) %>%
-                    reframe(median = median(value), IQR = IQR(value)) %>%
+            function(data) {
+                data %>%
+                    reframe(median = median(value), IQR = IQR(value), .by = Group_Felz) %>%
                     arrange(
                         Group_Felz %>%
                             factor(levels = c(
@@ -320,41 +342,101 @@ df02 <- df01 %>%
                     )
             }
         ),
-        art = map(data, ~ art(value ~ Group * Felz + (1 | Patient), data = .)),
-        art_aov = map(art, ~ anova(., type = "II")),
-        art_aov_tidy = map(art_aov, . %>% tidy()) %>% suppressWarnings(),
-        art_con = map(art, ~ art.con(.x, "Group:Felz", adjust = "none")),
-        art_con_tidy = map(art_con, tidy),
-        art_con_cld = map(art_con, . %>% as.data.frame() %>%
-        cldList(p.value ~ contrast, data = .) %>%
-        arrange(Group %>%
-        factor(
-        levels = c(
-        "Index,NoFelz", "FU1,NoFelz",
-        "Index,Felz", "FU1,Felz"
+        medians_delta = map(
+            data,
+            function(data) {
+                data %>%
+                    reframe(d = diff(value), .by = c(Patient, Felz)) %>%
+                    reframe(median_delta = median(d), IQR_delta = IQR(d), .by = c(Felz)) %>%
+                    arrange(Felz %>% factor(levels = c("NoFelz", "Felz")))
+            }
+        ),
+        medians_delta_delta = map(
+            medians_delta, reframe,
+            median_delta_delta = diff(median_delta), IQR_delta_delta = mean(IQR_delta)
         )
-                )))
     )
-names(df02$art_aov_tidy) <- df02$variable %>% as.character()
-names(df02$art_con) <- df02$variable %>% as.character()
-names(df02$art_con_tidy) <- df02$variable %>% as.character()
-names(df02$art_con_cld) <- df02$variable %>% as.character()
 
-df02$art_aov
-df02$art_aov_tidy
-df02$art_con_tidy
+df_univariate_01$medians[[11]]
+df_univariate_01$medians_delta[[11]]
+df_univariate_01$medians_delta_delta[[11]]
+
+
+# UNIVARIATE NONPARAMETRIC TESTS ####
+df_univariate_02 <- df_univariate_01 %>%
+    mutate(
+        art = map(data, art, formula = value ~ Group * Felz + (1 | Patient)),
+        art_lm = map(
+            art,
+            function(art) {
+                art %>%
+                    artlm(term = "Group:Felz", response = "aligned") %>%
+                    summary() %>%
+                    pluck("coefficients") %>%
+                    as.data.frame() %>%
+                    rownames_to_column("Term_lm") %>%
+                    dplyr::filter(Term_lm != "(Intercept)")
+            }
+        ),
+        art_aov = map(art, anova, type = "II"),
+        art_aov_tidy = map(art_aov, tidy) %>% suppressWarnings(),
+        art_con_interaction_default = map(
+            art,
+            art.con,
+            formula = "Group:Felz", adjust = "fdr", method = "pairwise", interaction = TRUE, response = "aligned"
+        ),
+        art_con_interaction = map(
+            art,
+            art.con,
+            formula = "Group:Felz", adjust = "fdr", method = list("interaction" = c(1, -1, -1, 1)), response = "aligned"
+        ),
+        art_con_groupwise = map(
+            art,
+            art.con,
+            formula = "Group:Felz", adjust = "fdr", method = list("abs" = c(3, -1, -1, -1)), response = "aligned"
+        ),
+        art_con_interaction_default_tidy = map(art_con_interaction_default, tidy),
+        art_con_interaction_tidy = map(art_con_interaction, tidy),
+        art_con_groupwise_tidy = map(art_con_groupwise, tidy),
+        # art_con_cld = map(
+        #     art_con,
+        #     function(art_con) {
+        #         art_con %>%
+        #             as.data.frame() %>%
+        #             cldList(p.value ~ contrast, data = .) %>%
+        #             arrange(Group %>%
+        #                 factor(
+        #                     levels = c(
+        #                         "Index,NoFelz", "FU1,NoFelz",
+        #                         "Index,Felz", "FU1,Felz"
+        #                     )
+        #                 ))
+        #     }
+        # )
+    )
+
+names(df_univariate_02$art_aov_tidy) <- df_univariate_02$variable %>% as.character()
+
+names(df_univariate_02$art_con_interaction_default_tidy) <- df_univariate_02$variable %>% as.character()
+names(df_univariate_02$art_con_interaction_tidy) <- df_univariate_02$variable %>% as.character()
+names(df_univariate_02$art_con_groupwise_tidy) <- df_univariate_02$variable %>% as.character()
+# names(df_univariate_02$art_con_cld) <- df_univariate_02$variable %>% as.character()
+
+df_univariate_02$art_con_interaction_tidy[[1]]
+df_univariate_02$art_con_interaction_default_tidy[[1]]
+df_univariate_02$art_con_groupwise_tidy[[1]]
 
 
 # CREATE FLEXTABLE OF ART MODELS ####
 title_art <- paste("Table i. Non-parametric ANOVA (ART) of molecular scores in biopsies from treated vs untreated patients")
 title_art_pairwise <- paste("Table i. Pairwise Non-parametric ANOVA (ART) of molecular scores in biopsies from treated vs untreated patients")
 
-res_art_flextable <- df02 %>%
-    dplyr::select(annotation, score, art_aov) %>%
+res_art_flextable <- df_univariate_02 %>%
+    dplyr::select(annotation, n_cat, score, art_aov) %>%
     unnest(everything()) %>%
-    dplyr::select(annotation, score, Term, `F`, `Pr(>F)`) %>%
     dplyr::rename(p.value = `Pr(>F)`) %>%
-    mutate(FDR = p.value %>% p.adjust(method = "fdr")) %>%
+    mutate(FDR = p.value %>% p.adjust(method = "fdr"), .by = annotation) %>%
+    dplyr::select(annotation, score, Term, `F`, p.value, FDR) %>%
     flextable::flextable() %>%
     flextable::add_header_row(values = rep(title_art, ncol_keys(.))) %>%
     flextable::merge_h(part = "header") %>%
@@ -374,50 +456,142 @@ res_art_flextable <- df02 %>%
 # res_art_flextable %>% print(preview = "pptx")
 
 
-# FORMAT TABLES OF PAIRWISE ART MODELS ####
-res_art_pairwise_formatted <- df02 %>%
-    dplyr::select(annotation, score, art_con_cld, medians) %>%
-    unnest(c(art_con_cld, medians), names_repair = tidyr_legacy) %>%
+# FORMAT TABLES OF CONTRASTS ####
+res_art_pairwise_formatted_delta <- df_univariate_02 %>%
+    dplyr::select(annotation, score, art_aov_tidy, art_lm, medians_delta, medians_delta_delta) %>%
+    unnest(c(art_aov_tidy, art_lm), names_repair = tidyr_legacy) %>%
+    unnest(medians_delta) %>%
+    unnest(medians_delta_delta) %>%
+    dplyr::filter(
+        Term == "Group:Felz",
+        Term_lm == "Group1:Felz1"
+    ) %>%
+    dplyr::rename(p_interaction = p.value) %>%
+    mutate(
+        FDR_interaction = p_interaction %>% p.adjust(method = "fdr"), .by = annotation
+    ) %>%
+    mutate_at(
+        vars(contains("p_i"), contains("FDR")),
+        ~ ifelse(
+            . < 0.01,
+            formatC(., digits = 0, format = "e"),
+            formatC(., digits = 3, format = "f")
+        )
+    ) %>%
+    mutate(
+        Estimate = Estimate %>% round(3),
+        delta = paste(
+            format(round(median_delta, 2), nsmall = 1),
+            "\u00B1",
+            round(IQR_delta, 2),
+            # Letter,
+            sep = " "
+        ),
+        deltadelta = paste(
+            format(round(median_delta_delta, 2), nsmall = 1),
+            "\u00B1",
+            round(IQR_delta_delta, 2),
+            # Letter,
+            sep = " "
+        )
+    ) %>%
+    dplyr::select(annotation, score, Estimate, p_interaction, FDR_interaction, Felz, delta, deltadelta) %>%
+    pivot_wider(names_from = c(Felz), values_from = c(delta)) %>%
+    as.data.frame() %>%
+    relocate(deltadelta, .after = last_col())
+
+res_art_pairwise_formatted_medians <- df_univariate_02 %>%
+    dplyr::select(annotation, score, art_con_groupwise_tidy, medians) %>%
+    unnest(c(art_con_groupwise_tidy, medians), names_repair = tidyr_legacy) %>%
+    dplyr::rename(p_groupwise = p.value) %>%
+    mutate(
+        FDR_groupwise = p_groupwise %>% p.adjust(method = "fdr"), .by = annotation
+    ) %>%
+    mutate_at(
+        vars(contains("p_g"), contains("FDR")),
+        ~ ifelse(
+            . < 0.01,
+            formatC(., digits = 0, format = "e"),
+            formatC(., digits = 3, format = "f")
+        )
+    ) %>%
     mutate(
         medians =
             paste(
                 format(round(median, 2), nsmall = 1),
                 "\u00B1",
                 round(IQR, 2),
-                Letter,
+                # Letter,
                 sep = " "
-            )
+            ),
     ) %>%
-    dplyr::select(annotation, score, Group, medians) %>%
-    pivot_wider(names_from = c(Group), values_from = c(medians)) %>%
+    dplyr::select(annotation, score, Group_Felz, medians, p_groupwise, FDR_groupwise) %>%
+    pivot_wider(names_from = c(Group_Felz), values_from = c(medians)) %>%
+    relocate(contains("groupwise"), .after = last_col()) %>%
     as.data.frame()
 
-res_art_pairwise_formatted
+res_art_pairwise_formatted <- left_join(
+    res_art_pairwise_formatted_delta,
+    res_art_pairwise_formatted_medians,
+    by = c("score", "annotation")
+)
 
 
-# FORMAT variable TABLE ####
+
+
+# FORMAT FLEXTABLE ####
 # define sample sizes
-df_n <- df00 %>%
+df_n <- df_00 %>%
     group_by(Group_Felz) %>%
     tally()
 
 N <- df_n %>% pull(n)
-cellWidths <- c(5, 9.25, rep(3, 4))
-title_art_pairwise <- paste("Table i. Pairwise Non-parametric ANOVA (ART) of molecular scores in biopsies from treated vs untreated patients")
+title_art_pairwise <- paste("Table i. Median \u00B1 IQR molecular scores in biopsies from treated vs untreated patients")
 
 footnoteText <- c(
     paste(
-        "Yellow shading indicates significant interactive effect of treatment in follow-up biopsy.\n",
-        "NOTE: Lettering represents contrasts within each row (i.e., multigene score).\n",
-        "Groups sharing the same letters are not different from one another for that molecular score",
+        "Yellow shading denotes ANOVA interactive effect FDR < 0.05\n",
+        "Green shading denotes groupwise contrast FDR < 0.05 ~ FelzFU1 - [FelzIndex + NoFelzFU1 + NoFelzIndex]/3\n",
+        "Bold denotes FDR < 0.05",
         sep = ""
     ) # ,
     # "Scores are the mean fold change in expression for all Probes within the set vs the mean expression for all Probes in the NoPGD control set"
 )
 
-header1 <- c("Annotation", "Score", "No Felz", "No Felz", "Felz", "Felz")
-header2 <- c("Annotation", "Score", "Index", "FU1", "Index", "FU1")
-header3 <- c("Annotation", "Score", paste("N = ", N, sep = ""))
+header1 <- c(
+    "Annotation", "Score",
+    rep("Aligned Rank-Transform ANOVA Interaction", 6),
+    rep("Aligned Rank-Transform ANOVA Groupwise contrast", 6)
+)
+header2 <- c(
+    "Annotation", "Score",
+    rep("Aligned Rank-Transform ANOVA Interaction", 6),
+    rep("Aligned Rank-Transform ANOVA Groupwise contrast", 6)
+)
+header3 <- c(
+    "Annotation", "Score",
+    "coef", "p", "FDR",
+    "\u394\n(Index vs FU1)", "\u394\n(Index vs FU1)", "\u394\u394\n(N = 44)",
+    "Group1", "Group1", "Group1", "Group2",
+    "p", "FDR"
+)
+header4 <- c(
+    "Annotation", "Score",
+    "coef", "p", "FDR",
+    "\u394\n(Index vs FU1)", "\u394\n(Index vs FU1)", "\u394\u394\n(N = 44)",
+    "NoFelz", "NoFelz", "Felz", "Felz",
+    "p", "FDR"
+)
+
+header5 <- c(
+    "Annotation", "Score",
+    "coef", "p", "FDR",
+    "NoFelz\n(N = 22)", "Felz\n(N = 22)", "\u394\u394\n(N = 44)",
+    "Index\n(N = 11)", "FU1\n(N = 11)", "Index\n(N = 11)", "FU1\n(N = 11)",
+    "p", "FDR"
+)
+
+cellWidths <- c(4, 11, rep(2, 3), rep(4, 7), rep(2, 2))
 
 
 
@@ -425,6 +599,8 @@ header3 <- c("Annotation", "Score", paste("N = ", N, sep = ""))
 res_art_pairwise_flextable <- res_art_pairwise_formatted %>%
     flextable::flextable() %>%
     flextable::delete_part("header") %>%
+    flextable::add_header_row(top = TRUE, values = header5) %>%
+    flextable::add_header_row(top = TRUE, values = header4) %>%
     flextable::add_header_row(top = TRUE, values = header3) %>%
     flextable::add_header_row(top = TRUE, values = header2) %>%
     flextable::add_header_row(top = TRUE, values = header1) %>%
@@ -432,7 +608,7 @@ res_art_pairwise_flextable <- res_art_pairwise_formatted %>%
     flextable::add_footer_row(values = footnoteText[[1]], colwidths = ncol_keys(.)) %>%
     flextable::merge_v(j = 1:2) %>%
     flextable::merge_v(part = "header") %>%
-    flextable::merge_h(i = 1:3, part = "header") %>%
+    flextable::merge_h(part = "header") %>%
     flextable::border_remove() %>%
     flextable::border(part = "header", border = fp_border()) %>%
     flextable::border(part = "body", border = fp_border()) %>%
@@ -440,23 +616,26 @@ res_art_pairwise_flextable <- res_art_pairwise_formatted %>%
     flextable::border(i = 1, part = "footer", border.bottom = fp_border()) %>%
     flextable::align(align = "center") %>%
     flextable::align(align = "center", part = "header") %>%
+    flextable::valign(i = 4, j = 8, valign = "bottom", part = "header") %>%
     flextable::font(fontname = "Arial", part = "all") %>%
-    flextable::fontsize(size = 10, part = "all") %>%
-    flextable::fontsize(size = 10, part = "footer") %>%
+    flextable::fontsize(size = 8, part = "all") %>%
+    flextable::fontsize(size = 8, part = "footer") %>%
     flextable::fontsize(i = 1, size = 12, part = "header") %>%
     flextable::bold(part = "header") %>%
     flextable::bold(j = 1, part = "body") %>%
     flextable::bg(bg = "white", part = "all") %>%
-    flextable::bg(i = ~ score %>% str_detect("NKB|DSAST|Glomerulitis classifier"), j = 2:6, bg = "yellow", part = "body") %>%
-    # flextable::bg(i = ~ score %>% str_detect(""), j = 2:6, bg = "yellow", part = "body") %>%
+    flextable::bg(i = ~ as.numeric(FDR_interaction) < 0.05, j = 3:8, bg = "#ffffd2", part = "body") %>%
+    flextable::bg(i = ~ as.numeric(FDR_groupwise) < 0.05, j = 9:ncol_keys(.), bg = "#d0ffe9", part = "body") %>%
+    flextable::bold(i = ~ as.numeric(FDR_interaction) < 0.05, j = 8, part = "body") %>%
+    flextable::bold(i = ~ as.numeric(FDR_groupwise) < 0.05, j = c(9:ncol_keys(.)), part = "body") %>%
     flextable::padding(padding = 0, part = "all") %>%
     flextable::width(width = cellWidths, unit = "cm") %>%
-    flextable::width(., width = dim(.)$widths * 26.25 / (flextable_dim(.)$widths), unit = "cm")
-# res_art_pairwise_flextable
+    flextable::width(., width = dim(.)$widths * 30 / (flextable_dim(.)$widths), unit = "cm")
+
 
 
 # PRINT THE FLEXTABLES ####
-# res_art_pairwise_flextable %>% print(preview = "pptx")
+res_art_pairwise_flextable %>% print(preview = "pptx")
 
 
 
@@ -534,12 +713,12 @@ plot_panel <- df_plot %>%
 
 # SAVE THE PLOTS ####
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg CD38 Vienna/G_Rstuff/output/"
-ggsave(
-    filename = paste(saveDir, "Felzartamab effect of treatemnt patient data.png"),
-    plot = plot_panel,
-    dpi = 300,
-    width = 50,
-    height = 25,
-    units = "cm",
-    bg = "white"
-)
+# ggsave(
+#     filename = paste(saveDir, "Felzartamab effect of treatemnt patient data.png"),
+#     plot = plot_panel,
+#     dpi = 300,
+#     width = 50,
+#     height = 25,
+#     units = "cm",
+#     bg = "white"
+# )

@@ -39,8 +39,8 @@ handlers(list(handler_progress(
     intrusiveness = 1,
     complete = "+"
 )))
-# Suppress pesky dplyr summarise info
-options(dplyr.summarise.inform = FALSE)
+# Suppress pesky dplyr reframe info
+options(dplyr.reframe.inform = FALSE)
 # laod reference set
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg CD38 Vienna/G_Rstuff/data/Vienna44_18Oct23.RData")
 # load affymap
