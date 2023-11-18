@@ -21,6 +21,7 @@ library(parallel) # install.packages("parallel")
 library(openxlsx) # install.packages("openxlsx")
 # Bioconductor libraries
 library(Biobase) # BiocManager::install("Biobase")
+library(genefilter)
 library(biobroom) # BiocManager::install("biobroom")
 # Custom operators, functions, and datasets
 "%nin%" <- function(a, b) match(a, b, nomatch = 0) == 0
@@ -45,6 +46,18 @@ options(dplyr.reframe.inform = FALSE)
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg CD38 Vienna/G_Rstuff/data/Vienna44_18Oct23.RData")
 # load affymap
 load("Z:/DATA/Datalocks/Other data/affymap219_21Oct2019_1306_JR.RData")
+# load reference expression data
+load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg CD38 Vienna/G_Rstuff/data/mean_expression_K5086_MMDx.RData")
+
+
+# IQR FILTER THE DATA ####
+f1 <- function(x) (IQR(x) > 0.5)
+ff <- filterfun(f1)
+if (!exists("selected")) {
+    selected <- genefilter(Vienna44, ff)
+}
+set00 <- Vienna44[selected, ]
+
 
 
 # DEFINE SEED ####
@@ -52,11 +65,11 @@ seed <- 42
 
 
 # DEFINE FEATURES ####
-features <- Vienna44 %>% featureNames()
+features <- set00 %>% featureNames()
 
 
 # DEFINE THE SET ####
-set <- Vienna44 %>% tidy(addPheno = TRUE)
+set <- set00 %>% tidy(addPheno = TRUE)
 
 
 # WRANGLE THE PHENOTYPE DATA ####
@@ -202,8 +215,6 @@ df01 <- df00 %>%
     mutate(id = row_number())
 
 
-
-
 # FUNCTION TO ITERATE ALIGNED RANK TRANSFORM ANOVA ####
 artF <- function(data, AffyID, p) {
     p <- progressor(along = AffyID)
@@ -237,7 +248,7 @@ art_aovF <- function(data, AffyID, p) {
 }
 
 
-# FUNCTION TO ITERATE GROUPWISE MEANS ####
+# FUNCTION TO ITERATE ESTIMATED EFFECTS OF INTERACTION TERM ####
 art_lmF <- function(data, AffyID, p) {
     p <- progressor(along = AffyID)
     future_pmap(
@@ -258,7 +269,7 @@ art_lmF <- function(data, AffyID, p) {
 }
 
 
-# FUNCTION TO ITERATE ESTIMATED EFFECTS OF INTERACTION TERM ####
+# FUNCTION TO ITERATE GROUPWISE MEANS ####
 meansF <- function(data, AffyID, p) {
     p <- progressor(along = AffyID)
     future_pmap(
@@ -272,12 +283,12 @@ meansF <- function(data, AffyID, p) {
             ) %>%
                 mutate(Group_Felz = paste(Group, Felz, sep = "_")) %>%
                 dplyr::select(Group_Felz, Mean) %>%
-                pivot_wider(names_from = Group_Felz, values_from = Mean)
+                pivot_wider(names_from = Group_Felz, values_from = Mean) %>%
+                mutate_all(~ 2^. %>% round(0))
         },
         .options = furrr_options(seed = TRUE)
     )
 }
-
 
 
 # RUN ART #####
@@ -295,72 +306,86 @@ res_art03 <- res_art02 %>% mutate(means = meansF(data, AffyID))
 plan(sequential)
 
 
-
 # FORMAT THE UNIVARIATE RESULTS ####
 res_art_table <- res_art03 %>%
+    left_join(
+        .,
+        means_K5086 %>% dplyr::select(-Symb, -Gene, -PBT),
+        by = "AffyID"
+    ) %>%
     dplyr::select(AffyID, Symb, Gene, PBT, means, art_aov, art_lm) %>%
     unnest(everything()) %>%
     dplyr::filter(Term %>% str_detect(":")) %>%
     dplyr::rename(
         p.value = `Pr(>F)`
     ) %>%
-    dplyr::select(
-        AffyID, Symb, Gene, PBT,
-        Index_NoFelz, Index_Felz, FU1_NoFelz, FU1_Felz,
-        Term, Estimate, F, p.value, part_eta_sq
-    ) %>%
-    arrange(p.value) %>%
     mutate(
         Term = "Interaction",
-        p.value = ifelse(
-            p.value < 0.001,
-            formatC(p.value, digits = 1, format = "e"),
-            round(p.value, 4)
+        FDR = p.value %>% p.adjust("fdr")
+    ) %>%
+    mutate_at(
+        vars(p.value, FDR),
+        ~ ifelse(
+            . < 0.01,
+            formatC(., digits = 0, format = "e"),
+            formatC(., digits = 3, format = "f")
         )
     ) %>%
     mutate_if(
         is.numeric, ~ round(., 2)
     ) %>%
+    dplyr::select(
+        AffyID, Symb, Gene, PBT,
+        Index_NoFelz, Index_Felz, FU1_NoFelz, FU1_Felz,
+        Estimate, p.value, FDR, contains("MMDx")
+    ) %>%
+    arrange(p.value) %>%
     expand_grid(direction = c("all", "negative", "positive")) %>%
-        group_by(direction) %>%
-        nest() %>%
-        tibble() %>%
-        mutate(data = pmap(
-            list(direction, data),
-            function(direction, data) {
-                if (direction == "all") {
-                    data
-                } else if (direction == "negative") {
-                    data %>% dplyr::filter(Estimate < 0)
-                } else if (direction == "positive") {
-                    data %>% dplyr::filter(Estimate > 0)
-                }
+    group_by(direction) %>%
+    nest() %>%
+    tibble() %>%
+    mutate(data = pmap(
+        list(direction, data),
+        function(direction, data) {
+            if (direction == "all") {
+                data
+            } else if (direction == "negative") {
+                data %>% dplyr::filter(Estimate < 0)
+            } else if (direction == "positive") {
+                data %>% dplyr::filter(Estimate > 0)
             }
-        ))
+        }
+    ))
 
 
-# MAKE FLEXTABLE OF UNIVARIATE RESULTS ####
+# GLOBALS VARIABLES FOR FLEXTABLES ####
 title <- paste("Table i. Top 20 probesets affected by Felzartamab treatment (by non-parametric ANOVA p-value)")
 cellWidths <- c(2, 2, 8, 4, rep(1.5, 9))
+cellWidths %>% length()
 
 header1 <- c(
-    "AffyID", "Symb", "Gene", "PBT",
-    rep("Mean expression", 4),
-    "Term", "Estimate", "F", "p.value", "part_eta_sq"
+    # "AffyID",
+    "Symb", "Gene", "PBT", "Estimate", "P", "FDR",
+    rep("Felzartamab study", 4),
+    rep("K5086 reference set", 6)
 )
-
 header2 <- c(
-    "AffyID", "Symb", "Gene", "PBT",
-    "NoFelz", "NoFelz", "Felz", "Felz",
-    "Term", "Estimate", "F", "p.value", "part_eta_sq"
+    # "AffyID",
+    "Symb", "Gene", "PBT", "Estimate", "P", "FDR",
+    rep("Mean expression by group", 4),
+    rep("Mean expression by MMDx", 6)
 )
 
 header3 <- c(
-    "AffyID", "Symb", "Gene", "PBT",
-    "Index", "FU1", "Index", "FU1",
-    "Term", "Estimate", "F", "p.value", "part_eta_sq"
+    # "AffyID",
+    "Symb", "Gene", "PBT", 
+    "Estimate", "P", "FDR",
+    "Index\n(N=11)", "FU1\n(N=11)", "Index\n(N=11)", "FU1\n(N=11)",
+    "Term", "Estimate", "F", "p.value", "FDR", "part_eta_sq"
 )
 
+
+# MAKE FLEXTABLE OF UNIVARIATE RESULTS ####
 res_art_flextable <- res_art_table %>%
     mutate(flextable = pmap(
         list(direction, data),
@@ -386,15 +411,14 @@ res_art_flextable <- res_art_table %>%
                 flextable::bg(bg = "white", part = "all") %>%
                 flextable::padding(padding = 0, part = "all") %>%
                 flextable::width(width = cellWidths, unit = "cm") %>%
-                flextable::width(., width = dim(.)$widths * 26.25 / (flextable_dim(.)$widths), unit = "cm")
+                flextable::width(., width = dim(.)$widths * 33 / (flextable_dim(.)$widths), unit = "cm")
         }
     ))
 
 res_art_flextable %>%
     dplyr::filter(direction == "negative") %>%
-    pull(flextable)  %>% 
+    pull(flextable) %>%
     print(preview = "pptx")
-
 
 
 # EXPORT THE DATA AS AN EXCEL SHEET ####

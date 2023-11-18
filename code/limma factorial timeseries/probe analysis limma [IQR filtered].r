@@ -14,6 +14,8 @@ library(limma) # BiocManager::install("limma")
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg CD38 Vienna/G_Rstuff/data/Vienna44_18Oct23.RData")
 # load affymap
 load("Z:/DATA/Datalocks/Other data/affymap219_21Oct2019_1306_JR.RData")
+# load reference expression data
+load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg CD38 Vienna/G_Rstuff/data/mean_expression_K5086_MMDx.RData")
 
 
 # IQR FILTER THE DATA ####
@@ -111,7 +113,7 @@ means <- fit_block_1 %>%
     rownames_to_column("AffyID") %>%
     tibble() %>%
     mutate_if(is.numeric, ~ 2^. %>% round(0)) %>%
-    rename_at(vars(contains("Felz")), ~str_remove(., "Group_Felz"))
+    rename_at(vars(contains("Felz")), ~ str_remove(., "Group_Felz"))
 
 
 # FORMAT TOPTABLES ####
@@ -127,7 +129,12 @@ table_block_1 <- tab_block_1 %>%
     left_join(., means, by = "AffyID") %>%
     # dplyr::relocate(c("BLADpos Mean", "BLADneg Mean"), .before = t) %>%
     dplyr::select(-AveExpr, -B) %>%
-    mutate(FC = 2^logFC, .after = logFC)
+    mutate(FC = 2^logFC, .after = logFC) %>%
+    left_join(
+        .,
+        means_K5086 %>% dplyr::select(-Symb, -Gene, -PBT),
+        by = "AffyID"
+    )
 
 table_block_2 <- tab_block_2 %>%
     as.data.frame() %>%
@@ -141,7 +148,12 @@ table_block_2 <- tab_block_2 %>%
     left_join(., means, by = "AffyID") %>%
     # dplyr::relocate(c("BLADpos Mean", "BLADneg Mean"), .before = t) %>%
     dplyr::select(-AveExpr, -B) %>%
-    mutate(FC = 2^logFC, .after = logFC)
+    mutate(FC = 2^logFC, .after = logFC) %>%
+    left_join(
+        .,
+        means_K5086 %>% dplyr::select(-Symb, -Gene, -PBT),
+        by = "AffyID"
+    )
 
 table_factorial <- tab_factorial %>%
     as.data.frame() %>%
@@ -155,13 +167,137 @@ table_factorial <- tab_factorial %>%
     left_join(., means, by = "AffyID") %>%
     # dplyr::relocate(c("BLADpos Mean", "BLADneg Mean"), .before = t) %>%
     dplyr::select(-AveExpr, -B) %>%
-    mutate(FC = 2^logFC, .after = logFC)
+    mutate(FC = 2^logFC, .after = logFC) %>%
+    left_join(
+        .,
+        means_K5086 %>% dplyr::select(-Symb, -Gene, -PBT),
+        by = "AffyID"
+    )
+
+
+# GLOBAL PARAMETERS FOR FLEXTABLES ####
+header1 <- c(
+    # "AffyID",
+    "Symb", "Gene", "PBT", "FC", "P", "FDR",
+    rep("Felzartamab study", 4),
+    rep("K5086 reference set", 6)
+)
+header2 <- c(
+    # "AffyID",
+    "Symb", "Gene", "PBT", "FC", "P", "FDR",
+    rep("Mean expression by group", 4),
+    rep("Mean expression by MMDx", 6)
+)
+header3 <- c(
+    # "AffyID",
+    "Symb", "Gene", "PBT", "FC", "P", "FDR",
+    rep("NoFelz", 2), rep("Felz", 2),
+    rep("Mean expression by MMDx", 6)
+)
+header4 <- c(
+    # "AffyID",
+    "Symb", "Gene", "PBT", "FC", "P", "FDR",
+    "Index\n(N=11)", "FU1\n(N=11)", "Index\n(N=11)", "FU1\n(N=11)",
+    "NR\n(N=2476)", "Mixed\n(N=327)", "TCMR\n(N=326)", "pTCMR\n(N=74)", "ABMR\n(N=1242)", "pABMR\n(N=209)"
+)
+
+title <- paste("Table i. Top 20 differentially expressed transcripts in biopsies from treated vs untreated patients (by P-value)", sep = "")
+
+cellWidths <- c(1.5, 5, 3, 1, 1, 1, rep(1.1, 10)) # for individual tables up or down
+cellWidths %>% length()
+
+
+# FORMAT FLEXTABLES ####
+flextable_block_1 <- table_block_1 %>%
+    dplyr::rename(FDR = adj.P.Val, Symbol = Symb) %>%
+    dplyr::select(-AffyID, -logFC, -t) %>%
+    # distinct(Symbol, .keep_all = T) %>%
+    dplyr::slice(1:20) %>%
+    mutate(FC = FC %>% round(2)) %>%
+    mutate_at(
+        vars(contains("p."), FDR),
+        ~ ifelse(
+            . < 0.01,
+            formatC(., digits = 0, format = "e"),
+            formatC(., digits = 3, format = "f")
+        )
+    ) %>%
+    flextable::flextable() %>%
+    flextable::delete_part("header") %>%
+    flextable::add_header_row(top = TRUE, values = header4) %>%
+    flextable::add_header_row(top = TRUE, values = header3) %>%
+    flextable::add_header_row(top = TRUE, values = header2) %>%
+    flextable::add_header_row(top = TRUE, values = header1) %>%
+    flextable::add_header_row(values = rep(title, ncol_keys(.))) %>%
+    flextable::merge_v(part = "header") %>%
+    flextable::merge_h(part = "header") %>%
+    # flextable::bg(bg = "grey90", part = "header") %>%
+    flextable::bg(bg = "white", part = "all") %>%
+    flextable::border_remove() %>%
+    flextable::border(border = fp_border(), part = "all") %>%
+    flextable::align(part = "header", align = "center") %>%
+    flextable::align(part = "body", align = "center") %>%
+    flextable::valign(i = 2:4, valign = "bottom", part = "header") %>%
+    flextable::padding(padding.left = 3, padding.bottom = 0, padding.top = 0) %>%
+    flextable::font(fontname = "Arial", part = "all") %>%
+    flextable::fontsize(size = 7, part = "body") %>%
+    flextable::fontsize(size = 8, part = "header") %>%
+    flextable::fontsize(i = 1, size = 12, part = "header") %>%
+    flextable::bold(part = "header") %>%
+    flextable::width(width = cellWidths, unit = "cm") %>%
+    flextable::width(., width = dim(.)$widths * 33 / (flextable_dim(.)$widths), unit = "cm")
+
+flextable_block_2 <- table_block_2 %>%
+    dplyr::rename(FDR = adj.P.Val, Symbol = Symb) %>%
+    dplyr::select(-AffyID, -logFC, -t) %>%
+    # distinct(Symbol, .keep_all = T) %>%
+    dplyr::slice(1:20) %>%
+    mutate(FC = FC %>% round(2)) %>%
+    mutate_at(
+        vars(contains("p."), FDR),
+        ~ ifelse(
+            . < 0.01,
+            formatC(., digits = 0, format = "e"),
+            formatC(., digits = 3, format = "f")
+        )
+    ) %>%
+    flextable::flextable() %>%
+    flextable::delete_part("header") %>%
+    flextable::add_header_row(top = TRUE, values = header4) %>%
+    flextable::add_header_row(top = TRUE, values = header3) %>%
+    flextable::add_header_row(top = TRUE, values = header2) %>%
+    flextable::add_header_row(top = TRUE, values = header1) %>%
+    flextable::add_header_row(values = rep(title, ncol_keys(.))) %>%
+    flextable::merge_v(part = "header") %>%
+    flextable::merge_h(part = "header") %>%
+    # flextable::bg(bg = "grey90", part = "header") %>%
+    flextable::bg(bg = "white", part = "all") %>%
+    flextable::border_remove() %>%
+    flextable::border(border = fp_border(), part = "all") %>%
+    flextable::align(part = "header", align = "center") %>%
+    flextable::align(part = "body", align = "center") %>%
+    flextable::valign(i = 2:4, valign = "bottom", part = "header") %>%
+    flextable::padding(padding.left = 3, padding.bottom = 0, padding.top = 0) %>%
+    flextable::font(fontname = "Arial", part = "all") %>%
+    flextable::fontsize(size = 7, part = "body") %>%
+    flextable::fontsize(size = 8, part = "header") %>%
+    flextable::fontsize(i = 1, size = 12, part = "header") %>%
+    flextable::bold(part = "header") %>%
+    flextable::width(width = cellWidths, unit = "cm") %>%
+    flextable::width(., width = dim(.)$widths * 33 / (flextable_dim(.)$widths), unit = "cm")
+
+
+
+# PRINT THE FLEXTABLES ####
+flextable_block_1 %>% print(preview = "pptx")
+flextable_block_2 %>% print(preview = "pptx")
+
 
 
 # MERGE TABLES FOR SIMPLE EXPORT ####
 limma_tables <- tibble(
-    design = c("interaction", "absolute difference"),
-    table = list(table_block_1, table_block_2) 
+    design = c("interaction", "groupwise"),
+    table = list(table_block_1, table_block_2)
 )
 
 
@@ -172,7 +308,7 @@ savedir1 <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg CD38 
 names(limma_tables$table) <- limma_tables$design
 openxlsx::write.xlsx(limma_tables$table,
     asTable = TRUE,
-    file = paste(savedir1, "IQR_filtered_probes_limma_Vienna44_16Nov23  ",
+    file = paste(savedir1, "IQR_filtered_probes_limma_Vienna44_17Nov23  ",
         # Sys.Date(),
         # format(Sys.time(), "_%I%M%p"),
         ".xlsx",
