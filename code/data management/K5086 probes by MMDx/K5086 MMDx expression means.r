@@ -66,5 +66,5 @@ means_K5086 <- left_join(
 
 
 # SAVE THE MEAN EXPRESSION DATA ####
-saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg CD38 Vienna/G_Rstuff/data/"
+saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vienna/G_Rstuff/data/"
 save(means_K5086, file = paste(saveDir, "mean_expression_K5086_MMDx.RData", sep = ""))

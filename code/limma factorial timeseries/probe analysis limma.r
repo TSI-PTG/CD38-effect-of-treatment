@@ -11,7 +11,7 @@ library(biobroom) # BiocManager::install("biobroom")
 # Custom operators, functions, and datasets
 "%nin%" <- function(a, b) match(a, b, nomatch = 0) == 0
 # load reference set
-load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg CD38 Vienna/G_Rstuff/data/Vienna44_18Oct23.RData")
+load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vienna/G_Rstuff/data/Vienna44_18Oct23.RData")
 # load affymap
 load("Z:/DATA/Datalocks/Other data/affymap219_21Oct2019_1306_JR.RData")
 
@@ -158,7 +158,7 @@ limma_tables <- tibble(
 
 
 # EXPORT THE DATA AS AN EXCEL SHEET ####
-savedir1 <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg CD38 Vienna/G_Rstuff/output/"
+savedir1 <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vienna/G_Rstuff/output/"
 
 names(limma_tables$table) <- limma_tables$design
 openxlsx::write.xlsx(limma_tables$table,

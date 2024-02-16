@@ -29,7 +29,7 @@ log10zero <- scales::trans_new(
 # Suppress pesky dplyr reframe info
 options(dplyr.reframe.inform = FALSE)
 # laod reference set
-load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg CD38 Vienna/G_Rstuff/data/Vienna44_18Oct23.RData")
+load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vienna/G_Rstuff/data/Vienna44_18Oct23.RData")
 
 
 # DEFINE SEED ####
@@ -772,7 +772,7 @@ panel_TCMR <- df_plot %>%
 
 
 # SAVE THE PLOTS ####
-saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg CD38 Vienna/G_Rstuff/output/"
+saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vienna/G_Rstuff/output/"
 ggsave(
     filename = paste(saveDir, "Felzartamab effect of treatemnt ABMR scores.png"),
     plot = panel_ABMR,

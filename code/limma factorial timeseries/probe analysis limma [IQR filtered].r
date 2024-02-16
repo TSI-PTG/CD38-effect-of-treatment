@@ -11,20 +11,20 @@ library(limma) # BiocManager::install("limma")
 # Custom operators, functions, and datasets
 "%nin%" <- function(a, b) match(a, b, nomatch = 0) == 0
 # load reference set
-load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg CD38 Vienna/G_Rstuff/data/Vienna44_18Oct23.RData")
+load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vienna/G_Rstuff/data/vienna_1208_16Feb24.RData")
 # load affymap
 load("Z:/DATA/Datalocks/Other data/affymap219_21Oct2019_1306_JR.RData")
 # load reference expression data
-load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg CD38 Vienna/G_Rstuff/data/mean_expression_K5086_MMDx.RData")
+load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vienna/G_Rstuff/data/mean_expression_K5086_MMDx.RData")
 
 
 # IQR FILTER THE DATA ####
 f1 <- function(x) (IQR(x) > 0.5)
 ff <- filterfun(f1)
 if (!exists("selected")) {
-    selected <- genefilter(Vienna44, ff)
+    selected <- genefilter(vienna_1208, ff)
 }
-set00 <- Vienna44[selected, ]
+set00 <- vienna_1208[selected, ]
 
 
 # DEFINE SEED ####
@@ -295,20 +295,23 @@ flextable_block_2 %>% print(preview = "pptx")
 
 
 # MERGE TABLES FOR SIMPLE EXPORT ####
+# limma_tables <- tibble(
+#     design = c("interaction", "groupwise"),
+#     table = list(table_block_1, table_block_2)
+# )
 limma_tables <- tibble(
-    design = c("interaction", "groupwise"),
-    table = list(table_block_1, table_block_2)
+    design = c("interaction"),
+    table = list(table_block_1)
 )
 
 
-
 # EXPORT THE DATA AS AN EXCEL SHEET ####
-savedir1 <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg CD38 Vienna/G_Rstuff/output/"
+savedir1 <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vienna/G_Rstuff/output/"
 
 names(limma_tables$table) <- limma_tables$design
 openxlsx::write.xlsx(limma_tables$table,
     asTable = TRUE,
-    file = paste(savedir1, "IQR_filtered_probes_limma_Vienna44_17Nov23  ",
+    file = paste(savedir1, "IQR_filtered_probes_limma_vienna_1208_17Nov23",
         # Sys.Date(),
         # format(Sys.time(), "_%I%M%p"),
         ".xlsx",

@@ -1,18 +1,27 @@
 # HOUSEKEEPING ####
 # CRAN libraries
 library(tidyverse) # install.packages("tidyverse")
-library(openxlsx)
+library(readxl) # install.packages("readxl")
 
 # Bioconductor libraries
 library(Biobase) # BiocManager::install("Biobase")
 # Custom operators, functions, and datasets
 "%nin%" <- function(a, b) match(a, b, nomatch = 0) == 0
 # Load new reference set
-load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg CD38 Vienna/G_Rstuff/data/set_new_raw_18Oct23.RData") # N=52
-# Load previous reference set
-load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg CD38 Vienna/G_Rstuff/data/Vienna.RData") # N=52
+load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vienna/G_Rstuff/data/Vienna_new_raw_18Oct23.RData") # N=52
 # Load additional phenotype data
-IDs <- read.xlsx("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg CD38 Vienna/G_Rstuff/data/File for Phil and Jeff Updated 26Sep2023mm.xlsx", detectDates = T)
+IDs <- read_excel("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vienna/G_Rstuff/data/Felzartamab_MMDx_File_4Feb 24.xlsx")
+
+
+
+dir_cel <- "Z:/CELs/219/KIDNEY INTERCOMEX"
+CEL_kidney <- dir_cel  %>% dir
+
+CEL_Vienna_new <- Vienna  %>% sampleNames()
+
+
+IDs$CEL %in% CEL_Vienna_new
+
 
 
 # DEFINE SET ####
@@ -129,7 +138,7 @@ set_vienna$InjAA_Clust <- ifelse(set_vienna$Inj5Clust == 1, "MildCKD",
 
 # SAVE NEW DATALOCK ####
 Vienna44 <- set_vienna
-save(Vienna44, file = "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg CD38 Vienna/G_Rstuff/data/Vienna44_18Oct23.RData")
+save(Vienna44, file = "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vienna/G_Rstuff/data/Vienna44_18Oct23.RData")
 
 
 # CREATE AN EXCEL FILE WITH DATA ####
@@ -159,4 +168,4 @@ df_Vienna44 <- tibble(
 
 
 # SAVE THE EXCEL FILE ####
-write.xlsx(df_Vienna44, file = "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg CD38 Vienna/G_Rstuff/output/dfVienna44_18Oct23.xlsx")
+write.xlsx(df_Vienna44, file = "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vienna/G_Rstuff/output/dfVienna44_18Oct23.xlsx")

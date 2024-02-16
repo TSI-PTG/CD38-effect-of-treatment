@@ -43,11 +43,11 @@ handlers(list(handler_progress(
 # Suppress pesky dplyr reframe info
 options(dplyr.reframe.inform = FALSE)
 # laod reference set
-load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg CD38 Vienna/G_Rstuff/data/Vienna44_18Oct23.RData")
+load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vienna/G_Rstuff/data/Vienna44_18Oct23.RData")
 # load affymap
 load("Z:/DATA/Datalocks/Other data/affymap219_21Oct2019_1306_JR.RData")
 # load reference expression data
-load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg CD38 Vienna/G_Rstuff/data/mean_expression_K5086_MMDx.RData")
+load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vienna/G_Rstuff/data/mean_expression_K5086_MMDx.RData")
 
 
 # IQR FILTER THE DATA ####
@@ -422,7 +422,7 @@ res_art_flextable %>%
 
 
 # EXPORT THE DATA AS AN EXCEL SHEET ####
-savedir1 <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg CD38 Vienna/G_Rstuff/output/"
+savedir1 <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vienna/G_Rstuff/output/"
 
 names(res_art_table$data) <- res_art_table$direction
 openxlsx::write.xlsx(res_art_table$data,

@@ -14,7 +14,7 @@ library(flextable) # install.packages("flextable") #for table outputs
 library(officer) # install.packages("officer")
 library(emmeans) # install.packages("emmeans") #for post-hoc testing and CLD
 library(multcomp) # install.packages("multcomp") #for for CLD
-library(ARTool) # install.packages("ARTool") #for non-parametric anova (aligned-rank test) and post-hoc
+library(ARTool) # install.packages("ARTool") pak::pak("mjskay/ARTool")#for non-parametric anova (aligned-rank test) and post-hoc
 library(rcompanion) # install.packages("rcompanion") #for non-parametric anova (aligned-rank test) and post-hoc
 # Bioconductor libraries
 library(Biobase) # BiocManager::install("Biobase")
@@ -29,7 +29,7 @@ log10zero <- scales::trans_new(
 # Suppress pesky dplyr reframe info
 options(dplyr.reframe.inform = FALSE)
 # laod reference set
-load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg CD38 Vienna/G_Rstuff/data/Vienna44_18Oct23.RData")
+load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vienna/G_Rstuff/data/vienna_1208_16Feb24.RData")
 
 
 # DEFINE SEED ####
@@ -52,7 +52,7 @@ features <- c(Rejectionrelated, ABMRrelated)
 
 
 # DEFINE THE SET ####
-set <- Vienna44
+set <- vienna_1208
 
 
 # WRANGLE THE PHENOTYPE DATA ####
@@ -70,17 +70,16 @@ df00 <- set %>%
         Group_Felz = paste(Group, Felz, sep = ":") %>%
             factor(levels = c("Index:NoFelz", "FU1:NoFelz", "Index:Felz", "FU1:Felz"))
     ) %>%
-                        dplyr::select(
-                        CEL, Patient, Center, Group, Felz, Group_Felz, TxBx,
-                        all_of(features)
-                    ) %>%
+    dplyr::select(
+        CEL, Patient, Center, Group, Felz, Group_Felz, TxBx,
+        all_of(features)
+    ) %>%
     tibble()
 
 
 # COMPARE THE MEAN variable SCORES ####
 df00 %>%
-    group_by(Group_Felz) %>%
-    reframe_at(vars(all_of(features)), mean) %>%
+    reframe(across(all_of(features), mean), .by = Group_Felz) %>%
     column_to_rownames("Group_Felz") %>%
     t() %>%
     round(3)
@@ -104,15 +103,15 @@ Group_Felz <- df00$Group_Felz
 # looks like there are some outliers
 
 # adonis
-                set.seed(seed)
-                res_adonis_interaction <- adonis2(
-                    df_features ~ Group * Felz,
-                    data = df00,
-                    method = "euclidean",
-                    # by = "margin", only specific margin if the sample sizes are unequal
-                    permutations = 100000
-                )
-            
+set.seed(seed)
+res_adonis_interaction <- adonis2(
+    df_features ~ Group * Felz,
+    data = df00,
+    method = "euclidean",
+    # by = "margin", only specific margin if the sample sizes are unequal
+    permutations = 100000
+)
+
 # set.seed(seed)
 # res_adonis <- adonis2(
 #     df_features ~ Group + Felz,
@@ -123,20 +122,20 @@ Group_Felz <- df00$Group_Felz
 # )
 
 # pairwise adonis
-                set.seed(seed)
-                res_pairwise_adonis <- pairwise.adonis(
-                    df_features,
-                    Group_Felz,
-                    reduce = "Group|Felz",
-                    sim.method = "euclidean",
-                    p.adjust.m = "fdr",
-                    perm = 10000
-                )
-            
+set.seed(seed)
+res_pairwise_adonis <- pairwise.adonis(
+    df_features,
+    Group_Felz,
+    reduce = "Group|Felz",
+    sim.method = "euclidean",
+    p.adjust.m = "fdr",
+    perm = 10000
+)
+
 
 # PRODUCE TABLE OF ADONIS RESULTS ####
 title_adonis <- paste("Table i. PERMANOVA of molecular scores in biopsies from treated vs untreated patients")
-                
+
 # res_adonis_flextable <- bind_rows(
 #     res_adonis %>%
 #         tidy() %>%
@@ -146,144 +145,144 @@ title_adonis <- paste("Table i. PERMANOVA of molecular scores in biopsies from t
 #         suppressWarnings()
 # ) %>%
 res_adonis_flextable <- res_adonis_interaction %>%
-                    tidy() %>%
-                    suppressWarnings() %>%
-                    dplyr::filter(term %nin% c("Residual", "Total")) %>%
-                    dplyr::select(-df, -SumOfSqs) %>%
-                    mutate(p.value = p.value %>% formatC(digits = 3, format = "fg")) %>%
-                    flextable::flextable() %>%
-                    flextable::add_header_row(values = rep(title_adonis, ncol_keys(.))) %>%
-                    flextable::merge_h(part = "header") %>%
-                    flextable::fontsize(size = 8, part = "all") %>%
-                    flextable::align(align = "center", part = "all") %>%
-                    flextable::bg(bg = "white", part = "all") %>%
-                    flextable::colformat_double(j = 2:3, digits = 2) %>%
-                    flextable::bg(i = ~ p.value %>% as.numeric() < 0.05, bg = "#fbff00", part = "body") %>%
-                    flextable::border_remove() %>%
-                    flextable::bold(part = "header") %>%
-                    flextable::padding(padding = 0, part = "all") %>%
-                    flextable::border(border = fp_border(), part = "all") %>%
-                    flextable::autofit()
-            
+    tidy() %>%
+    suppressWarnings() %>%
+    dplyr::filter(term %nin% c("Residual", "Total")) %>%
+    dplyr::select(-df, -SumOfSqs) %>%
+    mutate(p.value = p.value %>% formatC(digits = 3, format = "fg")) %>%
+    flextable::flextable() %>%
+    flextable::add_header_row(values = rep(title_adonis, ncol_keys(.))) %>%
+    flextable::merge_h(part = "header") %>%
+    flextable::fontsize(size = 8, part = "all") %>%
+    flextable::align(align = "center", part = "all") %>%
+    flextable::bg(bg = "white", part = "all") %>%
+    flextable::colformat_double(j = 2:3, digits = 2) %>%
+    flextable::bg(i = ~ p.value %>% as.numeric() < 0.05, bg = "#fbff00", part = "body") %>%
+    flextable::border_remove() %>%
+    flextable::bold(part = "header") %>%
+    flextable::padding(padding = 0, part = "all") %>%
+    flextable::border(border = fp_border(), part = "all") %>%
+    flextable::autofit()
+
 # res_adonis_flextable %>% print(preview = "docx")
 
 
 # PRODUCE TABLE OF PAIRWISE ADONIS RESULTS ####
 title_adonis_pairwise <- paste("Table i. Pairwise PERMANOVA of molecular scores in biopsies from treated vs untreated patients")
-                
+
 res_pairwise_adonis_flextable <- res_pairwise_adonis %>%
-                    dplyr::select(-Df, -sig, -SumsOfSqs) %>%
-                    dplyr::rename("F-value" = F.Model, FDR = p.adjusted) %>%
-                    mutate(
-                        p.value = p.value %>% formatC(digits = 0, format = "e"),
-                        FDR = FDR %>% formatC(digits = 0, format = "e"),
-                    ) %>%
-                    arrange(p.value) %>%
-                    flextable::flextable() %>%
-                    flextable::add_header_row(values = rep(title_adonis_pairwise, ncol_keys(.))) %>%
-                    flextable::merge_h(part = "header") %>%
-                    flextable::fontsize(size = 8, part = "all") %>%
-                    flextable::align(align = "center", part = "all") %>%
-                    flextable::bg(bg = "white", part = "all") %>%
-                    flextable::bg(i = ~ FDR %>% as.numeric() < 0.05, bg = "#fbff00") %>%
-                    flextable::colformat_double(j = 2:3, digits = 2) %>%
-                    flextable::border_remove() %>%
-                    flextable::bold(part = "header") %>%
-                    flextable::padding(padding = 0, part = "all") %>%
-                    flextable::border(border = fp_border(), part = "all") %>%
-                    flextable::autofit()
-            
+    dplyr::select(-Df, -sig, -SumsOfSqs) %>%
+    dplyr::rename("F-value" = F.Model, FDR = p.adjusted) %>%
+    mutate(
+        p.value = p.value %>% formatC(digits = 0, format = "e"),
+        FDR = FDR %>% formatC(digits = 0, format = "e"),
+    ) %>%
+    arrange(p.value) %>%
+    flextable::flextable() %>%
+    flextable::add_header_row(values = rep(title_adonis_pairwise, ncol_keys(.))) %>%
+    flextable::merge_h(part = "header") %>%
+    flextable::fontsize(size = 8, part = "all") %>%
+    flextable::align(align = "center", part = "all") %>%
+    flextable::bg(bg = "white", part = "all") %>%
+    flextable::bg(i = ~ FDR %>% as.numeric() < 0.05, bg = "#fbff00") %>%
+    flextable::colformat_double(j = 2:3, digits = 2) %>%
+    flextable::border_remove() %>%
+    flextable::bold(part = "header") %>%
+    flextable::padding(padding = 0, part = "all") %>%
+    flextable::border(border = fp_border(), part = "all") %>%
+    flextable::autofit()
+
 # res_pairwise_adonis_flextable %>% print(preview = "docx")
 
 
 # WRANGLE THE DATA FOR UNIVARIATE TESTS ####
 df01 <- df00 %>%
-                    pivot_longer(
-                        cols = c(
+    pivot_longer(
+        cols = c(
             all_of(features)
         ),
-                        names_to = "variable",
-                        values_to = "value"
-                    ) %>%
-                    group_by(variable) %>%
-                    nest() %>%
-                    tibble() %>%
-                    mutate(
-                        variable = variable %>%
-                            factor(
-                                levels = c(
-                                    "Rej-RAT", "GRIT3", "RejAA_NR",
-                                    "ABMRpm", "ggt0", "cggt0", "ptcgt0", "NKB", "DSAST",
-                                    "RejAA_EABMR", "RejAA_FABMR", "RejAA_LABMR",
-                                    "TCMRt", "tgt1", "igt1", "TCB", "TCMR-RAT", "QCAT",
-                                    "AMAT1", "QCMAT", "BAT",
-                                    "FICOL", "IRRAT30", "IRITD3", "IRITD5",
-                                    "cigt1", "ctgt1", "IGT", "MCAT",
-                                    "KT1", "KT2"
-                                )
-                            ),
-                        annotation = case_when(
-                            variable %in% Rejectionrelated ~ "Rejection-related",
-                            variable %in% TCMRrelated ~ "TCMR-related",
-                            variable %in% ABMRrelated ~ "ABMR-related",
-                            variable %in% Endothelium ~ "Endothelium-related",
-                            variable %in% Parenchyma ~ "Parenchyma-related",
-                            variable %in% Macrophage ~ "Macrophage-related",
-                            variable %in% Injurylate ~ "Atrophy-fibrosis-related",
-                            variable %in% Injuryrecent ~ "Recent injury-related",
-                            TRUE ~ " "
-                        ) %>%
-                            factor(
-                                levels = c(
-                                    "Rejection-related", "ABMR-related", "TCMR-related",
-                                    "Macrophage-related", "Recent injury-related", "Atrophy-fibrosis-related",
-                                    "Parenchyma-related"
-                                )
-                            ),
-                        score = case_when(
-                            variable == "TCMRt" ~ "TCMR classifier (TCMRProb)",
-                            variable == "TCB" ~ "T-cell burden (TCB)",
-                            variable == "TCMR-RAT" ~ "TCMR-associated RATs (TCMR-RAT)",
-                            variable == "tgt1" ~ "Tubulitis classifier (t>1Prob)",
-                            variable == "igt1" ~ "Interstitial infiltrate classifier (i>1Prob)",
-                            variable == "QCAT" ~ "Cytotoxic T cell-associated transcripts (QCAT)",
-                            variable == "Rej-RAT" ~ "Rejection-associated transcripts (Rej-RAT)",
-                            variable == "GRIT3" ~ "Interferon gamma-inducible transcripts (GRIT3)",
-                            variable == "ABMR-RAT" ~ "ABMR-associated RATs (ABMR-RAT)",
-                            variable == "ABMRpm" ~ "ABMR classifier (ABMRProb)",
-                            variable == "DSAST" ~ "DSA-selective transcripts (DSAST)",
-                            variable == "NKB" ~ "NK cell burden (NKB)",
-                            variable == "ggt0" ~ "Glomerulitis classifier (g>0Prob)",
-                            variable == "cggt0" ~ "Glomerular double contours classifier (cg>0Prob)",
-                            variable == "ptcgt0" ~ "Peritubular capillaritis classifier (ptc>0Prob)",
-                            variable == "AMAT1" ~ "Alternatively activated macrophage (AMAT1)",
-                            variable == "QCMAT" ~ "Constitutive macrophage (QCMAT)",
-                            variable == "FICOL" ~ "Fibrillar collagen (FICOL)",
-                            variable == "DAMP" ~ "Damage-associated molecular pattern transcripts (DAMP)",
-                            variable == "cIRIT" ~ "Cardiac injury and repair–induced transcripts (cIRIT)",
-                            variable == "IRITD3" ~ "Injury-repair induced, day 3 (IRITD3)",
-                            variable == "IRITD5" ~ "Injury-repair induced, day 5 (IRITD5)",
-                            variable == "IRRAT30" ~ "Injury-repair associated (IRRAT30)",
-                            variable == "cigt1" ~ "Fibrosis classifier (ci>1Prob)",
-                            variable == "ctgt1" ~ "Atrophy classifier (ct>1Prob)",
-                            variable == "txbxCorrCLAGdn_tbb" ~ "Transcripts downregulated in CLAD",
-                            variable == "txbxCorrCLAGup_tbb" ~ "Transcripts upregulated in CLAD",
-                            variable == "SFT" ~ "Surfactant-associated transcripts (SFT)",
-                            variable == "ENDAT" ~ "Endothelial cell-associated transcripts (ENDAT)",
-                            variable == "eDSAST" ~ "Endothelium-expressed DSA-selective transcripts (eDSAST)",
-                            variable == "IGT" ~ "Immunoglobulin transcripts (IGT)",
-                            variable == "BAT" ~ "B cell–associated transcripts (BAT)",
-                            variable == "MCAT" ~ "Mast cell-associated transcripts (MCAT)",
-                            variable == "KT1" ~ "Kidney parenchymal transcripts (KT1)",
-                            variable == "KT2" ~ "Kindey parenchymal transcripts - no solute carriers (KT2)",
-                            variable == "RejAA_NR" ~ "Archetypal No Rejection score (NR)",
-                            variable == "RejAA_EABMR" ~ "Archetypal Early ABMR score (EABMR)",
-                            variable == "RejAA_FABMR" ~ "Archetypal Full ABMR score (FABMR)",
-                            variable == "RejAA_LABMR" ~ "Archetypal Late ABMR score (LABMR)",
-                        ), .before = 1
-                    ) %>%
-                    arrange(annotation, variable)
-            df01 %>% print(n = "all")
+        names_to = "variable",
+        values_to = "value"
+    ) %>%
+    group_by(variable) %>%
+    nest() %>%
+    tibble() %>%
+    mutate(
+        variable = variable %>%
+            factor(
+                levels = c(
+                    "Rej-RAT", "GRIT3", "RejAA_NR",
+                    "ABMRpm", "ggt0", "cggt0", "ptcgt0", "NKB", "DSAST",
+                    "RejAA_EABMR", "RejAA_FABMR", "RejAA_LABMR",
+                    "TCMRt", "tgt1", "igt1", "TCB", "TCMR-RAT", "QCAT",
+                    "AMAT1", "QCMAT", "BAT",
+                    "FICOL", "IRRAT30", "IRITD3", "IRITD5",
+                    "cigt1", "ctgt1", "IGT", "MCAT",
+                    "KT1", "KT2"
+                )
+            ),
+        annotation = case_when(
+            variable %in% Rejectionrelated ~ "Rejection-related",
+            variable %in% TCMRrelated ~ "TCMR-related",
+            variable %in% ABMRrelated ~ "ABMR-related",
+            variable %in% Endothelium ~ "Endothelium-related",
+            variable %in% Parenchyma ~ "Parenchyma-related",
+            variable %in% Macrophage ~ "Macrophage-related",
+            variable %in% Injurylate ~ "Atrophy-fibrosis-related",
+            variable %in% Injuryrecent ~ "Recent injury-related",
+            TRUE ~ " "
+        ) %>%
+            factor(
+                levels = c(
+                    "Rejection-related", "ABMR-related", "TCMR-related",
+                    "Macrophage-related", "Recent injury-related", "Atrophy-fibrosis-related",
+                    "Parenchyma-related"
+                )
+            ),
+        score = case_when(
+            variable == "TCMRt" ~ "TCMR classifier (TCMRProb)",
+            variable == "TCB" ~ "T-cell burden (TCB)",
+            variable == "TCMR-RAT" ~ "TCMR-associated RATs (TCMR-RAT)",
+            variable == "tgt1" ~ "Tubulitis classifier (t>1Prob)",
+            variable == "igt1" ~ "Interstitial infiltrate classifier (i>1Prob)",
+            variable == "QCAT" ~ "Cytotoxic T cell-associated transcripts (QCAT)",
+            variable == "Rej-RAT" ~ "Rejection-associated transcripts (Rej-RAT)",
+            variable == "GRIT3" ~ "Interferon gamma-inducible transcripts (GRIT3)",
+            variable == "ABMR-RAT" ~ "ABMR-associated RATs (ABMR-RAT)",
+            variable == "ABMRpm" ~ "ABMR classifier (ABMRProb)",
+            variable == "DSAST" ~ "DSA-selective transcripts (DSAST)",
+            variable == "NKB" ~ "NK cell burden (NKB)",
+            variable == "ggt0" ~ "Glomerulitis classifier (g>0Prob)",
+            variable == "cggt0" ~ "Glomerular double contours classifier (cg>0Prob)",
+            variable == "ptcgt0" ~ "Peritubular capillaritis classifier (ptc>0Prob)",
+            variable == "AMAT1" ~ "Alternatively activated macrophage (AMAT1)",
+            variable == "QCMAT" ~ "Constitutive macrophage (QCMAT)",
+            variable == "FICOL" ~ "Fibrillar collagen (FICOL)",
+            variable == "DAMP" ~ "Damage-associated molecular pattern transcripts (DAMP)",
+            variable == "cIRIT" ~ "Cardiac injury and repair–induced transcripts (cIRIT)",
+            variable == "IRITD3" ~ "Injury-repair induced, day 3 (IRITD3)",
+            variable == "IRITD5" ~ "Injury-repair induced, day 5 (IRITD5)",
+            variable == "IRRAT30" ~ "Injury-repair associated (IRRAT30)",
+            variable == "cigt1" ~ "Fibrosis classifier (ci>1Prob)",
+            variable == "ctgt1" ~ "Atrophy classifier (ct>1Prob)",
+            variable == "txbxCorrCLAGdn_tbb" ~ "Transcripts downregulated in CLAD",
+            variable == "txbxCorrCLAGup_tbb" ~ "Transcripts upregulated in CLAD",
+            variable == "SFT" ~ "Surfactant-associated transcripts (SFT)",
+            variable == "ENDAT" ~ "Endothelial cell-associated transcripts (ENDAT)",
+            variable == "eDSAST" ~ "Endothelium-expressed DSA-selective transcripts (eDSAST)",
+            variable == "IGT" ~ "Immunoglobulin transcripts (IGT)",
+            variable == "BAT" ~ "B cell–associated transcripts (BAT)",
+            variable == "MCAT" ~ "Mast cell-associated transcripts (MCAT)",
+            variable == "KT1" ~ "Kidney parenchymal transcripts (KT1)",
+            variable == "KT2" ~ "Kindey parenchymal transcripts - no solute carriers (KT2)",
+            variable == "RejAA_NR" ~ "Archetypal No Rejection score (NR)",
+            variable == "RejAA_EABMR" ~ "Archetypal Early ABMR score (EABMR)",
+            variable == "RejAA_FABMR" ~ "Archetypal Full ABMR score (FABMR)",
+            variable == "RejAA_LABMR" ~ "Archetypal Late ABMR score (LABMR)",
+        ), .before = 1
+    ) %>%
+    arrange(annotation, variable)
+df01 %>% print(n = "all")
 
 
 # UNIVARIATE NONPARAMETRIC TESTS ####
@@ -321,18 +320,18 @@ df02 <- df01 %>%
             }
         ),
         art = map(data, ~ art(value ~ Group * Felz + (1 | Patient), data = .)),
-        art_aov = map(art, ~ anova(., type = "II")),
+        art_aov = map(art, anova, type = "II"),
         art_aov_tidy = map(art_aov, . %>% tidy()) %>% suppressWarnings(),
         art_con = map(art, ~ art.con(.x, "Group:Felz", adjust = "none")),
         art_con_tidy = map(art_con, tidy),
         art_con_cld = map(art_con, . %>% as.data.frame() %>%
-        cldList(p.value ~ contrast, data = .) %>%
-        arrange(Group %>%
-        factor(
-        levels = c(
-        "Index,NoFelz", "FU1,NoFelz",
-        "Index,Felz", "FU1,Felz"
-        )
+            cldList(p.value ~ contrast, data = .) %>%
+            arrange(Group %>%
+                factor(
+                    levels = c(
+                        "Index,NoFelz", "FU1,NoFelz",
+                        "Index,Felz", "FU1,Felz"
+                    )
                 )))
     )
 names(df02$art_aov_tidy) <- df02$variable %>% as.character()
@@ -447,7 +446,7 @@ res_art_pairwise_flextable <- res_art_pairwise_formatted %>%
     flextable::bold(part = "header") %>%
     flextable::bold(j = 1, part = "body") %>%
     flextable::bg(bg = "white", part = "all") %>%
-    flextable::bg(i = ~ score %>% str_detect("NKB|DSAST|Glomerulitis classifier"), j = 2:6, bg = "yellow", part = "body") %>%
+    flextable::bg(i = ~ score %>% str_detect("ABMR classifier|NKB|DSAST|Glomerulitis classifier|FABMR"), j = 2:6, bg = "yellow", part = "body") %>%
     # flextable::bg(i = ~ score %>% str_detect(""), j = 2:6, bg = "yellow", part = "body") %>%
     flextable::padding(padding = 0, part = "all") %>%
     flextable::width(width = cellWidths, unit = "cm") %>%
@@ -532,14 +531,14 @@ plot_panel <- df_plot %>%
     ggarrange(plotlist = ., common.legend = TRUE, ncol = 4, nrow = 3)
 
 
-# SAVE THE PLOTS ####
-saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg CD38 Vienna/G_Rstuff/output/"
-ggsave(
-    filename = paste(saveDir, "Felzartamab effect of treatemnt patient data.png"),
-    plot = plot_panel,
-    dpi = 300,
-    width = 50,
-    height = 25,
-    units = "cm",
-    bg = "white"
-)
+# # SAVE THE PLOTS ####
+# saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vienna/G_Rstuff/output/"
+# ggsave(
+#     filename = paste(saveDir, "Felzartamab effect of treatemnt patient data.png"),
+#     plot = plot_panel,
+#     dpi = 300,
+#     width = 50,
+#     height = 25,
+#     units = "cm",
+#     bg = "white"
+# )
