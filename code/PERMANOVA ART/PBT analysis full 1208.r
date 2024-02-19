@@ -4,6 +4,7 @@ library(tidyverse) # install.packages("tidyverse")
 library(ggbeeswarm) # install.packages("ggbeeswarm")
 library(ggpubr) # install.packages("ggpubr")
 library(ggrepel) # install.packages("ggrepel")
+library(gghalves) # pak::pak("erocoar/gghalves")
 library(ggh4x) # install.packages("ggh4x")
 library(broom) # install.packages("broom") #for tabular model object transformations
 library(car) # install.packages("car") #for type-II manovas
@@ -454,6 +455,7 @@ df_univariate_02$art_con_interaction_default_tidy[[1]]
 df_univariate_02$art_con_groupwise_tidy[[1]]
 df_univariate_02$art_con_interaction[[1]]@misc
 
+
 # CREATE FLEXTABLE OF ART MODELS ####
 title_art <- paste("Table i. Non-parametric ANOVA (ART) of molecular scores in biopsies from treated vs untreated patients")
 title_art_pairwise <- paste("Table i. Pairwise Non-parametric ANOVA (ART) of molecular scores in biopsies from treated vs untreated patients")
@@ -666,65 +668,200 @@ dodge <- 0.3
 
 
 
+df_univariate_02$art_aov_tidy[[1]]
+
+df_univariate_02$data[[1]] %>%
+    left_join(
+        df_univariate_02$data[[1]] %>%
+            reframe(median = median(value), .by = c(Group, Felz, Patient)) %>%
+            spread(Group, median) %>%
+            mutate(delta = FU1 - Index) %>%
+            pivot_longer(cols = c(Index, FU1), names_to = "Group", values_to = "value") %>%
+            # mutate(delta = ifelse(delta < 0, "improved", "worsened")) %>%
+            dplyr::select(Felz, Patient, Group, delta),
+        by = c("Felz", "Patient", "Group")
+    ) %>%
+    left_join(df_univariate_02$medians[[1]] %>% dplyr::select(Group, Felz, median_delta_delta), by = c("Felz", "Group")) %>%
+    mutate(
+        Group = Group %>% factor(levels = c("Index", "FU1")),
+        delta = delta %>% scale() %>% as.vector()
+    )
+
+
+
+
+
+
 # MAKE BIOPSY PAIR PLOTS ####
-plot_pairs <- df_univariate_02 %>%
+plot_violin_pairs <- df_univariate_02 %>%
     mutate(
         gg_line = pmap(
-            list(data, variable, score),
-            function(data, variable, score) {
+            list(data, variable, score, medians, art_aov_tidy),
+            function(data, variable, score, medians, art_aov_tidy) {
+                delta_delta <- medians %>%
+                    mutate(
+                        Felz = Felz %>% factor(labels = c("No Felzartamab", "Felzartamab"))
+                    )
+                delta_delta_fdr <- art_aov_tidy %>%
+                    dplyr::filter(term == "Group:Felz") %>%
+                    mutate(FDR = p.value %>% p.adjust(method = "fdr")) %>%
+                    mutate_at(
+                        vars(contains("p_i"), contains("FDR")),
+                        ~ ifelse(
+                            . < 0.01,
+                            formatC(., digits = 0, format = "e"),
+                            formatC(., digits = 3, format = "f")
+                        )
+                    ) %>%
+                    pull(FDR)
                 data <- data %>%
                     mutate(
                         variable = variable,
                         Felz = Felz %>% factor(labels = c("No Felzartamab", "Felzartamab"))
+                    )
+                medians <- data %>%
+                    reframe(median = median(value), .by = c(Group, Felz)) %>%
+                    spread(Group, median) %>%
+                    mutate(delta = FU1 - Index)
+                means <- data %>%
+                    reframe(mean = median(value), .by = c(Group, Felz)) %>%
+                    spread(Group, mean) %>%
+                    mutate(delta = FU1 - Index)
+                data <- data %>%
+                    left_join(
+                        data %>%
+                            reframe(median = median(value), .by = c(Group, Felz, Patient)) %>%
+                            spread(Group, median) %>%
+                            mutate(delta = FU1 - Index) %>%
+                            pivot_longer(cols = c(Index, FU1), names_to = "Group", values_to = "value") %>%
+                            # mutate(delta = ifelse(delta < 0, "improved", "worsened")) %>%
+                            dplyr::select(Felz, Patient, Group, delta),
+                        by = c("Felz", "Patient", "Group")
+                    ) %>%
+                    left_join(delta_delta %>% dplyr::select(Group, Felz, median_delta_delta), by = c("Felz", "Group")) %>%
+                    mutate(
+                        Group = Group %>% factor(levels = c("Index", "FU1")),
+                        # delta = delta %>% scale() %>% as.vector()
                     )
                 data %>%
                     ggplot(
                         aes(
                             x = Group,
                             y = value,
-                            col = Patient,
-                            group = Patient,
-                            linetype = Felz
+                            # group = Patient,
+                            # linetype = Felz
                         )
                     ) +
-                    geom_point(size = 5, position = position_dodge(width = dodge)) +
+                    geom_half_violin(
+                        inherit.aes = FALSE,
+                        aes(
+                            x = Group,
+                            y = value
+                        ),
+                        # draw_quantiles = c(0.25, 0.75),
+                        side = c("l", "r"),
+                        fill = "grey95",
+                        trim = FALSE,
+                        scale = "width"
+                    ) +
+                    geom_point(
+                        aes(col = delta),
+                        position = position_nudge(x = ifelse(data$Group == "Index", 0.1, -0.1)),
+                        size = 2, alpha = 0.75
+                    ) +
                     geom_line(
-                        linewidth = 0.75,
-                        position = position_dodge(width = dodge),
+                        aes(
+                            # x = Group,
+                            col = delta,
+                            group = Patient
+                        ),
+                        position = position_nudge(x = ifelse(data$Group == "Index", 0.1, -0.1)),
+                        linewidth = 0.5, alpha = 0.25,
                         show.legend = FALSE
                     ) +
+                    # geom_text(
+                    #     aes(label = Patient),
+                    #     size = 4,
+                    #     col = "#00000076",
+                    #     show.legend = FALSE
+                    # ) +
+                    stat_summary(fun = median, geom = "point", size = 4) +
+                    stat_summary(
+                        aes(group = Felz),
+                        fun = median,
+                        geom = "line",
+                        linewidth = 1,
+                        linetype = "dashed"
+                    ) +
+                    geom_errorbar(
+                        aes(x = 2.55, ymin = Index, ymax = FU1, y = NULL),
+                        data = medians, width = 0.05, linewidth = 0.5, color = "black"
+                    ) +
                     geom_text(
-                        aes(label = Patient),
-                        size = 4,
-                        col = "black",
-                        show.legend = FALSE,
-                        position = position_dodge(width = dodge)
+                        aes(
+                            x = 2.7, y = (Index + FU1) / 2,
+                            label = paste("\u394 =", round(delta, 2))
+                        ),
+                        data = medians, hjust = 0.5, vjust = 1, size = 5, color = "black", angle = 90
                     ) +
                     labs(
-                        # title = annotation,
+                        title = paste(
+                            "\u394\u394 =",
+                            data$median_delta_delta %>% round(2),
+                            "| FDR =",
+                            delta_delta_fdr
+                        ),
                         x = NULL,
                         y = score %>% str_replace("\\(", "\n("),
+                        col = "Individual patient response     ",
                         parse = TRUE
                     ) +
-                    scale_x_discrete(labels = c("Index\n(N = 11)", "FU1\n(N = 11)")) +
-                    coord_cartesian(xlim = c(1.3, 1.7)) +
+                    scale_color_gradient2(
+                        low = "#00ff00bc",
+                        mid = "grey60",
+                        high = "red",
+                        midpoint = 0,
+                        breaks = c(min(data$delta), max(data$delta)),
+                        labels = c("improved", "worsened"),
+                        guide = guide_colorbar(
+                            title.position = "top",
+                            barwidth = 20,
+                            ticks = FALSE,
+                            label.hjust = c(1.1, -0.1),
+                            label.vjust = 8,
+                            reverse = TRUE
+                        ),
+                    ) +
+                    scale_x_discrete(labels = c("Index\n(n = 11)", "Follow-up\n(n = 11)")) +
+                    coord_cartesian(xlim = c(NA, 2.6)) +
                     theme_bw() +
                     theme(
                         axis.title = element_text(size = 15),
                         axis.text = element_text(size = 12, colour = "black"),
                         panel.grid = element_blank(),
+                        strip.text = element_text(size = 12, colour = "black"),
                         legend.position = "top",
-                        plot.title = element_text(colour = "red", size = 20, face = "bold")
+                        legend.title = element_text(size = 15, hjust = 0.5, vjust = 1, face = "bold"),
+                        legend.text = element_text(size = 15),
+                        plot.title = element_text(
+                            colour = "black",
+                            hjust = 0.5,
+                            size = 12,
+                            face = ifelse(delta_delta_fdr %>% as.numeric() < 0.05, "bold.italic", "italic")
+                        )
                     ) +
-                    facet_wrap(~Felz) +
-                    guides(col = guide_legend(nrow = 2))
+                    facet_wrap(~Felz)
+                # +
+                # guides(col = guide_legend(nrow = 1, override.aes = list(size = 6)))
             }
         )
     )
 
+# plot_violin_pairs$gg_line[[1]]
+
 
 # MAKE JOINT BIOPSY PAIR PLOTS ####
-panel_pairs <- plot_pairs %>%
+panel_pairs <- plot_violin_pairs %>%
     dplyr::filter(category %in% c("ABMR", "TCMR")) %>%
     pull(gg_line) %>%
     ggarrange(
@@ -840,20 +977,20 @@ ggsave(
     plot = panel_pairs,
     dpi = 300,
     width = 60,
-    height = 21,
+    height = 22,
     units = "cm",
     bg = "white"
 )
 
-ggsave(
-    filename = paste(saveDir, "Felzartamab effect of treatment molecular scores.png"),
-    plot = panel_violin,
-    dpi = 300,
-    width = 60,
-    height = 20,
-    units = "cm",
-    bg = "white"
-)
+# ggsave(
+#     filename = paste(saveDir, "Felzartamab effect of treatment molecular scores.png"),
+#     plot = panel_violin,
+#     dpi = 300,
+#     width = 60,
+#     height = 20,
+#     units = "cm",
+#     bg = "white"
+# )
 
 
 
