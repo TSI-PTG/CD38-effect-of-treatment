@@ -418,14 +418,14 @@ df_univariate_02 <- df_univariate_01 %>%
             art.con,
             formula = "Group:Felz", adjust = "fdr", method = list("interaction" = c(1, -1, -1, 1)), response = "aligned"
         ),
-        # art_con_groupwise = map(
-        #     art,
-        #     art.con,
-        #     formula = "Group:Felz", adjust = "fdr", method = list("abs" = c(3, -1, -1, -1)), response = "aligned"
-        # ),
+        art_con_groupwise = map(
+            art,
+            art.con,
+            formula = "Group:Felz", adjust = "fdr", method = list("abs" = c(3, -1, -1, -1)), response = "aligned"
+        ),
         art_con_interaction_default_tidy = map(art_con_interaction_default, tidy),
         art_con_interaction_tidy = map(art_con_interaction, tidy),
-        # art_con_groupwise_tidy = map(art_con_groupwise, tidy),
+        art_con_groupwise_tidy = map(art_con_groupwise, tidy),
         # art_con_cld = map(
         #     art_con,
         #     function(art_con) {
@@ -447,12 +447,12 @@ names(df_univariate_02$art_aov_tidy) <- df_univariate_02$variable %>% as.charact
 
 names(df_univariate_02$art_con_interaction_default_tidy) <- df_univariate_02$variable %>% as.character()
 names(df_univariate_02$art_con_interaction_tidy) <- df_univariate_02$variable %>% as.character()
-names(df_univariate_02$art_con_groupwise_tidy) <- df_univariate_02$variable %>% as.character()
+# names(df_univariate_02$art_con_groupwise_tidy) <- df_univariate_02$variable %>% as.character()
 # names(df_univariate_02$art_con_cld) <- df_univariate_02$variable %>% as.character()
 
 df_univariate_02$art_con_interaction_tidy[[1]]
 df_univariate_02$art_con_interaction_default_tidy[[1]]
-df_univariate_02$art_con_groupwise_tidy[[1]]
+# df_univariate_02$art_con_groupwise_tidy[[1]]
 df_univariate_02$art_con_interaction[[1]]@misc
 
 
