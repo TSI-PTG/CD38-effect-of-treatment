@@ -384,7 +384,7 @@ df_univariate_01 <- df_univariate_00 %>%
         )
     )
 
-df_univariate_01$medians[[17]]
+df_univariate_01$medians[[1]]
 df_univariate_01$medians_delta_inner[[17]]
 df_univariate_01$medians_delta_delta_inner[[17]]
 
@@ -453,7 +453,7 @@ names(df_univariate_02$art_con_interaction_tidy) <- df_univariate_02$variable %>
 df_univariate_02$art_con_interaction_tidy[[1]]
 df_univariate_02$art_con_interaction_default_tidy[[1]]
 # df_univariate_02$art_con_groupwise_tidy[[1]]
-df_univariate_02$art_con_interaction[[1]]@misc
+# df_univariate_02$art_con_interaction[[1]]@misc
 
 
 # CREATE FLEXTABLE OF ART MODELS ####
@@ -659,7 +659,7 @@ res_art_pairwise_flextable <- res_art_pairwise_formatted_delta %>%
 
 
 # PRINT THE FLEXTABLES ####
-res_art_pairwise_flextable %>% print(preview = "pptx")
+# res_art_pairwise_flextable %>% print(preview = "pptx")
 
 
 

@@ -70,6 +70,9 @@ dfB2 <- set %>%
     ) %>%
     distinct(Patient, .keep_all = TRUE) %>%
     mutate(
+        across(all_of(features), ~ . + rnorm(22)),
+    ) %>%
+    mutate(
         Group = "FU2",
         Group_Felz = paste(Group, Felz, sep = ":") %>%
             factor(levels = c("FU2:NoFelz", "FU2:Felz"))
@@ -126,7 +129,6 @@ df00 <- set %>%
 df00$data[[1]] %>% print(n = "all")
 
 
-
 # PERMANOVA ####
 df01 <- df00 %>%
     mutate(
@@ -171,9 +173,6 @@ df02 <- df01 %>%
         )
     )
 df02$permanova_pairwise
-
-
-
 
 
 # WRANGLE THE DATA FOR UNIVARIATE TESTS ####
@@ -309,13 +308,16 @@ df_univariate_01 <- df_univariate_00 %>%
         medians = map(
             data,
             function(data) {
-                data %>%
-                    reframe(median = median(value), IQR = IQR(value), .by = c(Group, Felz)) %>%
+                medians <- data %>%
+                    reframe(median = median(value), .by = c(Group, Felz))  %>% 
                     mutate(
-                        Group_Felz = paste(Group, Felz, sep = ":") %>%
+                        Group_Felz = paste(Felz, Group,  sep = ":") %>%
                             factor(levels = c(
-                                "Index:NoFelz", "FU1:NoFelz", "FU2:NoFelz",
-                                "Index:Felz", "FU1:Felz", "FU2:Felz"
+                                # "Index:NoFelz", "FU1:NoFelz", "FU2:NoFelz",
+                                # "Index:Felz", "FU1:Felz", "FU2:Felz"
+
+                             "NoFelz:Index", "NoFelz:FU1", "NoFelz:FU2",
+                                "Felz:Index", "Felz:FU1", "Felz:FU2"
                             ))
                     ) %>%
                     arrange(Group_Felz)
@@ -324,20 +326,35 @@ df_univariate_01 <- df_univariate_00 %>%
         medians_delta = map(
             medians,
             function(medians) {
-                medians %>%
-                    reframe(median_delta = diff(median), .by = Felz) %>%
-                    mutate(contrast = c("FU1-Index", "FU2-FU1", "FU1-Index", "FU2-FU1")  %>% factor, .after =1) %>%
-                    arrange(contrast) %>%
-                        mutate(median_delta_delta = diff(median_delta), .by = c(contrast))
-
+                median <- medians %>%
+                    reframe(median_delta = diff(median), .by = c(Felz))%>%
+                mutate(contrast = c("FU1-Index", "FU2-FU1", "FU1-Index", "FU2-FU1") %>% factor(), .after = 1)  %>%
+                mutate(median_delta_delta = diff(median_delta), .by = c(contrast))
+                #     IQR_delta <- medians %>%
+                #         mutate(IQR_delta = (IQR + lag(IQR)) / 2)
+                #     median %>%
+                #         mutate(
+                #             IQR_delta = IQR_delta %>% dplyr::slice(2, 3, 5, 6) %>% pull(IQR_delta),
+                #             .after = median_delta
+                #         ) %>%
+                #         mutate(IQR_delta_delta = IQR_delta %>% mean(), .by = contrast) %>%
+                #         arrange(contrast)
             }
         )
     )
 
 df_univariate_01$data[[1]]
-df_univariate_01$medians[[1]]
-df_univariate_01$medians_delta[[1]] 
+df_univariate_01$medians[[1]] %>%
+   emmeans::emmeans()
 
+
+df_univariate_01$medians[[1]] $median  %>% dist  %>% as.numeric
+as.numeric(dist(v)) 
+df_univariate_01$medians[[1]] %>%
+    pivot_longer(cols = c(Group, Felz)) %>%
+        summarise(Diff = combn(median, 2, diff), .by = c(Group))
+
+df_univariate_01$medians_delta[[1]]
 
 
 # UNIVARIATE NONPARAMETRIC TESTS ####
@@ -370,13 +387,13 @@ df_univariate_02 <- df_univariate_01 %>%
                 art_con_interaction_default_tidy %>%
                     as.data.frame() %>%
                     cldList(adj.p.value ~ Group_pairwise, data = .) # %>%
-            #         arrange(Group %>%
-            #             factor(
-            #                 levels = c(
-            #                     "Index,NoFelz", "FU1,NoFelz",
-            #                     "Index,Felz", "FU1,Felz"
-            #                 )
-            #             ))
+                #         arrange(Group %>%
+                #             factor(
+                #                 levels = c(
+                #                     "Index,NoFelz", "FU1,NoFelz",
+                #                     "Index,Felz", "FU1,Felz"
+                #                 )
+                #             ))
             }
         )
     )
@@ -385,15 +402,15 @@ names(df_univariate_02$art_aov_tidy) <- df_univariate_02$variable %>% as.charact
 names(df_univariate_02$art_con_interaction_default_tidy) <- df_univariate_02$variable %>% as.character()
 names(df_univariate_02$art_con_cld) <- df_univariate_02$variable %>% as.character()
 
+df_univariate_02$art_con_cld
 
 
-df_univariate_02$art_con_interaction_default_tidy[[1]] %>%
-    as.data.frame() %>%
-    cldList(adj.p.value ~ Group_pairwise, data = .)
+df_univariate_02$medians[[1]]
+df_univariate_02$medians_delta[[1]]
+df_univariate_02$art_con_interaction_default[[1]]
 
-
-
-df_univariate_02$art_con_cld[[1]]
+df_univariate_02$art_con_interaction_default_tidy[[1]]
+df_univariate_02$art_con_cld
 
 
 # CREATE FLEXTABLE OF ART MODELS ####
@@ -427,14 +444,10 @@ res_art_flextable <- df_univariate_02 %>%
 
 # FORMAT TABLES OF CONTRASTS ####
 res_art_pairwise_formatted_delta <- df_univariate_02 %>%
-    dplyr::select(annotation, score, art_aov_tidy, art_lm, medians) %>%
-    unnest(c(art_aov_tidy, art_lm), names_repair = tidyr_legacy) %>%
-    unnest(medians) %>%
-    dplyr::filter(
-        Term == "Group:Felz",
-        Term_lm == "Group1:Felz1"
-    ) %>%
-    dplyr::rename(p_interaction = p.value) %>%
+    dplyr::select(annotation, score, art_con_interaction_default_tidy, art_con_cld, medians_delta) %>%
+    unnest(c(art_con_interaction_default_tidy, art_con_cld), names_repair = tidyr_legacy) %>%
+    unnest(medians_delta, names_repair = tidyr_legacy) %>%
+    dplyr::rename(p_interaction = adj.p.value) %>%
     mutate(
         FDR_interaction = p_interaction %>% p.adjust(method = "fdr"), .by = annotation
     ) %>%
@@ -447,7 +460,6 @@ res_art_pairwise_formatted_delta <- df_univariate_02 %>%
         )
     ) %>%
     mutate(
-        Estimate = Estimate %>% round(3),
         delta = paste(
             format(round(median_delta, 2), nsmall = 1),
             "\u00B1",
@@ -459,15 +471,38 @@ res_art_pairwise_formatted_delta <- df_univariate_02 %>%
             format(round(median_delta_delta, 2), nsmall = 1),
             "\u00B1",
             round(IQR_delta_delta, 2),
-            # Letter,
+            Letter,
             sep = " "
         )
     ) %>%
-    distinct(Felz, .by = score, .keep_all = TRUE) %>%
-    dplyr::select(annotation, score, Estimate, FDR_interaction, Felz, delta, deltadelta) %>%
-    pivot_wider(names_from = c(Felz), values_from = c(delta)) %>%
-    as.data.frame() %>%
-    relocate(deltadelta, .after = last_col())
+    nest(.by = Group_pairwise)
+
+
+
+res_art_pairwise_formatted <- res_art_pairwise_formatted_delta %>%
+    mutate(
+        data = map(
+            data,
+            function(data) {
+                data %>%
+                    distinct(Felz, .by = score, .keep_all = TRUE) %>%
+                    dplyr::select(annotation, score, Felz, delta, deltadelta) %>%
+                    pivot_wider(names_from = c(Felz), values_from = c(delta)) %>%
+                    as.data.frame() %>%
+                    relocate(deltadelta, .after = last_col())
+            }
+        )
+    )
+
+
+res_art_pairwise_formatted$data[[3]]
+
+
+res_art_pairwise_formatted %>%
+    unnest(data) %>%
+    pivot_wider(names_from = c(Group_pairwise), values_from = c(Felz, NoFelz))
+
+
 
 res_art_pairwise_formatted_medians <- df_univariate_02 %>%
     dplyr::select(annotation, score, medians) %>%
