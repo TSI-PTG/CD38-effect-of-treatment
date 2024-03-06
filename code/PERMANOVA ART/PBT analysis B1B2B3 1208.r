@@ -31,9 +31,9 @@ log10zero <- scales::trans_new(
 # Suppress pesky dplyr reframe info
 options(dplyr.reframe.inform = FALSE)
 # source plot function
-
+source("C:/R/CD38-effect-of-treatment/code/PERMANOVA ART/plot.gg_violin_interaction.r")
 # laod reference set
-load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vienna/G_Rstuff/data/vienna_1208_16Feb24.RData")
+load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vienna/G_Rstuff/data/vienna_1208_6Mar24.RData")
 
 
 # DEFINE SEED ####
@@ -66,32 +66,32 @@ set %>%
     colnames()
 
 
-# RANDOMLY SIMULATE B2 ####
-dfB2 <- set %>%
-    pData() %>%
-    tibble() %>%
-    dplyr::rename(
-        Patient = STUDY_EVALUATION_ID,
-        Felz = Felzartamab_presumed
-    ) %>%
-    mutate(
-        across(all_of(features), ~ mean(.)),
-        .by = Patient
-    ) %>%
-    distinct(Patient, .keep_all = TRUE) %>%
-    mutate(
-        across(all_of(features), ~ . + rnorm(n = 22, sd = 0.1)),
-    ) %>%
-    mutate(
-        across(all_of(features), ~ ifelse(. < 0, 0, .)),
-    ) %>%
-    mutate(
-        Group = "FU2",
-        Group_Felz = paste(Group, Felz, sep = ":") %>%
-            factor(levels = c("FU2:NoFelz", "FU2:Felz"))
-    )
+# # RANDOMLY SIMULATE B2 ####
+# dfB2 <- set %>%
+#     pData() %>%
+#     tibble() %>%
+#     dplyr::rename(
+#         Patient = STUDY_EVALUATION_ID,
+#         Felz = Felzartamab_presumed
+#     ) %>%
+#     mutate(
+#         across(all_of(features), ~ mean(.)),
+#         .by = Patient
+#     ) %>%
+#     distinct(Patient, .keep_all = TRUE) %>%
+#     mutate(
+#         across(all_of(features), ~ . + rnorm(n = 22, sd = 0.1)),
+#     ) %>%
+#     mutate(
+#         across(all_of(features), ~ ifelse(. < 0, 0, .)),
+#     ) %>%
+#     mutate(
+#         Group = "FU2",
+#         Group_Felz = paste(Group, Felz, sep = ":") %>%
+#             factor(levels = c("FU2:NoFelz", "FU2:Felz"))
+#     )
 
-# dfB2$TCMRt
+# # dfB2$TCMRt
 
 
 
@@ -103,7 +103,7 @@ df00 <- set %>%
         Patient = STUDY_EVALUATION_ID,
         Felz = Felzartamab_presumed
     ) %>%
-    bind_rows(dfB2) %>%
+    # bind_rows(dfB2) %>%
     mutate(
         Patient = Patient %>% factor(),
         Group = Group %>% factor(levels = c("Index", "FU1", "FU2")),
@@ -517,10 +517,13 @@ data_delta_formatted <- df_univariate_02 %>%
         )
     )
 
+
 data_res_art_formatted <- df_univariate_02 %>%
     dplyr::select(annotation, score, art_con_interaction_default_tidy, art_con_cld, medians_delta) %>%
     unnest(c(art_con_interaction_default_tidy, art_con_cld), names_repair = tidyr_legacy) %>%
-    mutate(FDR_interaction = adj.p.value %>% p.adjust(method = "fdr"), .by = annotation) %>%
+    # mutate(FDR_interaction = adj.p.value %>% p.adjust(method = "fdr"), .by = annotation) %>%
+        mutate(FDR_interaction = adj.p.value) %>%
+
     mutate_at(
         vars(contains("p_i"), contains("FDR")),
         ~ ifelse(
@@ -549,16 +552,16 @@ data_pairwise_formatted <- data_delta_formatted %>%
         )
     ) %>%
     dplyr::select(-medians, -contrasts) %>%
-    pivot_wider(names_from = Group_pairwise, values_from = data)
+        pivot_wider(names_from = Group_pairwise, values_from = data) %>%
+        relocate(`FU1 - FU2`, .before = `Index - FU2`)
 
 data_pairwise_formatted %>%
     dplyr::slice(1) %>%
-    pull(3)
+    pull(4)
 
 data_pairwise_formatted %>%
     dplyr::slice(1) %>%
     unnest(everything(), names_repair = tidyr_legacy)
-
 
 
 # FORMAT FLEXTABLE ####
@@ -589,7 +592,8 @@ header1 <- c(
 
 header2 <- c(
     "Annotation", "Score",
-    rep(c("\u394 NoFelz\n(N=22)", "\u394 Felz\n(N=22)", "\u394\u394", "\u394\u394 FDR"), 3)
+    rep(c("\u394 NoFelz\n(N=11)", "\u394 Felz\n(N=11)", "\u394\u394", "\u394\u394 FDR"), 1),
+    rep(c("\u394 NoFelz\n(N=10)", "\u394 Felz\n(N=10)", "\u394\u394", "\u394\u394 FDR"), 2)
 )
 
 cellWidths <- c(4, 11, rep(c(3, 3, 3, 2), 3))
@@ -641,10 +645,8 @@ flextable_pairwise <- data_pairwise_formatted %>%
 flextable_pairwise %>% print(preview = "pptx")
 
 
-
 # PLOTTING GLOBALS ####
 df_univariate_02$art_con_interaction_default_tidy[[1]]
-
 
 
 # MAKE BIOPSY PAIR PLOTS ####
@@ -656,8 +658,8 @@ plot_violin_pairs <- df_univariate_02 %>%
         )
     )
 
-
-# plot_violin_pairs$gg_line[[1]]
+df_univariate_02$art_con_interaction_default_tidy[[1]]
+plot_violin_pairs$gg_line[[2]]
 
 
 # MAKE JOINT BIOPSY PAIR PLOTS ####
@@ -666,11 +668,11 @@ panel_pairs <- plot_violin_pairs %>%
     pull(gg_line) %>%
     ggarrange(
         plotlist = .,
-        common.legend = TRUE, 
+        common.legend = TRUE,
         ncol = 5,
          nrow = 2,
          align = "hv",
-        labels = c("A", "", "", "", "", "B"), 
+        labels = c("A", "B", "C", "D", "E", "F", "G", "H", "I","J"), 
         font.label = list(size = 20, color = "black", face = "bold")
     )
 
@@ -689,5 +691,4 @@ ggsave(
 
 
 
-# # # END ####
-
+# END ####

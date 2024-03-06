@@ -1,11 +1,17 @@
 gg_violin_interaction <- function(data, variable, score, medians, medians_delta, art_con_interaction_default_tidy) {
+    delta <- medians_delta %>%
+        mutate(
+            Felz = Felz %>% factor(labels = c("No Felzartamab", "Felzartamab"))
+        )
+
+    # delta %>% print()
     delta_delta <- medians_delta %>%
-        dplyr::filter(Group_pairwise != "Index - FU2") %>%
+        # dplyr::filter(Group_pairwise != "Index - FU2") %>%
         distinct(Group_pairwise, .keep_all = TRUE) %>%
-        mutate(Group_pairwise = c("FU1 - Index", "FU2 - FU1"))
+        mutate(Group_pairwise = c("FU1 - Index", "FU2 - Index", "FU2 - FU1"))
 
     delta_delta_p <- art_con_interaction_default_tidy %>%
-        dplyr::filter(Group_pairwise != "Index - FU2") %>%
+        # dplyr::filter(Group_pairwise != "Index - FU2") %>%
         dplyr::select(Group_pairwise, adj.p.value) %>%
         mutate(FDR = ifelse(
             adj.p.value < 0.01,
@@ -13,13 +19,13 @@ gg_violin_interaction <- function(data, variable, score, medians, medians_delta,
             formatC(adj.p.value, digits = 3, format = "f")
         ))
 
-
     data <- data %>%
         mutate(
             variable = variable,
             Felz = Felz %>% factor(labels = c("No Felzartamab", "Felzartamab"))
         )
 
+    ymax <- data$value %>% max()
     # medians <- data %>%
     #     reframe(median = median(value), .by = c(Group, Felz)) %>%
     #     spread(Group, median) %>%
@@ -48,6 +54,7 @@ gg_violin_interaction <- function(data, variable, score, medians, medians_delta,
             Group = Group %>% factor(levels = c("Index", "FU1", "FU2")),
             # delta = delta %>% scale() %>% as.vector()
         )
+    # plot_proto <- 
     data %>%
         ggplot(aes(x = Group, y = value)) +
         geom_half_violin(
@@ -160,17 +167,6 @@ gg_violin_interaction <- function(data, variable, score, medians, medians_delta,
             linewidth = 1,
             linetype = "dashed"
         ) +
-        # geom_errorbar(
-        #     aes(x = 2.55, ymin = Index, ymax = FU1, y = NULL),
-        #     data = medians, width = 0.05, linewidth = 0.5, color = "black"
-        # ) +
-        # geom_text(
-        #     aes(
-        #         x = 2.7, y = (Index + FU1) / 2,
-        #         label = paste("\u394 =", round(delta, 2))
-        #     ),
-        #     data = medians, hjust = 0.5, vjust = 1, size = 5, color = "black", angle = 90
-        # ) +
         labs(
             title = paste(
                 paste(
@@ -178,6 +174,12 @@ gg_violin_interaction <- function(data, variable, score, medians, medians_delta,
                     delta_delta$median_delta_delta[[1]] %>% round(2),
                     "| FDR =",
                     delta_delta_p$FDR[[1]]
+                ),
+                paste(
+                    "\u394\u394", delta_delta$Group_pairwise[[3]], "=",
+                    delta_delta$median_delta_delta[[3]] %>% round(2),
+                    "| FDR =",
+                    delta_delta_p$FDR[[3]]
                 ),
                 paste(
                     "\u394\u394", delta_delta$Group_pairwise[[2]], "=",
@@ -203,7 +205,7 @@ gg_violin_interaction <- function(data, variable, score, medians, medians_delta,
                 title.position = "top",
                 barwidth = 20,
                 ticks = FALSE,
-                label.hjust = c(1.1, -0.1),
+                label.hjust = c(2, -0.1),
                 label.vjust = 8,
                 reverse = TRUE
             ),
@@ -214,7 +216,7 @@ gg_violin_interaction <- function(data, variable, score, medians, medians_delta,
         coord_cartesian(
             xlim = c(NA, NA),
             ylim = c(
-                ifelse(data$variable[[1]] == "ABMRpm", 0, 0),
+                ifelse(data$variable[[1]] == "ABMRpm", NA, NA),
                 ifelse(data$variable[[1]] == "ABMRpm", NA, NA)
             )
         ) +
@@ -239,4 +241,56 @@ gg_violin_interaction <- function(data, variable, score, medians, medians_delta,
             )
         ) +
         facet_wrap(~Felz)
+
+    # ymax <- plot_proto %>%
+    #     layer_data() %>%
+    #     pull(ymax) %>%
+    #     max
+
+    # plot_proto +
+    #     geom_errorbar(
+    #         inherit.aes = FALSE,
+    #         data = delta %>% dplyr::filter(Group_pairwise == "Index - FU1"),
+    #         mapping = aes(y = ymax*0.9, xmin = 1.1, xmax = 1.9, x = NULL, group = Felz),
+    #         width = 0.05, linewidth = 0.3, color = "black"
+    #     ) +
+    #     geom_text(
+    #         inherit.aes = FALSE,
+    #         data = delta %>% dplyr::filter(Group_pairwise == "Index - FU1"),
+    #         mapping = aes(
+    #             x = 1.5, y = ymax*0.9, group = Felz,
+    #             label = paste("\u394 =", round(median_delta, 2))
+    #         ),
+    #         hjust = 0.5, vjust = 1.2, size = 3, color = "black", angle = 0
+    #     ) +
+    #     geom_errorbar(
+    #         inherit.aes = FALSE,
+    #         data = delta %>% dplyr::filter(Group_pairwise == "FU1 - FU2"),
+    #         mapping = aes(y = ymax * 0.9, xmin = 2.1, xmax = 2.9, x = NULL, group = Felz),
+    #         width = 0.05, linewidth = 0.3, color = "black"
+    #     ) +
+    #     geom_text(
+    #         inherit.aes = FALSE,
+    #         data = delta %>% dplyr::filter(Group_pairwise == "FU1 - FU2"),
+    #         mapping = aes(
+    #             x = 2.5, y = ymax * 0.9, group = Felz,
+    #             label = paste("\u394 =", round(median_delta, 2))
+    #         ),
+    #         hjust = 0.5, vjust = 1.2, size = 3, color = "black", angle = 0
+    #     ) +
+    #     geom_errorbar(
+    #         inherit.aes = FALSE,
+    #         data = delta %>% dplyr::filter(Group_pairwise == "Index - FU2"),
+    #         mapping = aes(y = ymax, xmin = 1.1, xmax = 2.9, x = NULL, group = Felz),
+    #         width = 0.05, linewidth = 0.3, color = "black"
+    #     ) +
+    #     geom_text(
+    #         inherit.aes = FALSE,
+    #         data = delta %>% dplyr::filter(Group_pairwise == "Index - FU2"),
+    #         mapping = aes(
+    #             x = 2, y = ymax, group = Felz,
+    #             label = paste("\u394 =", round(median_delta, 2))
+    #         ),
+    #         hjust = 0.5, vjust = -0.5, size = 3, color = "black", angle = 0
+    #     )
 }
