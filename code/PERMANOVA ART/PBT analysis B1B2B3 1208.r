@@ -56,7 +56,9 @@ features <- c(ABMRrelated, TCMRrelated, Macrophage, Injurylate)
 
 
 # DEFINE THE SET ####
-set <- vienna_1208[, vienna_1208$STUDY_EVALUATION_ID != 15]
+set <- vienna_1208[, vienna_1208$STUDY_EVALUATION_ID %nin% c(15, 18)]
+# set <- vienna_1208[, vienna_1208$STUDY_EVALUATION_ID != 15 & vienna_1208$CEL != "FBN003_NBN010_B2_(PrimeView).CEL"]
+
 
 
 # WRANGLE THE PHENOTYPE DATA ####
@@ -109,7 +111,7 @@ df00 <- set %>%
 
 
 # PERMANOVA ####
-df01 <- df00 %>%
+df_permanova <- df00 %>%
     mutate(
         permanova = pmap(
             list(data, features),
@@ -119,43 +121,38 @@ df01 <- df00 %>%
                 Group <- data$Group
                 Felz <- data$Felz
                 adonis2(
-                    features ~ Group * Felz,
+                    features ~ Group * Felz + Patient,
                     data = data,
                     method = "euclidean",
-                    # by = "margin", only specific margin if the sample sizes are unequal
-                    permutations = 100000
+                    by = "margin", # only specify margin if the sample sizes are unequal
+                    permutations = 10000
                 )
             }
-        )
+        ),
+        #     mutate(
+        #         permanova_pairwise = pmap(
+        #             list(data, features),
+        #             function(data, features) {
+        #                 set.seed(seed)
+        #                 features <- data %>% dplyr::select(all_of(features))
+        #                 Group_Felz <- data$Group_Felz
+        #                 pairwise.adonis(
+        #                     features,
+        #                     Group_Felz,
+        #                     reduce = "Group|Felz",
+        #                     sim.method = "euclidean",
+        #                     p.adjust.m = "fdr",
+        #                     perm = 10000
+        #                 )
+        #             }
+        #         )
     )
-df01$permanova
-
-
-# PAIRWISE PERMANOVA ####
-df02 <- df01 %>%
-    mutate(
-        permanova_pairwise = pmap(
-            list(data, features),
-            function(data, features) {
-                set.seed(seed)
-                features <- data %>% dplyr::select(all_of(features))
-                Group_Felz <- data$Group_Felz
-                pairwise.adonis(
-                    features,
-                    Group_Felz,
-                    reduce = "Group|Felz",
-                    sim.method = "euclidean",
-                    p.adjust.m = "fdr",
-                    perm = 10000
-                )
-            }
-        )
-    )
-df02$permanova_pairwise
+df_permanova$permanova
+# df_permanova$permanova_pairwise
 
 
 # WRANGLE THE DATA FOR UNIVARIATE TESTS ####
-df_univariate_00 <- df02 %>%
+df_univariate_00 <- df_permanova %>%
     mutate(
         data_univariate = pmap(
             list(data, features),
@@ -480,13 +477,11 @@ data_delta_formatted <- df_univariate_02 %>%
         )
     )
 
-
 data_res_art_formatted <- df_univariate_02 %>%
     dplyr::select(annotation, score, art_con_interaction_default_tidy, art_con_cld, medians_delta) %>%
     unnest(c(art_con_interaction_default_tidy, art_con_cld), names_repair = tidyr_legacy) %>%
     # mutate(FDR_interaction = adj.p.value %>% p.adjust(method = "fdr"), .by = annotation) %>%
-        mutate(FDR_interaction = adj.p.value) %>%
-
+    mutate(FDR_interaction = adj.p.value) %>%
     mutate_at(
         vars(contains("p_i"), contains("FDR")),
         ~ ifelse(
@@ -515,8 +510,8 @@ data_pairwise_formatted <- data_delta_formatted %>%
         )
     ) %>%
     dplyr::select(-medians, -contrasts) %>%
-        pivot_wider(names_from = Group_pairwise, values_from = data) %>%
-        relocate(`FU1 - FU2`, .before = `Index - FU2`)
+    pivot_wider(names_from = Group_pairwise, values_from = data) %>%
+    relocate(`FU1 - FU2`, .before = `Index - FU2`)
 
 data_pairwise_formatted %>%
     dplyr::slice(1) %>%
@@ -609,7 +604,7 @@ flextable_pairwise %>% print(preview = "pptx")
 
 
 # PLOTTING GLOBALS ####
-df_univariate_02$art_con_interaction_default_tidy[[1]]
+
 
 
 # MAKE BIOPSY PAIR PLOTS ####
@@ -622,11 +617,7 @@ plot_violin_pairs <- df_univariate_02 %>%
     )
 
 # df_univariate_02$art_con_interaction_default_tidy[[1]]
-plot_violin_pairs$gg_line[[2]] %>%
-    layer_data() %>%
-    tibble() %>%
-    dplyr::select(group, n)  %>% print(n="all")
-
+# plot_violin_pairs$gg_line[[2]]
 
 
 # MAKE JOINT BIOPSY PAIR PLOTS ####
@@ -637,9 +628,9 @@ panel_pairs <- plot_violin_pairs %>%
         plotlist = .,
         common.legend = TRUE,
         ncol = 5,
-         nrow = 2,
-         align = "hv",
-        labels = c("A", "B", "C", "D", "E", "F", "G", "H", "I","J"), 
+        nrow = 2,
+        align = "hv",
+        labels = c("A", "B", "C", "D", "E", "F", "G", "H", "I", "J"),
         font.label = list(size = 20, color = "black", face = "bold")
     )
 
@@ -649,7 +640,7 @@ saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz C
 ggsave(
     filename = paste(saveDir, "Felzartamab B1B2B3.png"),
     plot = panel_pairs,
-    dpi = 300,
+    dpi = 600,
     width = 60,
     height = 22,
     units = "cm",

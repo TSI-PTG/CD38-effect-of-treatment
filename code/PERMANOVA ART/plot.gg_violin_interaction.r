@@ -53,8 +53,9 @@ gg_violin_interaction <- function(data, variable, score, medians, medians_delta,
         mutate(
             Group = Group %>% factor(levels = c("Index", "FU1", "FU2")),
             # delta = delta %>% scale() %>% as.vector()
-        ) 
-    # plot_proto <- 
+        )
+    # bw <- 0.075
+    # plot_proto <-
     data %>%
         ggplot(aes(x = Group, y = value)) +
         geom_half_violin(
@@ -64,6 +65,7 @@ gg_violin_interaction <- function(data, variable, score, medians, medians_delta,
                 x = Group,
                 y = value
             ),
+            bw = ifelse(data$variable[[1]] %in% c("ABMRpm", "ggt0", "ptcgt0", "TCMRt", "tgt1", "igt1"), 0.05, 0.1),
             side = c("l"),
             fill = "grey95",
             col = "grey60",
@@ -77,6 +79,7 @@ gg_violin_interaction <- function(data, variable, score, medians, medians_delta,
                 x = Group,
                 y = value
             ),
+            bw = ifelse(data$variable[[1]] %in% c("ABMRpm", "ggt0", "ptcgt0", "TCMRt", "tgt1", "igt1"), 0.05, 0.1),
             fill = "#f2f2f2ec",
             col = "#cdcdcdb8",
             trim = FALSE,
@@ -89,6 +92,7 @@ gg_violin_interaction <- function(data, variable, score, medians, medians_delta,
                 x = Group,
                 y = value
             ),
+            bw = ifelse(data$variable[[1]] %in% c("ABMRpm", "ggt0", "ptcgt0", "TCMRt", "tgt1", "igt1"), 0.05, 0.1),
             side = c("r"),
             fill = "grey95",
             col = "grey60",
@@ -137,7 +141,6 @@ gg_violin_interaction <- function(data, variable, score, medians, medians_delta,
             position = position_nudge(
                 x = ifelse(data %>%
                     dplyr::filter(Group %in% c("Index", "FU1")) %>%
-
                     pull(Group) == "Index", 0.1, 0)
             ),
             linewidth = 0.5, alpha = 0.25,
@@ -153,7 +156,6 @@ gg_violin_interaction <- function(data, variable, score, medians, medians_delta,
             position = position_nudge(
                 x = ifelse(data %>%
                     dplyr::filter(Group %in% c("FU1", "FU2")) %>%
-
                     pull(Group) == "FU1", 0, -0.1)
             ),
             linewidth = 0.5, alpha = 0.25,
@@ -207,19 +209,19 @@ gg_violin_interaction <- function(data, variable, score, medians, medians_delta,
                 title.position = "top",
                 barwidth = 20,
                 ticks = FALSE,
-                label.hjust = c(2, -0.1),
+                label.hjust = c(2, -0.05),
                 label.vjust = 8,
                 reverse = TRUE
             ),
         ) +
         # scale_x_discrete(labels = c("Index\n(n = 11)", "FU1\n(n = 11)", "FU2\n(n = 11)")) +
         scale_x_discrete(labels = c("Index", "FU1", "FU2")) +
-        # scale_y_continuous(expand = c(0,0)) +
+        scale_y_continuous(expand = c(0,0)) +
         coord_cartesian(
             xlim = c(NA, NA),
             ylim = c(
-                ifelse(data$variable[[1]] == "ABMRpm", NA, NA),
-                ifelse(data$variable[[1]] == "ABMRpm", NA, NA)
+                ifelse(data$variable[[1]] %in% c("ABMRpm", "ggt0", "ptcgt0", "TCMRt", "tgt1", "igt1"), 0, NA),
+                ifelse(data$variable[[1]] %in% c("ABMRpm", "ggt0", "ptcgt0", "TCMRt", "tgt1", "igt1"), 1, NA)
             )
         ) +
         theme_bw() +
@@ -229,7 +231,7 @@ gg_violin_interaction <- function(data, variable, score, medians, medians_delta,
             panel.grid = element_blank(),
             strip.text = element_text(size = 12, colour = "black"),
             legend.position = "top",
-            legend.title = element_text(size = 15, hjust = 0.5, vjust = 1, face = "bold"),
+            legend.title = element_text(size = 15, hjust = 0.66, vjust = 1, face = "bold"),
             legend.text = element_text(size = 15),
             plot.title = element_text(
                 colour = "black",
