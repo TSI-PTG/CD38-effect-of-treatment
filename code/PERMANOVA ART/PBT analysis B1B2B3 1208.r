@@ -56,43 +56,7 @@ features <- c(ABMRrelated, TCMRrelated, Macrophage, Injurylate)
 
 
 # DEFINE THE SET ####
-set <- vienna_1208
-
-
-
-set %>%
-    pData() %>%
-    tibble() %>%
-    colnames()
-
-
-# # RANDOMLY SIMULATE B2 ####
-# dfB2 <- set %>%
-#     pData() %>%
-#     tibble() %>%
-#     dplyr::rename(
-#         Patient = STUDY_EVALUATION_ID,
-#         Felz = Felzartamab_presumed
-#     ) %>%
-#     mutate(
-#         across(all_of(features), ~ mean(.)),
-#         .by = Patient
-#     ) %>%
-#     distinct(Patient, .keep_all = TRUE) %>%
-#     mutate(
-#         across(all_of(features), ~ . + rnorm(n = 22, sd = 0.1)),
-#     ) %>%
-#     mutate(
-#         across(all_of(features), ~ ifelse(. < 0, 0, .)),
-#     ) %>%
-#     mutate(
-#         Group = "FU2",
-#         Group_Felz = paste(Group, Felz, sep = ":") %>%
-#             factor(levels = c("FU2:NoFelz", "FU2:Felz"))
-#     )
-
-# # dfB2$TCMRt
-
+set <- vienna_1208[, vienna_1208$STUDY_EVALUATION_ID != 15]
 
 
 # WRANGLE THE PHENOTYPE DATA ####
@@ -103,7 +67,6 @@ df00 <- set %>%
         Patient = STUDY_EVALUATION_ID,
         Felz = Felzartamab_presumed
     ) %>%
-    # bind_rows(dfB2) %>%
     mutate(
         Patient = Patient %>% factor(),
         Group = Group %>% factor(levels = c("Index", "FU1", "FU2")),
@@ -546,7 +509,7 @@ data_pairwise_formatted <- data_delta_formatted %>%
             function(medians, contrasts) {
                 medians %>%
                     left_join(contrasts, by = c("annotation", "score", "Group_pairwise")) %>%
-                    mutate(deltadelta = deltadelta %>% paste(Letter)) %>%
+                    # mutate(deltadelta = deltadelta %>% paste(Letter)) %>%
                     dplyr::select(-annotation, -score, -Group_pairwise, -Letter)
             }
         )
@@ -658,8 +621,12 @@ plot_violin_pairs <- df_univariate_02 %>%
         )
     )
 
-df_univariate_02$art_con_interaction_default_tidy[[1]]
-plot_violin_pairs$gg_line[[2]]
+# df_univariate_02$art_con_interaction_default_tidy[[1]]
+plot_violin_pairs$gg_line[[2]] %>%
+    layer_data() %>%
+    tibble() %>%
+    dplyr::select(group, n)  %>% print(n="all")
+
 
 
 # MAKE JOINT BIOPSY PAIR PLOTS ####

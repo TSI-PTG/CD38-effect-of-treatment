@@ -53,7 +53,7 @@ gg_violin_interaction <- function(data, variable, score, medians, medians_delta,
         mutate(
             Group = Group %>% factor(levels = c("Index", "FU1", "FU2")),
             # delta = delta %>% scale() %>% as.vector()
-        )
+        ) 
     # plot_proto <- 
     data %>%
         ggplot(aes(x = Group, y = value)) +
@@ -137,6 +137,7 @@ gg_violin_interaction <- function(data, variable, score, medians, medians_delta,
             position = position_nudge(
                 x = ifelse(data %>%
                     dplyr::filter(Group %in% c("Index", "FU1")) %>%
+
                     pull(Group) == "Index", 0.1, 0)
             ),
             linewidth = 0.5, alpha = 0.25,
@@ -152,6 +153,7 @@ gg_violin_interaction <- function(data, variable, score, medians, medians_delta,
             position = position_nudge(
                 x = ifelse(data %>%
                     dplyr::filter(Group %in% c("FU1", "FU2")) %>%
+
                     pull(Group) == "FU1", 0, -0.1)
             ),
             linewidth = 0.5, alpha = 0.25,
