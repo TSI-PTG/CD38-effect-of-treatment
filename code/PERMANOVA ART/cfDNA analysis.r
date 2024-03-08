@@ -18,297 +18,55 @@ library(emmeans) # install.packages("emmeans") #for post-hoc testing and CLD
 library(multcomp) # install.packages("multcomp") #for for CLD
 library(ARTool) # install.packages("ARTool") #for non-parametric anova (aligned-rank test) and post-hoc
 library(rcompanion) # install.packages("rcompanion") #for non-parametric anova (aligned-rank test) and post-hoc
-# Bioconductor libraries
-library(Biobase) # BiocManager::install("Biobase")
 # Custom operators, functions, and datasets
 "%nin%" <- function(a, b) match(a, b, nomatch = 0) == 0
-se <- function(x) sd(x) / sqrt(length((x)))
 log10zero <- scales::trans_new(
     name = "log10zero",
-    transform = function(x) log10(x + 0.001),
-    inverse = function(x) 10^x - 0.001
+    transform = function(x) log10(x + 1),
+    inverse = function(x) 10^x - 1
 )
 # Suppress pesky dplyr reframe info
 options(dplyr.reframe.inform = FALSE)
 # source plot function
 source("C:/R/CD38-effect-of-treatment/code/PERMANOVA ART/plot.gg_violin_interaction.r")
-# laod reference set
-load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vienna/G_Rstuff/data/vienna_1208_6Mar24.RData")
+# load data
+load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vienna/G_Rstuff/data/data_cfDNA.RData")
 
 
 # DEFINE SEED ####
 seed <- 42
 
-
-# DEFINE CATEGORIES FOR FEATURES ####
-Rejectionrelated <- c("GRIT3", "Rej-RAT", "RejAA_NR")
-ABMRrelated <- c("DSAST", "NKB", "ABMRpm", "ggt0", "ptcgt0") # "cggt0", "RejAA_EABMR", "RejAA_FABMR", "RejAA_LABMR")
-TCMRrelated <- c("QCAT", "TCB", "TCMRt", "tgt1", "igt1") # , "TCMR-RAT", )
-Endothelium <- c("ENDAT")
-Parenchyma <- c("KT1", "KT2")
-Macrophage <- c("AMAT1", "QCMAT")
-Injuryrecent <- c("FICOL", "IRRAT30", "IRITD3", "IRITD5")
-Injurylate <- c("IGT", "MCAT", "BAT", "cigt1", "ctgt1")
-
-
-# DEFINE FEATURES ####
-features <- c(ABMRrelated, TCMRrelated, Macrophage, Injurylate)
-
-
-# PATIENT SUMMARIES ####
-patient_summary <- vienna_1208 %>%
-    pData() %>%
-    dplyr::select(Center, STUDY_EVALUATION_ID, Felzartamab_presumed, CEL, Group) %>%
-    tibble() %>%
-    mutate(
-        Followup = case_when(Group == "Index" ~ "Index\n(Baseline)", Group == "FU1" ~ "FU1\n(week24)", Group == "FU2" ~ "FU2\n(week52)"),
-        Felzartamab_presumed = Felzartamab_presumed %>% factor(),
-        STUDY_EVALUATION_ID = STUDY_EVALUATION_ID %>% factor()
-    ) %>%
-    dplyr::filter(CEL %nin% c("FBN003_NBN010_B2_(PrimeView).CEL", "FVI022_FVI022_B2_(PrimeView).CEL")) %>%
-    dplyr::select(-Group) %>%
-    pivot_wider(names_from = Followup, values_from = CEL) %>%
-    arrange(STUDY_EVALUATION_ID, Felzartamab_presumed)
-
-patient_summary %>%
-    mutate(across(c("Index\n(Baseline)", "FU1\n(week24)", "FU2\n(week52)"), ~ ifelse(. %>% is.na(), NA, "X"))) %>%
-    flextable::flextable() %>%
-    flextable::add_header_row(values = rep("Felzartamab study population", ncol_keys(.))) %>%
-    flextable::merge_h(part = "header") %>%
-    flextable::merge_v(j = 1:2) %>%
-    flextable::fontsize(size = 8, part = "all") %>%
-    flextable::align(align = "center", part = "all") %>%
-    flextable::bg(bg = "white", part = "all") %>%
-    flextable::colformat_double(j = 2:3, digits = 2) %>%
-    flextable::border_remove() %>%
-    flextable::bold(part = "header") %>%
-    flextable::padding(padding = 0, part = "all") %>%
-    flextable::border(border = fp_border(), part = "all") %>%
-    flextable::autofit()
-# %>%
-# print(preview = "pptx")
-
-# table with cel id's
-patient_summary %>%
-    flextable::flextable() %>%
-    flextable::add_header_row(values = rep("Felzartamab study population", ncol_keys(.))) %>%
-    flextable::merge_h(part = "header") %>%
-    flextable::merge_v(j = 1:2) %>%
-    flextable::fontsize(size = 8, part = "all") %>%
-    flextable::align(align = "center", part = "all") %>%
-    flextable::bg(bg = "white", part = "all") %>%
-    flextable::colformat_double(j = 2:3, digits = 2) %>%
-    flextable::border_remove() %>%
-    flextable::bold(part = "header") %>%
-    flextable::padding(padding = 0, part = "all") %>%
-    flextable::border(border = fp_border(), part = "all") %>%
-    flextable::autofit()
-
-vienna_1208[, vienna_1208$STUDY_EVALUATION_ID %nin% c(15, 18)] %>%
-    pData() %>%
-    dplyr::select(Felzartamab_presumed, Group) %>%
-    table() %>%
-    as_tibble() %>%
-    pivot_wider(names_from = Group, values_from = n)
-
-
-# DEFINE THE SET ####
-set <- vienna_1208[, vienna_1208$STUDY_EVALUATION_ID %nin% c(15, 18)]
-# set <- vienna_1208[, vienna_1208$STUDY_EVALUATION_ID != 15 & vienna_1208$CEL != "FBN003_NBN010_B2_(PrimeView).CEL"]
+# data_cfdna %>% print(n = "all")
 
 
 # WRANGLE THE PHENOTYPE DATA ####
-df00 <- set %>%
-    pData() %>%
-    tibble() %>%
+df00 <- data_cfdna %>%
+    dplyr::filter(STUDY_EVALUATION_ID %nin% c(15, 18)) %>%
+    drop_na(cfDNA) %>%
     dplyr::rename(
         Patient = STUDY_EVALUATION_ID,
-        Felz = Felzartamab_presumed
+        Felz = Felzartamab
     ) %>%
     mutate(
+        # cfDNA = log10(cfDNA + 10),
         Patient = Patient %>% factor(),
-        Group = Group %>% factor(levels = c("Index", "FU1", "FU2")),
+        Group = Group %>% factor(levels = c("Index", "FU0", "FU1", "FU2")),
         Felz = Felz %>% factor(labels = c("NoFelz", "Felz")),
-        TxBx = TxBx %>% as.numeric(),
         Group_Felz = paste(Group, Felz, sep = ":") %>%
-            factor(levels = c("Index:NoFelz", "FU1:NoFelz", "FU2:NoFelz", "Index:Felz", "FU1:Felz", "FU2:Felz"))
+            factor(levels = c(
+                "Index:NoFelz", "FU0:NoFelz", "FU1:NoFelz", "FU2:NoFelz",
+                "Index:Felz", "FU0:Felz", "FU1:Felz", "FU2:Felz"
+            ))
     ) %>%
     arrange(Patient, Group) %>%
-    expand_grid(category = c("ABMR", "TCMR", "Macrophage", "Injurylate")) %>%
-    nest(.by = category) %>%
-    mutate(
-        features = map(
-            category,
-            function(category) {
-                if (category == "ABMR") {
-                    ABMRrelated
-                } else if (category == "TCMR") {
-                    TCMRrelated
-                } else if (category == "Macrophage") {
-                    Macrophage
-                } else if (category == "Injurylate") {
-                    Injurylate
-                }
-            }
-        ),
-        data = pmap(
-            list(features, data),
-            function(features, data) {
-                data %>%
-                    dplyr::select(
-                        CEL, Patient, Center, Group, Felz, Group_Felz, TxBx,
-                        all_of(features)
-                    )
-            }
-        )
-    )
-
-
-
-# PERMANOVA ####
-df_permanova <- df00 %>%
-    mutate(
-        permanova = pmap(
-            list(data, features),
-            function(data, features) {
-                set.seed(seed)
-                features <- data %>% dplyr::select(all_of(features))
-                Group <- data$Group
-                Felz <- data$Felz
-                adonis2(
-                    features ~ Group * Felz + Patient,
-                    data = data,
-                    method = "euclidean",
-                    by = "margin", # only specify margin if the sample sizes are unequal
-                    permutations = 10000
-                )
-            }
-        ),
-        permanova_pairwise = pmap(
-            list(data, features),
-            function(data, features) {
-                set.seed(seed)
-                features <- data %>% dplyr::select(all_of(features))
-                Group_Felz <- data$Group_Felz
-                pairwise.adonis(
-                    features,
-                    Group_Felz,
-                    reduce = "Group|Felz",
-                    sim.method = "euclidean",
-                    p.adjust.m = "fdr",
-                    perm = 10000
-                )
-            }
-        )
-    )
-df_permanova$permanova[[1]] %>% str()
-df_permanova$permanova_pairwise[[1]]
-
-
-
-# WRANGLE THE DATA FOR UNIVARIATE TESTS ####
-df_univariate_00 <- df_permanova %>%
-    mutate(
-        data_univariate = pmap(
-            list(data, features),
-            function(data, features) {
-                data %>%
-                    pivot_longer(
-                        cols = all_of(features),
-                        names_to = "variable",
-                        values_to = "value"
-                    ) %>%
-                    group_by(variable) %>%
-                    nest() %>%
-                    tibble() %>%
-                    mutate(
-                        variable = variable %>%
-                            factor(
-                                levels = c(
-                                    "Rej-RAT", "GRIT3", "RejAA_NR",
-                                    "ABMRpm", "ggt0", "cggt0", "ptcgt0", "NKB", "DSAST",
-                                    "RejAA_EABMR", "RejAA_FABMR", "RejAA_LABMR",
-                                    "TCMRt", "tgt1", "igt1", "TCB", "TCMR-RAT", "QCAT",
-                                    "AMAT1", "QCMAT", "BAT",
-                                    "FICOL", "IRRAT30", "IRITD3", "IRITD5",
-                                    "cigt1", "ctgt1", "IGT", "MCAT",
-                                    "KT1", "KT2"
-                                )
-                            ),
-                        annotation = case_when(
-                            variable %in% Rejectionrelated ~ "Rejection-related",
-                            variable %in% TCMRrelated ~ "TCMR-related",
-                            variable %in% ABMRrelated ~ "ABMR-related",
-                            variable %in% Endothelium ~ "Endothelium-related",
-                            variable %in% Parenchyma ~ "Parenchyma-related",
-                            variable %in% Macrophage ~ "Macrophage-related",
-                            variable %in% Injurylate ~ "Atrophy-fibrosis-related",
-                            variable %in% Injuryrecent ~ "Recent injury-related",
-                            TRUE ~ " "
-                        ) %>%
-                            factor(
-                                levels = c(
-                                    "Rejection-related", "ABMR-related", "TCMR-related",
-                                    "Macrophage-related", "Recent injury-related", "Atrophy-fibrosis-related",
-                                    "Parenchyma-related"
-                                )
-                            ),
-                        score = case_when(
-                            variable == "TCMRt" ~ "TCMR classifier (TCMRProb)",
-                            variable == "TCB" ~ "T-cell burden (TCB)",
-                            variable == "TCMR-RAT" ~ "TCMR-associated RATs (TCMR-RAT)",
-                            variable == "tgt1" ~ "Tubulitis classifier (t>1Prob)",
-                            variable == "igt1" ~ "Interstitial infiltrate classifier (i>1Prob)",
-                            # variable == "QCAT" ~ "Cytotoxic T cell-associated transcripts (QCAT)",
-                            variable == "QCAT" ~ "Cytotoxic T cell-associated (QCAT)",
-                            variable == "Rej-RAT" ~ "Rejection-associated transcripts (Rej-RAT)",
-                            variable == "GRIT3" ~ "Interferon gamma-inducible transcripts (GRIT3)",
-                            variable == "ABMR-RAT" ~ "ABMR-associated RATs (ABMR-RAT)",
-                            variable == "ABMRpm" ~ "ABMR classifier (ABMRProb)",
-                            variable == "DSAST" ~ "DSA-selective transcripts (DSAST)",
-                            variable == "NKB" ~ "NK cell burden (NKB)",
-                            variable == "ggt0" ~ "Glomerulitis classifier (g>0Prob)",
-                            variable == "cggt0" ~ "Glomerular double contours classifier (cg>0Prob)",
-                            variable == "ptcgt0" ~ "Peritubular capillaritis classifier (ptc>0Prob)",
-                            variable == "AMAT1" ~ "Alternatively activated macrophage (AMAT1)",
-                            variable == "QCMAT" ~ "Constitutive macrophage (QCMAT)",
-                            variable == "FICOL" ~ "Fibrillar collagen (FICOL)",
-                            variable == "DAMP" ~ "Damage-associated molecular pattern transcripts (DAMP)",
-                            variable == "cIRIT" ~ "Cardiac injury and repair–induced transcripts (cIRIT)",
-                            variable == "IRITD3" ~ "Injury-repair induced, day 3 (IRITD3)",
-                            variable == "IRITD5" ~ "Injury-repair induced, day 5 (IRITD5)",
-                            variable == "IRRAT30" ~ "Injury-repair associated (IRRAT30)",
-                            variable == "cigt1" ~ "Fibrosis classifier (ci>1Prob)",
-                            variable == "ctgt1" ~ "Atrophy classifier (ct>1Prob)",
-                            variable == "txbxCorrCLAGdn_tbb" ~ "Transcripts downregulated in CLAD",
-                            variable == "txbxCorrCLAGup_tbb" ~ "Transcripts upregulated in CLAD",
-                            variable == "SFT" ~ "Surfactant-associated transcripts (SFT)",
-                            variable == "ENDAT" ~ "Endothelial cell-associated transcripts (ENDAT)",
-                            variable == "eDSAST" ~ "Endothelium-expressed DSA-selective transcripts (eDSAST)",
-                            variable == "IGT" ~ "Immunoglobulin transcripts (IGT)",
-                            variable == "BAT" ~ "B cell–associated transcripts (BAT)",
-                            variable == "MCAT" ~ "Mast cell-associated transcripts (MCAT)",
-                            variable == "KT1" ~ "Kidney parenchymal transcripts (KT1)",
-                            variable == "KT2" ~ "Kindey parenchymal transcripts - no solute carriers (KT2)",
-                            variable == "RejAA_NR" ~ "Archetypal No Rejection score (NR)",
-                            variable == "RejAA_EABMR" ~ "Archetypal Early ABMR score (EABMR)",
-                            variable == "RejAA_FABMR" ~ "Archetypal Full ABMR score (FABMR)",
-                            variable == "RejAA_LABMR" ~ "Archetypal Late ABMR score (LABMR)",
-                        ), .before = 1
-                    ) %>%
-                    arrange(annotation, variable)
-            }
-        )
-    ) %>%
-    dplyr::select(category, data_univariate) %>%
-    unnest(data_univariate)
+    expand_grid(category = c("cfDNA")) %>%
+    mutate(value = cfDNA, annotation = "cfDNA", score = "cfDNA", variable = "cfDNA") %>%
+    dplyr::filter(Group != "FU0") %>%
+    nest(.by = c(category, annotation, variable, score))
 
 
 # UNIVARIATE MEANS AND MEDIANS ####
-df_univariate_01 <- df_univariate_00 %>%
-    mutate(
-        n_cat = score %>% unique() %>% length(), .by = category, .after = variable
-    ) %>%
+df_univariate_01 <- df00 %>%
     mutate(
         medians = map(
             data,
@@ -322,10 +80,10 @@ df_univariate_01 <- df_univariate_00 %>%
                     mutate(
                         Group_Felz = paste(Felz, Group, sep = ":") %>%
                             factor(levels = c(
-                                # "Index:NoFelz", "FU1:NoFelz", "FU2:NoFelz",
-                                # "Index:Felz", "FU1:Felz", "FU2:Felz"
                                 "NoFelz:Index", "NoFelz:FU1", "NoFelz:FU2",
                                 "Felz:Index", "Felz:FU1", "Felz:FU2"
+                                # "NoFelz:Index", "NoFelz:FU0","NoFelz:FU1", "NoFelz:FU2",
+                                # "Felz:Index", "Felz:FU0", "Felz:FU1", "Felz:FU2"
                             ))
                     ) %>%
                     arrange(Group_Felz)
@@ -349,7 +107,6 @@ df_univariate_01 <- df_univariate_00 %>%
             }
         )
     )
-
 df_univariate_01$data[[1]]
 df_univariate_01$medians[[1]]
 df_univariate_01$medians_delta[[1]]
@@ -407,8 +164,8 @@ df_univariate_02$medians_delta[[1]]
 df_univariate_02$art_aov_tidy[[1]]
 df_univariate_02$art_con_interaction_default[[1]]
 
-df_univariate_02$art_con_interaction_default_tidy[[3]]
-df_univariate_02$art_con_cld[[3]]
+df_univariate_02$art_con_interaction_default_tidy[[1]]
+df_univariate_02$art_con_cld[[1]]
 
 
 # CREATE FLEXTABLE OF ART MODELS ####
@@ -416,11 +173,11 @@ title_art <- paste("Table i. Non-parametric ANOVA (ART) of molecular scores in b
 title_art_pairwise <- paste("Table i. Pairwise Non-parametric ANOVA (ART) of molecular scores in biopsies from treated vs untreated patients")
 
 res_art_flextable <- df_univariate_02 %>%
-    dplyr::select(annotation, n_cat, score, art_aov) %>%
+    dplyr::select(annotation, score, art_aov) %>%
     unnest(everything()) %>%
     dplyr::rename(p.value = `Pr(>F)`) %>%
-    mutate(FDR = p.value %>% p.adjust(method = "fdr"), .by = annotation) %>%
-    dplyr::select(annotation, score, Term, `F`, p.value, FDR) %>%
+    mutate(FDR = p.value) %>%
+    dplyr::select(annotation, score, Term, `F`, FDR) %>%
     flextable::flextable() %>%
     flextable::add_header_row(values = rep(title_art, ncol_keys(.))) %>%
     flextable::merge_h(part = "header") %>%
@@ -428,7 +185,7 @@ res_art_flextable <- df_univariate_02 %>%
     flextable::fontsize(size = 8, part = "all") %>%
     flextable::align(align = "center", part = "all") %>%
     flextable::bg(bg = "white", part = "all") %>%
-    flextable::bg(i = ~ FDR < 0.05 & Term == "Group:Felz", j = 3:6, bg = "#fbff00") %>%
+    flextable::bg(i = ~ FDR < 0.05 & Term == "Group:Felz", j = 3:4, bg = "#fbff00") %>%
     flextable::colformat_double(j = 2:3, digits = 2) %>%
     flextable::colformat_double(j = 4:ncol_keys(.), digits = 3) %>%
     flextable::border_remove() %>%
@@ -655,20 +412,281 @@ flextable_pairwise <- data_pairwise_formatted %>%
 
 
 # PRINT THE FLEXTABLES ####
-flextable_pairwise %>% print(preview = "pptx")
+# flextable_pairwise %>% print(preview = "pptx")
+
+
+# PROCESS DATA FOR PLOTTING ####
+df_plot <- df_univariate_02 %>%
+    mutate(
+        data_plot = pmap(
+            list(data, variable, score, medians, medians_delta, art_con_interaction_default_tidy),
+            function(data, variable, score, medians, medians_delta, art_con_interaction_default_tidy) {
+                delta <- medians_delta %>%
+                    mutate(
+                        Felz = Felz %>% factor(labels = c("No Felzartamab", "Felzartamab"))
+                    )
+                delta_delta <- medians_delta %>%
+                    distinct(Group_pairwise, .keep_all = TRUE) %>%
+                    mutate(Group_pairwise = c("FU1 - Index", "FU2 - Index", "FU2 - FU1"))
+                delta_delta_p <- art_con_interaction_default_tidy %>%
+                    dplyr::select(Group_pairwise, adj.p.value) %>%
+                    mutate(FDR = ifelse(
+                        adj.p.value < 0.01,
+                        formatC(adj.p.value, digits = 0, format = "e"),
+                        formatC(adj.p.value, digits = 3, format = "f")
+                    ))
+                data <- data %>%
+                    mutate(
+                        variable = variable,
+                        Felz = Felz %>% factor(labels = c("No Felzartamab", "Felzartamab"))
+                    )
+                data <- data %>%
+                    left_join(
+                        data %>%
+                            reframe(median = median(value), .by = c(Group, Felz, Patient)) %>%
+                            spread(Group, median) %>%
+                            mutate(delta = FU1 - Index, delta2 = FU2 - FU1) %>%
+                            pivot_longer(cols = c(Index, FU1, FU2), names_to = "Group", values_to = "value") %>%
+                            dplyr::select(Felz, Patient, Group, delta, delta2),
+                        by = c("Felz", "Patient", "Group")
+                    ) %>%
+                    mutate(Group = Group %>% factor(levels = c("Index", "FU1", "FU2")))
+                ymax <- data$value %>% max()
+                tibble(
+                    data = data %>% list(),
+                    delta_delta = delta_delta %>% list(),
+                    delta_delta_p = delta_delta_p %>% list(),
+                    ymax = ymax %>% list(),
+                )
+            }
+        )
+    )
+
+df_plot$data_plot[[1]]$data
 
 
 # PLOTTING GLOBALS ####
+log_ticks <- c(
+    seq(0, 1, length.out = 11),
+    seq(1, 10, length.out = 10),
+    seq(10, 100, length.out = 10),
+    seq(100, 1000, length.out = 10)
+)
+labels <- c(0, 1, 10, 100, 1000)
 dodge <- 0.3
 
+
 # MAKE BIOPSY PAIR PLOTS ####
-plot_violin_pairs <- df_univariate_02 %>%
+plot_violin_pairs <- df_plot %>%
     mutate(
-        gg_line = pmap(
-            list(data, variable, score, medians, medians_delta, art_con_interaction_default_tidy),
-            gg_violin_interaction
+        plot_violin = pmap(
+            list(data_plot),
+            function(data_plot) {
+                data <- data_plot$data[[1]]
+                delta_delta <- data_plot$delta_delta[[1]]
+                delta_delta_p <- data_plot$delta_delta_p[[1]]
+                ymax <- data_plot$ymax[[1]]
+                data %>%
+                    ggplot(aes(x = Group, y = value)) +
+                    geom_half_violin(
+                        inherit.aes = FALSE,
+                        data = data %>% dplyr::filter(Group %in% c("Index")),
+                        mapping = aes(
+                            x = Group,
+                            y = value
+                        ),
+                        # bw = 0.05,
+                        side = c("l"),
+                        fill = "grey95",
+                        col = "grey60",
+                        trim = FALSE,
+                        scale = "width"
+                    ) +
+                    geom_violin(
+                        inherit.aes = FALSE,
+                        data = data %>% dplyr::filter(Group == c("FU1")),
+                        mapping = aes(
+                            x = Group,
+                            y = value
+                        ),
+                        # bw =0.05,
+                        fill = "#f2f2f2ec",
+                        col = "#cdcdcdb8",
+                        trim = FALSE,
+                        scale = "width"
+                    ) +
+                    geom_half_violin(
+                        inherit.aes = FALSE,
+                        data = data %>% dplyr::filter(Group %in% c("FU2")),
+                        mapping = aes(
+                            x = Group,
+                            y = value
+                        ),
+                        # bw =  0.05),
+                        side = c("r"),
+                        fill = "grey95",
+                        col = "grey60",
+                        trim = FALSE,
+                        scale = "width"
+                    ) +
+                    geom_point(
+                        inherit.aes = FALSE,
+                        data = data %>% dplyr::filter(Group %in% c("Index")),
+                        mapping = aes(
+                            x = Group,
+                            y = value,
+                            col = delta
+                        ),
+                        position = position_nudge(x = 0.1),
+                        size = 2, alpha = 0.75
+                    ) +
+                    geom_point(
+                        inherit.aes = FALSE,
+                        data = data %>% dplyr::filter(Group %in% c("FU1")),
+                        mapping = aes(
+                            x = Group,
+                            y = value,
+                            col = delta
+                        ),
+                        size = 2, alpha = 0.75
+                    ) +
+                    geom_point(
+                        inherit.aes = FALSE,
+                        data = data %>% dplyr::filter(Group %in% c("FU2")),
+                        mapping = aes(
+                            x = Group,
+                            y = value,
+                            col = delta2
+                        ),
+                        position = position_nudge(x = -0.1),
+                        size = 2, alpha = 0.75
+                    ) +
+                    geom_line(
+                        data = data %>% dplyr::filter(Group %in% c("Index", "FU1")),
+                        mapping = aes(
+                            x = Group,
+                            col = delta,
+                            group = Patient
+                        ),
+                        position = position_nudge(
+                            x = ifelse(data %>%
+                                dplyr::filter(Group %in% c("Index", "FU1")) %>%
+                                pull(Group) == "Index", 0.1, 0)
+                        ),
+                        linewidth = 0.5, alpha = 0.25,
+                        show.legend = FALSE
+                    ) +
+                    geom_line(
+                        data = data %>% dplyr::filter(Group %in% c("FU1", "FU2")),
+                        mapping = aes(
+                            x = Group,
+                            col = delta2,
+                            group = Patient
+                        ),
+                        position = position_nudge(
+                            x = ifelse(data %>%
+                                dplyr::filter(Group %in% c("FU1", "FU2")) %>%
+                                pull(Group) == "FU1", 0, -0.1)
+                        ),
+                        linewidth = 0.5, alpha = 0.25,
+                        show.legend = FALSE
+                    ) +
+                    stat_summary(
+                        fun = median, geom = "point", size = 4
+                    ) +
+                    stat_summary(
+                        aes(group = Felz),
+                        fun = median,
+                        geom = "line",
+                        linewidth = 1,
+                        linetype = "dashed"
+                    ) +
+                    labs(
+                        title = paste(
+                            paste(
+                                "\u394\u394", delta_delta$Group_pairwise[[1]], "=",
+                                delta_delta$median_delta_delta[[1]] %>% round(2),
+                                "| FDR =",
+                                delta_delta_p$FDR[[1]]
+                            ),
+                            paste(
+                                "\u394\u394", delta_delta$Group_pairwise[[3]], "=",
+                                delta_delta$median_delta_delta[[3]] %>% round(2),
+                                "| FDR =",
+                                delta_delta_p$FDR[[3]]
+                            ),
+                            paste(
+                                "\u394\u394", delta_delta$Group_pairwise[[2]], "=",
+                                delta_delta$median_delta_delta[[2]] %>% round(2),
+                                "| FDR =",
+                                delta_delta_p$FDR[[2]]
+                            ),
+                            sep = "\n"
+                        ),
+                        x = NULL,
+                        y = "dd-cfDNA (cp/mL)",
+                        col = "Individual patient response     ",
+                        parse = TRUE
+                    ) +
+                    scale_color_gradient2(
+                        low = "#00ff00bc",
+                        mid = "grey60",
+                        high = "red",
+                        midpoint = 0,
+                        breaks = c(min(data$delta), max(data$delta)),
+                        labels = c("improved", "worsened"),
+                        guide = guide_colorbar(
+                            title.position = "top",
+                            barwidth = 20,
+                            ticks = FALSE,
+                            label.hjust = c(1.1, -1.2),
+                            label.vjust = 8,
+                            reverse = TRUE
+                        ),
+                    ) +
+                    # scale_x_discrete(labels = c("Index\n(n = 11)", "FU1\n(n = 11)", "FU2\n(n = 11)")) +
+                    scale_x_discrete(labels = c("Index", "FU1", "FU2")) +
+                    scale_y_continuous(
+                        expand = c(0, 0),
+                        breaks = c(0, 1, 10, 100, 1000),
+                        labels = c(0, 1, 10, 100, 1000),
+                        minor_breaks = log_ticks,
+                        trans = log10zero
+                    ) +
+                    coord_cartesian(
+                        xlim = c(NA, NA),
+                        ylim = c(0, NA)
+                    ) +
+                    theme_bw() +
+                    theme(
+                        axis.ticks.length.y = unit(0.25, "cm"),
+                        axis.title = element_text(size = 15),
+                        axis.text = element_text(size = 12, colour = "black"),
+                        panel.grid = element_blank(),
+                        strip.text = element_text(size = 12, colour = "black"),
+                        legend.position = "top",
+                        legend.box.spacing = unit(-10, "pt"),
+                        legend.background = element_blank(),
+                        legend.title = element_text(size = 15, hjust = 0.66, vjust = 1, face = "bold"),
+                        legend.text = element_text(size = 15),
+                        plot.title = element_text(
+                            colour = "black",
+                            hjust = 0,
+                            size = 12,
+                            face = case_when(
+                                delta_delta_p$adj.p.value[[1]] < 0.05 ~ "bold.italic",
+                                delta_delta_p$adj.p.value[[2]] < 0.05 ~ "bold.italic",
+                                TRUE ~ "italic"
+                            )
+                        )
+                    ) +
+                    guides(y = ggprism::guide_prism_minor()) +
+                    facet_wrap(~Felz)
+            }
         )
     )
+
+plot_ddcfDNA <- plot_violin_pairs$plot_violin[[1]] %>% ggarrange(common.legend = TRUE)
 
 
 
@@ -708,76 +726,57 @@ plot_patient_pairs <- df_univariate_02 %>%
                     ) +
                     labs(
                         x = NULL,
-                        y = score %>% str_replace("\\(", "\n("),
+                        y = "dd-cfDNA (cp/mL)",
                         col = "STUDY_EVALUATION_ID     ",
                         parse = TRUE
                     ) +
-                    coord_cartesian(xlim = c(1.3, 2.7)) +
+                    scale_y_continuous(
+                        breaks = c(0, 1, 10, 100, 1000),
+                        labels = c(0, 1, 10, 100, 1000),
+                        minor_breaks = log_ticks,
+                        trans = log10zero
+                    ) +
+                    coord_cartesian(xlim = c(1.3, 2.7), ylim = c(0, 1000)) +
                     theme_bw() +
                     theme(
+                        axis.ticks.length.y = unit(0.25, "cm"),
                         axis.title = element_text(size = 15),
                         axis.text = element_text(size = 12, colour = "black"),
                         panel.grid = element_blank(),
                         strip.text = element_text(size = 12, colour = "black"),
-                        legend.position = "top",
+                        legend.position = "none",
                         legend.title = element_text(size = 15, hjust = 0.66, vjust = 1, face = "bold"),
                         legend.text = element_text(size = 15),
                     ) +
                     facet_wrap(data$Felz) +
-                    guides(col = guide_legend(nrow = 1))
+                    guides(
+                        col = guide_legend(nrow = 1),
+                        y = ggprism::guide_prism_minor()
+                    )
             }
         )
     )
 
 
 
-# MAKE JOINT BIOPSY PAIR PLOTS ####
-panel_pairs <- plot_violin_pairs %>%
-    dplyr::filter(category %in% c("ABMR", "TCMR")) %>%
-    pull(gg_line) %>%
-    ggarrange(
-        plotlist = .,
-        common.legend = TRUE,
-        ncol = 5,
-        nrow = 2,
-        align = "hv",
-        labels = c("A", "B", "C", "D", "E", "F", "G", "H", "I", "J"),
-        font.label = list(size = 20, color = "black", face = "bold")
-    )
-
-
-panel_patient_pairs <- plot_patient_pairs %>%
-    dplyr::filter(category %in% c("ABMR", "TCMR")) %>%
-    pull(gg_line) %>%
-    ggarrange(
-        plotlist = .,
-        common.legend = TRUE,
-        ncol = 5,
-        nrow = 2,
-        align = "hv",
-        labels = c("A", "B", "C", "D", "E", "F", "G", "H", "I", "J"),
-        font.label = list(size = 20, color = "black", face = "bold")
-    )
-
-
 
 # SAVE THE PLOTS ####
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vienna/G_Rstuff/output/"
 ggsave(
-    filename = paste(saveDir, "Felzartamab B1B2B3.png"),
-    plot = panel_pairs,
+    filename = paste(saveDir, "Felzartamab ddcfDNA.png"),
+    plot = plot_ddcfDNA,
     dpi = 600,
-    width = 60,
-    height = 22,
+    width = 18,
+    height = 14,
     units = "cm",
     bg = "white"
 )
 ggsave(
-    filename = paste(saveDir, "Felzartamab patient pairs.png"),
-    plot = panel_patient_pairs,
+    filename = paste(saveDir, "Felzartamab ddcfDNA patient pairs.png"),
+    plot = plot_patient_pairs$gg_line[[1]],
     dpi = 600,
-    width = 60,
-    height = 22,
+    width = 18,
+    height = 12,
     units = "cm",
     bg = "white"
 )
