@@ -759,7 +759,6 @@ plot_patient_pairs <- df_univariate_02 %>%
 
 
 
-
 # SAVE THE PLOTS ####
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vienna/G_Rstuff/output/"
 ggsave(

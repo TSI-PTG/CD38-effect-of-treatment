@@ -33,7 +33,7 @@ options(dplyr.reframe.inform = FALSE)
 # source plot function
 source("C:/R/CD38-effect-of-treatment/code/PERMANOVA ART/plot.gg_violin_interaction.r")
 # laod reference set
-load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vienna/G_Rstuff/data/vienna_1208_6Mar24.RData")
+load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vienna/G_Rstuff/data/vienna_5086_6Mar24.RData")
 
 
 # DEFINE SEED ####
@@ -56,7 +56,7 @@ features <- c(ABMRrelated, TCMRrelated, Macrophage, Injurylate)
 
 
 # PATIENT SUMMARIES ####
-patient_summary <- vienna_1208 %>%
+patient_summary <- vienna_5086 %>%
     pData() %>%
     dplyr::select(Center, STUDY_EVALUATION_ID, Felzartamab_presumed, CEL, Group) %>%
     tibble() %>%
@@ -104,7 +104,7 @@ patient_summary %>%
     flextable::border(border = fp_border(), part = "all") %>%
     flextable::autofit()
 
-vienna_1208[, vienna_1208$STUDY_EVALUATION_ID %nin% c(15, 18)] %>%
+vienna_5086[, vienna_5086$STUDY_EVALUATION_ID %nin% c(15, 18)] %>%
     pData() %>%
     dplyr::select(Felzartamab_presumed, Group) %>%
     table() %>%
@@ -113,8 +113,8 @@ vienna_1208[, vienna_1208$STUDY_EVALUATION_ID %nin% c(15, 18)] %>%
 
 
 # DEFINE THE SET ####
-set <- vienna_1208[, vienna_1208$STUDY_EVALUATION_ID %nin% c(15, 18)]
-# set <- vienna_1208[, vienna_1208$STUDY_EVALUATION_ID != 15 & vienna_1208$CEL != "FBN003_NBN010_B2_(PrimeView).CEL"]
+set <- vienna_5086[, vienna_5086$STUDY_EVALUATION_ID %nin% c(15, 18)]
+# set <- vienna_5086[, vienna_5086$STUDY_EVALUATION_ID != 15 & vienna_5086$CEL != "FBN003_NBN010_B2_(PrimeView).CEL"]
 
 
 # WRANGLE THE PHENOTYPE DATA ####
@@ -201,8 +201,8 @@ df_permanova <- df00 %>%
             }
         )
     )
-df_permanova$permanova[[1]] %>% str()
-df_permanova$permanova_pairwise[[1]]
+df_permanova$permanova
+# df_permanova$permanova_pairwise[[1]]
 
 
 
@@ -661,10 +661,11 @@ flextable_pairwise %>% print(preview = "pptx")
 # PLOTTING GLOBALS ####
 dodge <- 0.3
 
+
 # MAKE BIOPSY PAIR PLOTS ####
 plot_violin_pairs <- df_univariate_02 %>%
     mutate(
-        gg_line = pmap(
+        plot_violin = pmap(
             list(data, variable, score, medians, medians_delta, art_con_interaction_default_tidy),
             gg_violin_interaction
         )
@@ -675,7 +676,7 @@ plot_violin_pairs <- df_univariate_02 %>%
 # MAKE JOINT PATIENT PAIR PLOTS ####
 plot_patient_pairs <- df_univariate_02 %>%
     mutate(
-        gg_line = pmap(
+        plot_patient = pmap(
             list(data, variable, score),
             function(data, variable, score) {
                 data <- data %>%
@@ -734,7 +735,7 @@ plot_patient_pairs <- df_univariate_02 %>%
 # MAKE JOINT BIOPSY PAIR PLOTS ####
 panel_pairs <- plot_violin_pairs %>%
     dplyr::filter(category %in% c("ABMR", "TCMR")) %>%
-    pull(gg_line) %>%
+    pull(plot_violin) %>%
     ggarrange(
         plotlist = .,
         common.legend = TRUE,
@@ -748,11 +749,12 @@ panel_pairs <- plot_violin_pairs %>%
 
 panel_patient_pairs <- plot_patient_pairs %>%
     dplyr::filter(category %in% c("ABMR", "TCMR")) %>%
-    pull(gg_line) %>%
+    pull(plot_patient) %>%
     ggarrange(
         plotlist = .,
         common.legend = TRUE,
         ncol = 5,
+
         nrow = 2,
         align = "hv",
         labels = c("A", "B", "C", "D", "E", "F", "G", "H", "I", "J"),
@@ -764,7 +766,7 @@ panel_patient_pairs <- plot_patient_pairs %>%
 # SAVE THE PLOTS ####
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vienna/G_Rstuff/output/"
 ggsave(
-    filename = paste(saveDir, "Felzartamab B1B2B3.png"),
+    filename = paste(saveDir, "Felzartamab scores 5086.png"),
     plot = panel_pairs,
     dpi = 600,
     width = 60,
@@ -773,7 +775,7 @@ ggsave(
     bg = "white"
 )
 ggsave(
-    filename = paste(saveDir, "Felzartamab patient pairs.png"),
+    filename = paste(saveDir, "Felzartamab patient pairs 5086.png"),
     plot = panel_patient_pairs,
     dpi = 600,
     width = 60,

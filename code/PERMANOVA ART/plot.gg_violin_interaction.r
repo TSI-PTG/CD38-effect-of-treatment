@@ -30,7 +30,6 @@ gg_violin_interaction <- function(data, variable, score, medians, medians_delta,
     #     reframe(median = median(value), .by = c(Group, Felz)) %>%
     #     spread(Group, median) %>%
     #     mutate(delta = FU1 - Index, delta2 = FU2 - FU1)
-    trans <- ifelse(variable == "cfDNA", rlang::sym("log10zero"), NULL)
     data <- data %>%
         left_join(
             data %>%
