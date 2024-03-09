@@ -477,12 +477,50 @@ dodge <- 0.3
 
 
 # MAKE BIOPSY PAIR PLOTS ####
+df_plot$data_plot[[1]]$data[[1]] %>%
+    dplyr::filter(Patient == 9)
+
+
+df_plot$data_plot[[1]]$data[[1]] %>%
+    dplyr::select(Patient, Group, cfDNA, delta, delta2) %>%
+    mutate(
+                        delta_prop = case_when(
+                            Group == "Index" ~ lead(cfDNA) / cfDNA,
+                            Group == "FU1" ~ cfDNA / lag(cfDNA),
+                            Group == "FU2" ~ cfDNA / lag(cfDNA),
+                        )%>% log2(),
+                        delta_prop = case_when(
+                            delta_prop == -Inf ~ min(delta_prop[delta_prop != -Inf]),
+                            delta_prop == Inf ~ max(delta_prop[delta_prop != Inf]),
+                            TRUE ~ delta_prop
+                        )
+    ) %>%
+    print(n = "all")
+
+
+
+
+c(min(df_plot$data_plot[[1]]$data[[1]]$delta), max(df_plot$data_plot[[1]]$data[[1]]$delta))
+
+
 plot_violin_pairs <- df_plot %>%
     mutate(
         plot_violin = pmap(
             list(data_plot),
             function(data_plot) {
-                data <- data_plot$data[[1]]
+                data <- data_plot$data[[1]] %>%
+                    mutate(
+                        delta_prop = case_when(
+                            Group == "Index" ~ lead(cfDNA) / cfDNA,
+                            Group == "FU1" ~ cfDNA / lag(cfDNA),
+                            Group == "FU2" ~ cfDNA / lag(cfDNA),
+                        )%>% log2(),
+                        delta_prop = case_when(
+                            delta_prop == -Inf ~ min(delta_prop[delta_prop != -Inf]),
+                            delta_prop == Inf ~ max(delta_prop[delta_prop != Inf]),
+                            TRUE ~ delta_prop
+                        )
+                    )
                 delta_delta <- data_plot$delta_delta[[1]]
                 delta_delta_p <- data_plot$delta_delta_p[[1]]
                 ymax <- data_plot$ymax[[1]]
@@ -535,7 +573,7 @@ plot_violin_pairs <- df_plot %>%
                         mapping = aes(
                             x = Group,
                             y = value,
-                            col = delta
+                            col = delta_prop
                         ),
                         position = position_nudge(x = 0.1),
                         size = 2, alpha = 0.75
@@ -546,7 +584,7 @@ plot_violin_pairs <- df_plot %>%
                         mapping = aes(
                             x = Group,
                             y = value,
-                            col = delta
+                            col = delta_prop
                         ),
                         size = 2, alpha = 0.75
                     ) +
@@ -556,7 +594,7 @@ plot_violin_pairs <- df_plot %>%
                         mapping = aes(
                             x = Group,
                             y = value,
-                            col = delta2
+                            col = delta_prop
                         ),
                         position = position_nudge(x = -0.1),
                         size = 2, alpha = 0.75
@@ -565,7 +603,7 @@ plot_violin_pairs <- df_plot %>%
                         data = data %>% dplyr::filter(Group %in% c("Index", "FU1")),
                         mapping = aes(
                             x = Group,
-                            col = delta,
+                            col = delta_prop,
                             group = Patient
                         ),
                         position = position_nudge(
@@ -580,7 +618,7 @@ plot_violin_pairs <- df_plot %>%
                         data = data %>% dplyr::filter(Group %in% c("FU1", "FU2")),
                         mapping = aes(
                             x = Group,
-                            col = delta2,
+                            col = delta_prop  %>% lead,
                             group = Patient
                         ),
                         position = position_nudge(
@@ -633,13 +671,13 @@ plot_violin_pairs <- df_plot %>%
                         mid = "grey60",
                         high = "red",
                         midpoint = 0,
-                        breaks = c(min(data$delta), max(data$delta)),
+                        breaks = c(min(data$delta_prop), max(data$delta_prop)),
                         labels = c("improved", "worsened"),
                         guide = guide_colorbar(
                             title.position = "top",
                             barwidth = 20,
                             ticks = FALSE,
-                            label.hjust = c(1.1, -1.2),
+                            label.hjust = c(1.1, -0.1),
                             label.vjust = 8,
                             reverse = TRUE
                         ),
