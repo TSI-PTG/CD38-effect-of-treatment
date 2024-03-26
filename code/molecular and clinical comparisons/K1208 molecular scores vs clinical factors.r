@@ -207,7 +207,7 @@ data_delta <- data_02 %>%
             data,
             function(data) {
                 data %>%
-                    mutate(value_norm = value + min(value) + 0.01) %>% 
+                    mutate(value_norm = value + min(value) + 0.01) %>%
                     mutate(
                         delta = value - lag(value),
                         delta = ifelse(delta %>% is.na(), last(value) - first(value), delta),
@@ -219,7 +219,7 @@ data_delta <- data_02 %>%
                             TRUE ~ "FU2 - Index"
                         ) %>% factor(levels = c("FU1 - Index", "FU2 - FU1", "FU2 - Index")),
                         .by = Patient
-                    ) 
+                    )
             }
         )
     ) %>%
@@ -233,13 +233,13 @@ data_delta <- data_02 %>%
 
 # data_delta$delta[[5]]  %>% print(n="all")
 
-data_delta$data[[1]]  %>% colnames
+data_delta$data[[1]] %>% colnames()
 
 
 # MAKE SOME GENERAL PLOTS ####
 data_plots <- data_delta %>%
     mutate(
-        plot = pmap(
+        plot_ageTx = pmap(
             list(variable, contrast, data),
             function(variable, contrast, data) {
                 data %>%
@@ -250,26 +250,53 @@ data_plots <- data_delta %>%
                     ggplot(aes(x = Age_at_Tx, y = prop, col = Felz)) +
                     geom_point() +
                     geom_smooth(
-                    method = "gam", 
-                    formula = y ~ s(x, bs = "cs", k = 3), 
-                    na.rm = TRUE, 
-                    se = FALSE,
-                    show.legend = FALSE) +
+                        method = "gam",
+                        formula = y ~ s(x, bs = "cs", k = 3),
+                        na.rm = TRUE,
+                        se = FALSE,
+                        show.legend = FALSE
+                    ) +
                     labs(
                         col = NULL,
                         y = paste("\u394", variable)
-                        ) +
-                    facet_wrap(~ contrast) +
+                    ) +
+                    facet_wrap(~contrast) +
+                    theme_bw()
+            }
+        ),
+        plot_ageScreening = pmap(
+            list(variable, contrast, data),
+            function(variable, contrast, data) {
+                data %>%
+                    mutate(
+                        contrast = contrast,
+                        variable = variable
+                    ) %>%
+                    ggplot(aes(x = Age_at_Screening, y = prop, col = Felz)) +
+                    geom_point() +
+                    geom_smooth(
+                        method = "gam",
+                        formula = y ~ s(x, bs = "cs", k = 3),
+                        na.rm = TRUE,
+                        se = FALSE,
+                        show.legend = FALSE
+                    ) +
+                    labs(
+                        col = NULL,
+                        y = paste("\u394", variable)
+                    ) +
+                    facet_wrap(~contrast) +
                     theme_bw()
             }
         )
     )
 
 
-data_plots %>%
+
+plot_ageTx <-  data_plots %>%
     dplyr::filter(category == "ABMR") %>%
-    pull(plot) %>% 
- wrap_plots(.) +
+    pull(plot_ageTx) %>%
+    wrap_plots(.) +
     plot_layout(
         ncol = 3,
         guides = "collect",
@@ -277,3 +304,17 @@ data_plots %>%
     ) &
     theme(legend.position = "top") &
     guides(col = guide_legend(override.aes = list(size = 5)))
+
+
+plot_ageScreening <- data_plots %>%
+    dplyr::filter(category == "ABMR") %>%
+    pull(plot_ageScreening) %>%
+    wrap_plots(.) +
+    plot_layout(
+        ncol = 3,
+        guides = "collect",
+        axes = "collect"
+    ) &
+    theme(legend.position = "top") &
+    guides(col = guide_legend(override.aes = list(size = 5)))
+
