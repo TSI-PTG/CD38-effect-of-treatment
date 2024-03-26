@@ -15,7 +15,7 @@ d<- d |> dplyr::filter(STUDY_EVALUATION_ID != c(15, 18))
 
 # Inspect dataset
 library(tidyverse)
-library(summarytools)
+library(summarytools) # install.packages("summarytools")
 library(tidyverse)
 library(flextable)
 #Font einstellen einmalig: 

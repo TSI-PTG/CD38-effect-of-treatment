@@ -675,8 +675,9 @@ data_K1208 <- reduce(
     left_join(data_patient, by = c("Trial_Center", "STUDY_EVALUATION_ID", "Felzartamab")) %>%
     mutate(
         Trial_Center = Trial_Center %>% as.character(),
-        STUDY_EVALUATION_ID = STUDY_EVALUATION_ID %>% as.character(),
-        Felzartamab = Felzartamab %>% as.character()
+        STUDY_EVALUATION_ID = STUDY_EVALUATION_ID %>% as.numeric(),
+        Felzartamab = Felzartamab %>% as.numeric(),
+        Group = Group  %>% factor(levels = c("Index", "FU1", "FU2"))
     ) %>%
     relocate(names(data_patient), .before = 1)
 
@@ -684,7 +685,6 @@ data_K1208 <- reduce(
 
 # SAVE THE DATA ####
 save(data_K1208, file = "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vienna/G_Rstuff/data/data_K1208.RData")
-
 
 
 
