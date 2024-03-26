@@ -33,7 +33,8 @@ options(dplyr.reframe.inform = FALSE)
 # source plot function
 source("C:/R/CD38-effect-of-treatment/code/PERMANOVA ART/plot.gg_violin_interaction.r")
 # load reference set
-load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vienna/G_Rstuff/data/vienna_1208_6Mar24.RData")
+load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vienna/G_Rstuff/data/data_K1208.RData")
+
 
 
 # DEFINE SEED ####
@@ -41,37 +42,41 @@ seed <- 42
 
 
 # DEFINE CATEGORIES FOR FEATURES ####
-Rejectionrelated <- c("GRIT3", "Rej-RAT", "RejAA_NR")
+# Rejectionrelated <- c("GRIT3", "Rej-RAT", "RejAA_NR")
 ABMRrelated <- c("DSAST", "NKB", "ABMRpm", "ggt0", "ptcgt0") # "cggt0", "RejAA_EABMR", "RejAA_FABMR", "RejAA_LABMR")
 TCMRrelated <- c("QCAT", "TCB", "TCMRt", "tgt1", "igt1") # , "TCMR-RAT", )
-Endothelium <- c("ENDAT")
-Parenchyma <- c("KT1", "KT2")
-Macrophage <- c("AMAT1", "QCMAT")
-Injuryrecent <- c("FICOL", "IRRAT30", "IRITD3", "IRITD5")
-Injurylate <- c("IGT", "MCAT", "BAT", "cigt1", "ctgt1")
+# Endothelium <- c("ENDAT")
+# Parenchyma <- c("KT1", "KT2")
+# Macrophage <- c("AMAT1", "QCMAT")
+# Injuryrecent <- c("FICOL", "IRRAT30", "IRITD3", "IRITD5")
+# Injurylate <- c("IGT", "MCAT", "BAT", "cigt1", "ctgt1")
 
 
 # DEFINE FEATURES ####
-features <- c(ABMRrelated, TCMRrelated, Macrophage, Injurylate)
+features <- c(ABMRrelated, TCMRrelated)
 
 
 # PATIENT SUMMARIES ####
-patient_summary <- vienna_1208 %>%
-    pData() %>%
-    dplyr::select(Center, STUDY_EVALUATION_ID, Felzartamab_presumed, CEL, Group) %>%
+patient_summary <- data_K1208 %>%
+    dplyr::select(Trial_Center, STUDY_EVALUATION_ID, Felzartamab, CEL, Group) %>%
     tibble() %>%
     mutate(
         Followup = case_when(Group == "Index" ~ "Index\n(Baseline)", Group == "FU1" ~ "FU1\n(week24)", Group == "FU2" ~ "FU2\n(week52)"),
-        Felzartamab_presumed = Felzartamab_presumed %>% factor(),
+        Felzartamab = Felzartamab %>% factor(),
         STUDY_EVALUATION_ID = STUDY_EVALUATION_ID %>% factor()
     ) %>%
     dplyr::filter(CEL %nin% c("FBN003_NBN010_B2_(PrimeView).CEL", "FVI022_FVI022_B2_(PrimeView).CEL")) %>%
     dplyr::select(-Group) %>%
     pivot_wider(names_from = Followup, values_from = CEL) %>%
-    arrange(STUDY_EVALUATION_ID, Felzartamab_presumed)
+    arrange(STUDY_EVALUATION_ID, Felzartamab)
 
 patient_summary %>%
-    mutate(across(c("Index\n(Baseline)", "FU1\n(week24)", "FU2\n(week52)"), ~ ifelse(. %>% is.na(), NA, "X"))) %>%
+    mutate(
+        across(
+            c("Index\n(Baseline)", "FU1\n(week24)", "FU2\n(week52)"),
+            ~ ifelse(. %>% is.na() | . == "", NA, "X")
+        )
+    ) %>%
     flextable::flextable() %>%
     flextable::add_header_row(values = rep("Felzartamab study population", ncol_keys(.))) %>%
     flextable::merge_h(part = "header") %>%
@@ -104,37 +109,37 @@ patient_summary %>%
     flextable::border(border = fp_border(), part = "all") %>%
     flextable::autofit()
 
-vienna_1208[, vienna_1208$STUDY_EVALUATION_ID %nin% c(15, 18)] %>%
-    pData() %>%
-    dplyr::select(Felzartamab_presumed, Group) %>%
+data_K1208 %>%
+    dplyr::filter(STUDY_EVALUATION_ID %nin% c(15, 18))  %>% 
+    dplyr::select(Felzartamab, Group) %>%
     table() %>%
     as_tibble() %>%
     pivot_wider(names_from = Group, values_from = n)
 
 
 # DEFINE THE SET ####
-set <- vienna_1208[, vienna_1208$STUDY_EVALUATION_ID %nin% c(15, 18)]
-# set <- vienna_1208[, vienna_1208$STUDY_EVALUATION_ID != 15 & vienna_1208$CEL != "FBN003_NBN010_B2_(PrimeView).CEL"]
+set <- data_K1208 %>%
+    dplyr::filter(STUDY_EVALUATION_ID %nin% c(15, 18))
+
 
 
 # WRANGLE THE PHENOTYPE DATA ####
 df00 <- set %>%
-    pData() %>%
     tibble() %>%
     dplyr::rename(
         Patient = STUDY_EVALUATION_ID,
-        Felz = Felzartamab_presumed
+        Felz = Felzartamab
     ) %>%
     mutate(
         Patient = Patient %>% factor(),
         Group = Group %>% factor(levels = c("Index", "FU1", "FU2")),
         Felz = Felz %>% factor(labels = c("NoFelz", "Felz")),
-        TxBx = TxBx %>% as.numeric(),
+        # TxBx = TxBx %>% as.numeric(),
         Group_Felz = paste(Group, Felz, sep = ":") %>%
             factor(levels = c("Index:NoFelz", "FU1:NoFelz", "FU2:NoFelz", "Index:Felz", "FU1:Felz", "FU2:Felz"))
     ) %>%
     arrange(Patient, Group) %>%
-    expand_grid(category = c("ABMR", "TCMR", "Macrophage", "Injurylate")) %>%
+    expand_grid(category = c("ABMR", "TCMR")) %>%
     nest(.by = category) %>%
     mutate(
         features = map(
@@ -144,10 +149,6 @@ df00 <- set %>%
                     ABMRrelated
                 } else if (category == "TCMR") {
                     TCMRrelated
-                } else if (category == "Macrophage") {
-                    Macrophage
-                } else if (category == "Injurylate") {
-                    Injurylate
                 }
             }
         ),
@@ -156,7 +157,7 @@ df00 <- set %>%
             function(features, data) {
                 data %>%
                     dplyr::select(
-                        CEL, Patient, Center, Group, Felz, Group_Felz, TxBx,
+                        CEL, Patient, Trial_Center, Group, Felz, Group_Felz,
                         all_of(features)
                     )
             }
@@ -176,11 +177,11 @@ df_permanova <- df00 %>%
                 Group <- data$Group
                 Felz <- data$Felz
                 adonis2(
-                    features ~ Group * Felz + Patient,
+                    features ~ Group * Felz,
                     data = data,
                     method = "euclidean",
-                    by = "margin", # only specify margin if the sample sizes are unequal
-                    permutations = 10000
+                    # by = "margin", # only specify margin if the sample sizes are unequal
+                    permutations = 100000
                 )
             }
         ),
@@ -203,6 +204,7 @@ df_permanova <- df00 %>%
     )
 # df_permanova$permanova[[1]] %>% str()
 df_permanova$permanova_pairwise[[1]]
+df_permanova$permanova[[1]]
 
 
 
@@ -225,32 +227,20 @@ df_univariate_00 <- df_permanova %>%
                         variable = variable %>%
                             factor(
                                 levels = c(
-                                    "Rej-RAT", "GRIT3", "RejAA_NR",
                                     "ABMRpm", "ggt0", "cggt0", "ptcgt0", "NKB", "DSAST",
-                                    "RejAA_EABMR", "RejAA_FABMR", "RejAA_LABMR",
-                                    "TCMRt", "tgt1", "igt1", "TCB", "TCMR-RAT", "QCAT",
-                                    "AMAT1", "QCMAT", "BAT",
-                                    "FICOL", "IRRAT30", "IRITD3", "IRITD5",
-                                    "cigt1", "ctgt1", "IGT", "MCAT",
-                                    "KT1", "KT2"
+                                    "TCMRt", "tgt1", "igt1", "TCB", "TCMR-RAT", "QCAT"
                                 )
                             ),
                         annotation = case_when(
-                            variable %in% Rejectionrelated ~ "Rejection-related",
                             variable %in% TCMRrelated ~ "TCMR-related",
                             variable %in% ABMRrelated ~ "ABMR-related",
-                            variable %in% Endothelium ~ "Endothelium-related",
-                            variable %in% Parenchyma ~ "Parenchyma-related",
-                            variable %in% Macrophage ~ "Macrophage-related",
-                            variable %in% Injurylate ~ "Atrophy-fibrosis-related",
-                            variable %in% Injuryrecent ~ "Recent injury-related",
+    
                             TRUE ~ " "
                         ) %>%
                             factor(
                                 levels = c(
-                                    "Rejection-related", "ABMR-related", "TCMR-related",
-                                    "Macrophage-related", "Recent injury-related", "Atrophy-fibrosis-related",
-                                    "Parenchyma-related"
+                                    "ABMR-related", 
+                                    "TCMR-related"
                                 )
                             ),
                         score = case_when(
@@ -384,14 +374,7 @@ df_univariate_02 <- df_univariate_01 %>%
             function(art_con_interaction_default_tidy) {
                 art_con_interaction_default_tidy %>%
                     as.data.frame() %>%
-                    cldList(adj.p.value ~ Group:Felz, data = .) # %>%
-                #         arrange(Group %>%
-                #             factor(
-                #                 levels = c(
-                #                     "Index,NoFelz", "FU1,NoFelz",
-                #                     "Index,Felz", "FU1,Felz"
-                #                 )
-                #             ))
+                    cldList(adj.p.value ~ Group:Felz, data = .)
             }
         )
     )
@@ -639,7 +622,6 @@ flextable_pairwise <- data_pairwise_formatted %>%
     flextable::border(i = 1, part = "footer", border.bottom = fp_border()) %>%
     flextable::align(align = "center") %>%
     flextable::align(align = "center", part = "header") %>%
-    # flextable::valign(i = 3, j = ncol_keys(.), valign = "bottom", part = "header") %>%
     flextable::font(fontname = "Arial", part = "all") %>%
     flextable::fontsize(size = 8, part = "all") %>%
     flextable::fontsize(size = 8, part = "footer") %>%
@@ -782,4 +764,3 @@ panel_patient_pairs <- plot_patient_pairs %>%
 
 
 # END ####
-
