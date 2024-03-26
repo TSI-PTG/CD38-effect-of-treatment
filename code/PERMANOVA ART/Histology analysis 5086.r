@@ -34,6 +34,8 @@ options(dplyr.reframe.inform = FALSE)
 source("C:/R/CD38-effect-of-treatment/code/PERMANOVA ART/plot.gg_violin_interaction.r")
 # laod reference set
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vienna/G_Rstuff/data/vienna_5086_6Mar24.RData")
+# load histo data
+load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vienna/G_Rstuff/data/data_histo.RData")
 
 
 # DEFINE SEED ####
@@ -115,6 +117,7 @@ vienna_5086[, vienna_5086$STUDY_EVALUATION_ID %nin% c(15, 18)] %>%
 # DEFINE THE SET ####
 set <- vienna_5086[, vienna_5086$STUDY_EVALUATION_ID %nin% c(15, 18)]
 # set <- vienna_5086[, vienna_5086$STUDY_EVALUATION_ID != 15 & vienna_5086$CEL != "FBN003_NBN010_B2_(PrimeView).CEL"]
+
 
 
 # WRANGLE THE PHENOTYPE DATA ####
