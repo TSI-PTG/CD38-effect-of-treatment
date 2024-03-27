@@ -129,8 +129,8 @@ tbl1<- tbl1 %>%
 
 flextable::qflextable(tbl1) %>% 
   set_table_properties(layout = "autofit") %>%
-  set_header_labels(label = "Variables", Total = "Total (N=22)", 
-                    "0" = "Placebo (n=11)", "1" = "Felzartamab (n=11)") %>% 
+  set_header_labels(label = "Variables", Total = "Total (N=20)", 
+                    "0" = "Placebo (n=10)", "1" = "Felzartamab (n=10)") %>% 
   flextable::bold(i = NULL, part = "header") %>% 
   flextable::bold(i = c(1,7), j=1) %>%
   flextable::padding(i= c(13:15, 17:22), j=1, padding.left=20) %>% 
