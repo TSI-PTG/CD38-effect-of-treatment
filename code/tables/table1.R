@@ -102,7 +102,7 @@ tbl1<- tbl1_data %>% mutate(Felzartamab = factor(Felzartamab),
                             DSA_HLA_class_I_and_II_Screening = ff_label(DSA_HLA_class_I_and_II_Screening, "HLA class I and II DSA – no. (%)") , 
                             mfi_immunodominant = ff_label(mfi_immunodominant, "Peak MFI of DSA >10,000 – no. (%)") , 
                             HLA_DQ_DSA_Screening = ff_label(HLA_DQ_DSA_Screening, "Anti-DQ DSA – no. (%)"), 
-                            DSA_Number_Screening = ff_label(DSA_Number_Screening, " Median DSA (IQR) – n"))%>% 
+                            DSA_Number_Screening = ff_label(DSA_Number_Screening, "Median DSA (IQR) – n"))%>% 
   summary_factorlist(dependent, explanatory, 
                      total_col = T, 
                      cont = "median", 
@@ -129,8 +129,8 @@ flextable::qflextable(tbl1) %>%
   set_header_labels(label = "Variables", Total = "Total (N=22)", 
                     "0" = "Placebo (n=11)", "1" = "Felzartamab (n=11)") %>% 
   flextable::bold(i = NULL, part = "header") %>% 
-  flextable::bold(i = c(1,22), j=1) %>%
-  flextable::padding(i= c(14:16, 18:23), j=1, padding.left=20) %>% 
+  flextable::bold(i = c(1,7), j=1) %>%
+  flextable::padding(i= c(13:15, 17:22), j=1, padding.left=20) %>% 
   set_caption(caption="Table 1. Demographic and Characteristics of the Participants at Baseline.") %>%
   add_footer_lines("ABMR, antibody-mediated rejection; DSA, donor-specific antibody; eGFR, estimated glomerular filtration rate; HLA, human leukocyte antigen; IQR, interquartile range; MFI, mean fluorescence intensity") %>%
   hline_bottom(part = "body", border = fp_border(color = "black", width = 1)) |> 
@@ -138,7 +138,6 @@ flextable::qflextable(tbl1) %>%
   hline_top(part = "header", border = fp_border(color = "black", width = 1)) |> 
   flextable::save_as_docx(path =  here::here("tables", "table1.docx"), 
                           pr_section = prop_section(page_size = page_size(orient = "landscape"))) 
-
 
 
 
