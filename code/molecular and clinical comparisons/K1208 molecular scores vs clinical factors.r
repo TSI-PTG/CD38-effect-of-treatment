@@ -201,7 +201,7 @@ data_02$data_clinical[[1]]
 
 
 # CALCULATE CHANGE IN SCORES AMONG FOLLOW-UP ####
-data_delta <- data_02 %>%
+data_K1208_delta <- data_02 %>%
     mutate(
         delta = map(
             data,
@@ -213,6 +213,7 @@ data_delta <- data_02 %>%
                         delta = ifelse(delta %>% is.na(), last(value) - first(value), delta),
                         prop = value_norm / lag(value_norm),
                         prop = ifelse(prop %>% is.na(), last(value_norm) / first(value_norm), prop),
+                        percent = ifelse(prop > 1, prop * 100, -(1 - prop) * 100),
                         contrast = case_when(
                             Group == "FU1" ~ "FU1 - Index",
                             Group == "FU2" ~ "FU2 - FU1",
@@ -231,23 +232,42 @@ data_delta <- data_02 %>%
 
 
 
-# data_delta$delta[[5]]  %>% print(n="all")
+# SAVE PLOTS ####
+saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vienna/G_Rstuff/data/"
+save(data_K1208_delta, file = paste(saveDir, "data_K1208_patient_deltas.RData"))
 
+
+# DEFINE CLINICAL FEATURES OF INTEREST ####
 data_delta$data[[1]] %>% colnames()
+vars_clinical_continuous <- c("Age_at_Tx", "Age_at_Screening", "Years_to_ScreeningVisit", "Screening_GFR", "Screening_Prot_Krea")
+vars_clinical_discrete <- c("")
+
+data_delta$data[[1]] %>%
+    dplyr::select(Felz, DSA_HLA_class_I_Only_Screening) %>%
+    arrange(Felz)
 
 
 # MAKE SOME GENERAL PLOTS ####
 data_plots <- data_delta %>%
+    expand_grid(vars_clinical_continuous) %>%
     mutate(
-        plot_ageTx = pmap(
-            list(variable, contrast, data),
-            function(variable, contrast, data) {
+        plot_scatter = pmap(
+            list(variable, vars_clinical_continuous, contrast, data),
+            function(variable, vars_clinical_continuous, contrast, data) {
+                sym <- vars_clinical_continuous %>% sym()
                 data %>%
                     mutate(
                         contrast = contrast,
                         variable = variable
                     ) %>%
-                    ggplot(aes(x = Age_at_Tx, y = prop, col = Felz)) +
+                    ggplot(aes_string(x = sym, y = "percent", col = "Felz")) +
+                    geom_point(
+                        aes(fill = ABMRActivity_Banff19 %>% factor()),
+                        pch = 21,
+                        data = data %>% dplyr::filter(ABMRActivity_Banff19 == 1),
+                        col = "#fa0d0d",
+                        size = 2.5
+                    ) +
                     geom_point() +
                     geom_smooth(
                         method = "gam",
@@ -256,65 +276,61 @@ data_plots <- data_delta %>%
                         se = FALSE,
                         show.legend = FALSE
                     ) +
+                    scale_colour_manual(values = c("black", "#005eff")) +
+                    scale_fill_manual(values = c("#00000000")) +
                     labs(
+                        fill = "non-responder",
                         col = NULL,
-                        y = paste("\u394", variable)
+                        y = paste("%\u394", variable)
                     ) +
-                    facet_wrap(~contrast) +
-                    theme_bw()
-            }
-        ),
-        plot_ageScreening = pmap(
-            list(variable, contrast, data),
-            function(variable, contrast, data) {
-                data %>%
-                    mutate(
-                        contrast = contrast,
-                        variable = variable
-                    ) %>%
-                    ggplot(aes(x = Age_at_Screening, y = prop, col = Felz)) +
-                    geom_point() +
-                    geom_smooth(
-                        method = "gam",
-                        formula = y ~ s(x, bs = "cs", k = 3),
-                        na.rm = TRUE,
-                        se = FALSE,
-                        show.legend = FALSE
-                    ) +
-                    labs(
-                        col = NULL,
-                        y = paste("\u394", variable)
-                    ) +
-                    facet_wrap(~contrast) +
+                    # facet_wrap(~contrast) +
                     theme_bw()
             }
         )
     )
+data_plots$plot_scatter[[4]]
 
 
 
-plot_ageTx <-  data_plots %>%
-    dplyr::filter(category == "ABMR") %>%
-    pull(plot_ageTx) %>%
+
+
+
+
+
+
+
+
+
+# MAKE JOINT PLOTS ####
+plot_scatter_joint <- data_plots %>%
+    dplyr::filter(category == "ABMR", contrast == "FU1 - Index") %>%
+    pull(plot_scatter) %>%
     wrap_plots(.) +
     plot_layout(
-        ncol = 3,
+        ncol = 5,
         guides = "collect",
         axes = "collect"
     ) &
-    theme(legend.position = "top") &
-    guides(col = guide_legend(override.aes = list(size = 5)))
+    theme(
+        legend.position = "top",
+        legend.text = element_text(size = 15),
+        legend.title = element_text(size = 15)
+        ) &
+        guides(col = guide_legend(
+            override.aes = list(size = 8)
+        ))
 
 
-plot_ageScreening <- data_plots %>%
-    dplyr::filter(category == "ABMR") %>%
-    pull(plot_ageScreening) %>%
-    wrap_plots(.) +
-    plot_layout(
-        ncol = 3,
-        guides = "collect",
-        axes = "collect"
-    ) &
-    theme(legend.position = "top") &
-    guides(col = guide_legend(override.aes = list(size = 5)))
 
+
+# SAVE PLOTS ####
+saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vienna/G_Rstuff/output/"
+ggsave(
+    filename = paste(saveDir, "Felzartamab scores vs time 1208.png"),
+    plot = plot_scatter_joint,
+    dpi = 600,
+    width = 22,
+    height = 25,
+    units = "cm",
+    bg = "white"
+)

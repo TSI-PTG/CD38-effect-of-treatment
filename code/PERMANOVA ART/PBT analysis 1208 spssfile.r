@@ -122,7 +122,7 @@ set <- data_K1208 %>%
     dplyr::filter(STUDY_EVALUATION_ID %nin% c(15, 18))
 
 
-
+sessionInfo()
 # WRANGLE THE PHENOTYPE DATA ####
 df00 <- set %>%
     tibble() %>%
