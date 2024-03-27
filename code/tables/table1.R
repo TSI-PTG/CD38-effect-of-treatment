@@ -8,7 +8,6 @@ d <- read_sav(
 )
 
 # Exclude Patient STUDY_EVALUATION_ID 15 and 18 
-
 d<- d |> filter(STUDY_EVALUATION_ID != c(15, 18))
 
 # Inspect dataset
