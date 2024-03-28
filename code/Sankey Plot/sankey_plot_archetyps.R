@@ -48,7 +48,7 @@ abmr_arche_felz<-
   geom_sankey_label(size = 2, fill="white") + 
   theme_sankey() +
   labs(x=c("Biopsy")) +
-  scale_fill_manual(values= alpha(c("#bc3c29", "#20854e", "#bc3c29", "#20854e", "#bc3c29","#20854e"),0.8)) + 
+  scale_fill_manual(values= alpha(c("cyan3", "blue", "purple", "black", "red"),0.8)) + 
   theme(legend.position = "none") + 
   theme(legend.title = element_blank(), 
         axis.text.x = element_text(size = 8.3, color = "black", family = "Arial"), 
@@ -87,17 +87,18 @@ df <- d_sankey %>%
 
 ### Plot 
 
-abmr_arche_placebo <-  ggplot(df, aes(x = x, 
-                                      next_x = next_x, 
-                                      node = node, 
-                                      next_node = next_node,
-                                      fill = factor(node),
-                                      label= node)) +
+abmr_arche_placebo <-  
+  ggplot(df, aes(x = x, 
+                 next_x = next_x, 
+                 node = node, 
+                 next_node = next_node,
+                 fill = factor(node),
+                 label= node)) +
   geom_sankey(flow.alpha = 0.4, flow.fill= "grey")  + 
   geom_sankey_label(size = 2, fill="white") + 
   theme_sankey() +
   labs(x="Biopsy") +
-  scale_fill_manual(values= alpha(c("#bc3c29", "#20854e", "#bc3c29", "#20854e", "#bc3c29","#20854e"),0.8)) + 
+  scale_fill_manual(values= alpha(c("cyan3", "blue", "purple", "black", "red"),0.8)) + 
   theme(legend.position = "none") + 
   theme(legend.title = element_blank(), 
         axis.text.x = element_text(size = 8.3, color = "black", family = "Arial"), 
