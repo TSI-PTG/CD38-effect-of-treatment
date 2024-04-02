@@ -549,6 +549,287 @@ data_MCAT <- data %>%
     dplyr::filter(Followup %>% str_detect("FU1b", negate = TRUE))
 
 
+
+# WRANGLE THE ENDAT SCORES FROM SPSS DATA ####
+data_ENDAT <- data %>%
+    dplyr::select(
+        contains("ENDAT_1208Set"),
+        Trial_Center,
+        STUDY_EVALUATION_ID,
+        Felzartamab
+    ) %>%
+    mutate_at(vars(contains("ENDAT_1208Set")), ~ as.numeric(.) %>% suppressWarnings()) %>%
+    pivot_longer(
+        cols = contains("ENDAT_1208Set"),
+        names_to = c("Group"),
+        names_pattern = "^(\\w+)_.*",
+        values_to = "ENDAT"
+    ) %>%
+    mutate(
+        Group = Group %>%
+            str_remove_all("_ENDAT"),
+        Followup = case_when(
+            Group == "Index" ~ "Day0",
+            Group == "FU0" ~ "Week12",
+            Group == "FU1" ~ "Week24",
+            Group == "FU2" ~ "Week52",
+        )
+    ) %>%
+    dplyr::filter(Followup %>% str_detect("FU1b", negate = TRUE))
+
+# WRANGLE THE KT1 SCORES FROM SPSS DATA ####
+data_KT1 <- data %>%
+    dplyr::select(
+        contains("KT1_1208Set"),
+        Trial_Center,
+        STUDY_EVALUATION_ID,
+        Felzartamab
+    ) %>%
+    mutate_at(vars(contains("KT1_1208Set")), ~ as.numeric(.) %>% suppressWarnings()) %>%
+    pivot_longer(
+        cols = contains("KT1_1208Set"),
+        names_to = c("Group"),
+        names_pattern = "^(\\w+)_.*",
+        values_to = "KT1"
+    ) %>%
+    mutate(
+        Group = Group %>%
+            str_remove_all("_KT1"),
+        Followup = case_when(
+            Group == "Index" ~ "Day0",
+            Group == "FU0" ~ "Week12",
+            Group == "FU1" ~ "Week24",
+            Group == "FU2" ~ "Week52",
+        )
+    ) %>%
+    dplyr::filter(Followup %>% str_detect("FU1b", negate = TRUE))
+
+# WRANGLE THE KT2 SCORES FROM SPSS DATA ####
+data_KT2 <- data %>%
+    dplyr::select(
+        contains("KT2_1208Set"),
+        Trial_Center,
+        STUDY_EVALUATION_ID,
+        Felzartamab
+    ) %>%
+    mutate_at(vars(contains("KT2_1208Set")), ~ as.numeric(.) %>% suppressWarnings()) %>%
+    pivot_longer(
+        cols = contains("KT2_1208Set"),
+        names_to = c("Group"),
+        names_pattern = "^(\\w+)_.*",
+        values_to = "KT2"
+    ) %>%
+    mutate(
+        Group = Group %>%
+            str_remove_all("_KT2"),
+        Followup = case_when(
+            Group == "Index" ~ "Day0",
+            Group == "FU0" ~ "Week12",
+            Group == "FU1" ~ "Week24",
+            Group == "FU2" ~ "Week52",
+        )
+    ) %>%
+    dplyr::filter(Followup %>% str_detect("FU1b", negate = TRUE))
+
+
+
+
+
+# WRANGLE THE FICOL SCORES FROM SPSS DATA ####
+data_FICOL <- data %>%
+    dplyr::select(
+        contains("FICOL_1208Set"),
+        Trial_Center,
+        STUDY_EVALUATION_ID,
+        Felzartamab
+    ) %>%
+    mutate_at(vars(contains("FICOL_1208Set")), ~ as.numeric(.) %>% suppressWarnings()) %>%
+    pivot_longer(
+        cols = contains("FICOL_1208Set"),
+        names_to = c("Group"),
+        names_pattern = "^(\\w+)_.*",
+        values_to = "FICOL"
+    ) %>%
+    mutate(
+        Group = Group %>%
+            str_remove_all("_FICOL"),
+        Followup = case_when(
+            Group == "Index" ~ "Day0",
+            Group == "FU0" ~ "Week12",
+            Group == "FU1" ~ "Week24",
+            Group == "FU2" ~ "Week52",
+        )
+    ) %>%
+    dplyr::filter(Followup %>% str_detect("FU1b", negate = TRUE))
+
+
+# WRANGLE THE IRRAT30 SCORES FROM SPSS DATA ####
+data_IRRAT30 <- data %>%
+    dplyr::select(
+        contains("IRRAT30_1208Set"),
+        Trial_Center,
+        STUDY_EVALUATION_ID,
+        Felzartamab
+    ) %>%
+    mutate_at(vars(contains("IRRAT30_1208Set")), ~ as.numeric(.) %>% suppressWarnings()) %>%
+    pivot_longer(
+        cols = contains("IRRAT30_1208Set"),
+        names_to = c("Group"),
+        names_pattern = "^(\\w+)_.*",
+        values_to = "IRRAT30"
+    ) %>%
+    mutate(
+        Group = Group %>%
+            str_remove_all("_IRRAT30"),
+        Followup = case_when(
+            Group == "Index" ~ "Day0",
+            Group == "FU0" ~ "Week12",
+            Group == "FU1" ~ "Week24",
+            Group == "FU2" ~ "Week52",
+        )
+    ) %>%
+    dplyr::filter(Followup %>% str_detect("FU1b", negate = TRUE))
+
+# WRANGLE THE IRITD3 SCORES FROM SPSS DATA ####
+data_IRITD3 <- data %>%
+    dplyr::select(
+        contains("IRITD3_1208Set"),
+        Trial_Center,
+        STUDY_EVALUATION_ID,
+        Felzartamab
+    ) %>%
+    mutate_at(vars(contains("IRITD3_1208Set")), ~ as.numeric(.) %>% suppressWarnings()) %>%
+    pivot_longer(
+        cols = contains("IRITD3_1208Set"),
+        names_to = c("Group"),
+        names_pattern = "^(\\w+)_.*",
+        values_to = "IRITD3"
+    ) %>%
+    mutate(
+        Group = Group %>%
+            str_remove_all("_IRITD3"),
+        Followup = case_when(
+            Group == "Index" ~ "Day0",
+            Group == "FU0" ~ "Week12",
+            Group == "FU1" ~ "Week24",
+            Group == "FU2" ~ "Week52",
+        )
+    ) %>%
+    dplyr::filter(Followup %>% str_detect("FU1b", negate = TRUE))
+
+
+# WRANGLE THE IRITD5 SCORES FROM SPSS DATA ####
+data_IRITD5 <- data %>%
+    dplyr::select(
+        contains("IRITD5_1208Set"),
+        Trial_Center,
+        STUDY_EVALUATION_ID,
+        Felzartamab
+    ) %>%
+    mutate_at(vars(contains("IRITD5_1208Set")), ~ as.numeric(.) %>% suppressWarnings()) %>%
+    pivot_longer(
+        cols = contains("IRITD5_1208Set"),
+        names_to = c("Group"),
+        names_pattern = "^(\\w+)_.*",
+        values_to = "IRITD5"
+    ) %>%
+    mutate(
+        Group = Group %>%
+            str_remove_all("_IRITD5"),
+        Followup = case_when(
+            Group == "Index" ~ "Day0",
+            Group == "FU0" ~ "Week12",
+            Group == "FU1" ~ "Week24",
+            Group == "FU2" ~ "Week52",
+        )
+    ) %>%
+    dplyr::filter(Followup %>% str_detect("FU1b", negate = TRUE))
+
+
+# WRANGLE THE GRIT3 SCORES FROM SPSS DATA ####
+data_GRIT3 <- data %>%
+    dplyr::select(
+        contains("GRIT3_1208Set"),
+        Trial_Center,
+        STUDY_EVALUATION_ID,
+        Felzartamab
+    ) %>%
+    mutate_at(vars(contains("GRIT3_1208Set")), ~ as.numeric(.) %>% suppressWarnings()) %>%
+    pivot_longer(
+        cols = contains("GRIT3_1208Set"),
+        names_to = c("Group"),
+        names_pattern = "^(\\w+)_.*",
+        values_to = "GRIT3"
+    ) %>%
+    mutate(
+        Group = Group %>%
+            str_remove_all("_GRIT3"),
+        Followup = case_when(
+            Group == "Index" ~ "Day0",
+            Group == "FU0" ~ "Week12",
+            Group == "FU1" ~ "Week24",
+            Group == "FU2" ~ "Week52",
+        )
+    ) %>%
+    dplyr::filter(Followup %>% str_detect("FU1b", negate = TRUE))
+
+
+# WRANGLE THE Rej_RAT SCORES FROM SPSS DATA ####
+data_Rej_RAT <- data %>%
+    dplyr::select(
+        contains("Rej_RAT_1208Set"),
+        Trial_Center,
+        STUDY_EVALUATION_ID,
+        Felzartamab
+    ) %>%
+    mutate_at(vars(contains("Rej_RAT_1208Set")), ~ as.numeric(.) %>% suppressWarnings()) %>%
+    pivot_longer(
+        cols = contains("Rej_RAT_1208Set"),
+        names_to = c("Group"),
+        names_pattern = "^(\\w+)_.*",
+        values_to = "Rej_RAT"
+    ) %>%
+    mutate(
+        Group = Group %>%
+            str_remove_all("_Rej_RAT"),
+        Followup = case_when(
+            Group == "Index" ~ "Day0",
+            Group == "FU0" ~ "Week12",
+            Group == "FU1" ~ "Week24",
+            Group == "FU2" ~ "Week52",
+        )
+    ) %>%
+    dplyr::filter(Followup %>% str_detect("FU1b", negate = TRUE))
+
+# WRANGLE THE RejAA_NR SCORES FROM SPSS DATA ####
+data_RejAA_NR <- data %>%
+    dplyr::select(
+        contains("RejAA_NR_1208Set"),
+        Trial_Center,
+        STUDY_EVALUATION_ID,
+        Felzartamab
+    ) %>%
+    mutate_at(vars(contains("RejAA_NR_1208Set")), ~ as.numeric(.) %>% suppressWarnings()) %>%
+    pivot_longer(
+        cols = contains("RejAA_NR_1208Set"),
+        names_to = c("Group"),
+        names_pattern = "^(\\w+)_.*",
+        values_to = "RejAA_NR"
+    ) %>%
+    mutate(
+        Group = Group %>%
+            str_remove_all("_RejAA_NR"),
+        Followup = case_when(
+            Group == "Index" ~ "Day0",
+            Group == "FU0" ~ "Week12",
+            Group == "FU1" ~ "Week24",
+            Group == "FU2" ~ "Week52",
+        )
+    ) %>%
+    dplyr::filter(Followup %>% str_detect("FU1b", negate = TRUE))
+
+
+
 # WRANGLE ABMRActivity_Banff19 FROM SPSS DATA ####
 data_ABMRActivity_Banff19 <- data %>%
     dplyr::select(
@@ -666,6 +947,9 @@ data_K1208 <- reduce(
         data_TCMRt, data_tgt1, data_igt1, data_TCB, data_QCAT,
         data_AMAT1, data_QCMAT,
         data_BAT, data_cigt1, data_ctgt1, data_IGT, data_MCAT,
+        data_ENDAT, data_KT1, data_KT2, 
+        data_FICOL, data_IRRAT30, data_IRITD3, data_IRITD5, data_GRIT3, 
+        data_Rej_RAT, data_RejAA_NR,
         data_ABMRActivity_Banff19, data_Active_ABMR_Banff19, data_Chronic_active_ABMR_Banff19,
         data_Borderline_Banff
     ),
