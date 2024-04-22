@@ -155,7 +155,10 @@ table_block_1 <- tab_block_1 %>%
     left_join(., means_Index_FU1, by = "AffyID") %>%
     # dplyr::relocate(c("BLADpos Mean", "BLADneg Mean"), .before = t) %>%
     dplyr::select(-AveExpr, -B) %>%
-    mutate(FC = 2^logFC, .after = logFC) %>%
+    mutate(
+        FC = 2^logFC, 
+        FCfelz = FU1_Felz/Index_Felz,
+        .after = logFC) %>%
     left_join(
         .,
         means_K5086 %>% dplyr::select(-Symb, -Gene, -PBT),
@@ -244,10 +247,16 @@ cellWidths <- c(1.5, 5, 3, 1, 1, 1, rep(1.1, 10)) # for individual tables up or 
 cellWidths %>% length()
 
 
+table_block_1 %>%
+    arrange(FCfelz)
+
+
+
 # FORMAT FLEXTABLES ####
 flextable_block_1 <- table_block_1 %>%
+    arrange(FCfelz) %>%
     dplyr::rename(FDR = adj.P.Val, Symbol = Symb) %>%
-    dplyr::select(-AffyID, -logFC, -t) %>%
+    dplyr::select(-AffyID, -logFC, -t, -FCfelz) %>%
     # distinct(Symbol, .keep_all = T) %>%
     dplyr::slice(1:20) %>%
     mutate(FC = FC %>% round(2)) %>%
@@ -392,12 +401,12 @@ limma_tables <- tibble(
 savedir1 <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vienna/G_Rstuff/output/"
 
 names(limma_tables$table) <- limma_tables$design
-openxlsx::write.xlsx(limma_tables$table,
-    asTable = TRUE,
-    file = paste(savedir1, "IQR_filtered_probes_limma_vienna_1208_7Mar24",
-        # Sys.Date(),
-        # format(Sys.time(), "_%I%M%p"),
-        ".xlsx",
-        sep = ""
-    )
-)
+# openxlsx::write.xlsx(limma_tables$table,
+#     asTable = TRUE,
+#     file = paste(savedir1, "IQR_filtered_probes_limma_vienna_1208_7Mar24",
+#         # Sys.Date(),
+#         # format(Sys.time(), "_%I%M%p"),
+#         ".xlsx",
+#         sep = ""
+#     )
+# )
