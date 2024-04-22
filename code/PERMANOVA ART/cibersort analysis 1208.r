@@ -31,7 +31,7 @@ log10zero <- scales::trans_new(
 # Suppress pesky dplyr reframe info
 options(dplyr.reframe.inform = FALSE)
 # source plot function
-source("C:/R/CD38-effect-of-treatment/code/PERMANOVA ART/plot.gg_violin_interaction.r")
+source("C:/R/CD38-effect-of-treatment/code/PERMANOVA ART/plot.gg_violin_interaction cibersort.r")
 # load reference set
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vienna/G_Rstuff/data/vienna_1208_cibersort_21apr24.RData")
 
@@ -142,7 +142,7 @@ df00 <- set %>%
             factor(levels = c("Index:NoFelz", "FU1:NoFelz", "FU2:NoFelz", "Index:Felz", "FU1:Felz", "FU2:Felz"))
     ) %>%
     arrange(Patient, Group) %>%
-    expand_grid(category = c("tcells", "nkcells", "myeloidcells", "bcells")) %>%
+    expand_grid(category = c("nkcells", "myeloidcells", "bcells","tcells")) %>%
     nest(.by = category) %>%
     mutate(
         features = map(
@@ -166,11 +166,11 @@ df00 <- set %>%
                     dplyr::select(
                         CEL, Patient, Center, Group, Felz, Group_Felz, TxBx,
                         all_of(features)
-                    )
+                    ) %>%
+                    mutate_at(features, ~ . * 100)
             }
         )
     )
-
 
 
 # PERMANOVA ####
@@ -233,7 +233,7 @@ df_univariate_00 <- df_permanova %>%
                         variable = variable %>%
                             factor(
                                 levels = c(
-                                    tcells, nkcells, myeloidcells, bcells
+                                    nkcells, myeloidcells, bcells,tcells
                                 )
                             ),
                         annotation = case_when(
@@ -245,7 +245,7 @@ df_univariate_00 <- df_permanova %>%
                         ) %>%
                             factor(
                                 levels = c(
-                                    "NK cells", "T cells", "myeloid cells", "B cells"
+                                    "NK cells",  "myeloid cells", "B cells", "T cells"
                                 )
                             ),
                         score = case_when(
@@ -270,6 +270,9 @@ df_univariate_00 <- df_permanova %>%
     arrange(annotation)
 
 
+df_univariate_00$data[[1]]
+
+
 # UNIVARIATE MEANS AND MEDIANS ####
 df_univariate_01 <- df_univariate_00 %>%
     mutate(
@@ -283,6 +286,27 @@ df_univariate_01 <- df_univariate_00 %>%
                     reframe(
                         median = value %>% median(),
                         IQR = value %>% IQR(),
+                        .by = c(Group, Felz)
+                    ) %>%
+                    mutate(
+                        Group_Felz = paste(Felz, Group, sep = ":") %>%
+                            factor(levels = c(
+                                # "Index:NoFelz", "FU1:NoFelz", "FU2:NoFelz",
+                                # "Index:Felz", "FU1:Felz", "FU2:Felz"
+                                "NoFelz:Index", "NoFelz:FU1", "NoFelz:FU2",
+                                "Felz:Index", "Felz:FU1", "Felz:FU2"
+                            ))
+                    ) %>%
+                    arrange(Group_Felz)
+            }
+        ),
+        means = map(
+            data,
+            function(data) {
+                means <- data %>%
+                    reframe(
+                        mean = value %>% mean(),
+                        se = value %>% se(),
                         .by = c(Group, Felz)
                     ) %>%
                     mutate(
@@ -313,12 +337,32 @@ df_univariate_01 <- df_univariate_00 %>%
                         .by = c(Group_pairwise)
                     )
             }
+        ),
+        means_delta = map(
+            means,
+            function(means) {
+                mean <- means %>%
+                    reframe(
+                        mean_delta = combn(mean, 2, diff) %>% as.numeric(),
+                        se_delta = combn(se, 2, base::mean) %>% as.numeric(),
+                        .by = c(Felz)
+                    ) %>%
+                    mutate(Group_pairwise = rep(c("Index - FU1", "Index - FU2", "FU1 - FU2"), 2)) %>%
+                    mutate(
+                        mean_delta_delta = combn(mean_delta, 2, diff) %>% as.numeric(),
+                        se_delta_delta = combn(se_delta, 2, mean) %>% as.numeric(),
+                        .by = c(Group_pairwise)
+                    )
+            }
         )
     )
 
 df_univariate_01$data[[1]]
-df_univariate_01$medians[[1]]
+df_univariate_01$medians[[1]] 
+df_univariate_01$means[[1]] 
 df_univariate_01$medians_delta[[1]]
+df_univariate_01$means_delta[[1]]
+
 
 
 # UNIVARIATE NONPARAMETRIC TESTS ####
@@ -382,7 +426,7 @@ title_art <- paste("Table i. Non-parametric ANOVA (ART) of molecular scores in b
 title_art_pairwise <- paste("Table i. Pairwise Non-parametric ANOVA (ART) of molecular scores in biopsies from treated vs untreated patients")
 
 res_art_flextable <- df_univariate_02 %>%
-    arrange(annotation) %>% 
+    arrange(annotation) %>%
     dplyr::select(annotation, n_cat, score, art_aov) %>%
     unnest(everything()) %>%
     dplyr::rename(p.value = `Pr(>F)`) %>%
@@ -631,12 +675,15 @@ dodge <- 0.3
 
 # MAKE BIOPSY PAIR PLOTS ####
 plot_violin_pairs <- df_univariate_02 %>%
+    dplyr::filter(variable != "CD8effmemTcells")  %>% 
     mutate(
         plot_violin = pmap(
-            list(data, variable, score, medians, medians_delta, art_con_interaction_default_tidy),
+            list(data, annotation, variable, score, medians, medians_delta, art_con_interaction_default_tidy),
             gg_violin_interaction
         )
     )
+plot_violin_pairs$plot_violin[[1]]
+
 
 
 # MAKE JOINT PATIENT PAIR PLOTS ####
@@ -706,35 +753,36 @@ panel_pairs <- plot_violin_pairs %>%
         ncol = 5,
         nrow = 2,
         align = "hv",
-        labels = c("A", "B", "C", "D", "E", "F", "G", "H", "I", "J"),
+        labels = c("A", "B", "C", "D", "E", "F", "G", "H", "I"),
         font.label = list(size = 20, color = "black", face = "bold")
     )
 
-panel_patient_pairs <- plot_patient_pairs %>%
-    dplyr::filter(category %in% c("ABMR", "TCMR")) %>%
-    pull(plot_patient) %>%
-    ggarrange(
-        plotlist = .,
-        common.legend = TRUE,
-        ncol = 5,
-        nrow = 2,
-        align = "hv",
-        labels = c("A", "B", "C", "D", "E", "F", "G", "H", "I", "J"),
-        font.label = list(size = 20, color = "black", face = "bold")
-    )
+
+# panel_patient_pairs <- plot_patient_pairs %>%
+#     dplyr::filter(category %in% c("ABMR", "TCMR")) %>%
+#     pull(plot_patient) %>%
+#     ggarrange(
+#         plotlist = .,
+#         common.legend = TRUE,
+#         ncol = 5,
+#         nrow = 2,
+#         align = "hv",
+#         labels = c("A", "B", "C", "D", "E", "F", "G", "H", "I", "J"),
+#         font.label = list(size = 20, color = "black", face = "bold")
+#     )
 
 
 # SAVE THE PLOTS ####
-# saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vienna/G_Rstuff/output/"
-# ggsave(
-#     filename = paste(saveDir, "Felzartamab scores 1208.png"),
-#     plot = panel_pairs,
-#     dpi = 600,
-#     width = 60,
-#     height = 22,
-#     units = "cm",
-#     bg = "white"
-# )
+saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/output/"
+ggsave(
+    filename = paste(saveDir, "Felzartamab cibersort 1208.png"),
+    plot = panel_pairs,
+    dpi = 600,
+    width = 60,
+    height = 22,
+    units = "cm",
+    bg = "white"
+)
 # ggsave(
 #     filename = paste(saveDir, "Felzartamab patient pairs 1208.png"),
 #     plot = panel_patient_pairs,
