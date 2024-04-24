@@ -128,7 +128,10 @@ patient_summary %>%
 # DEFINE THE SET ####
 set <- vienna_1208_cibersort %>%
     dplyr::filter(STUDY_EVALUATION_ID %nin% c(15, 18)) %>%
-    mutate(NKFCGR3A = NKFCGR3Alo + NKFCGR3Alo)
+    mutate(NKFCGR3A = NKFCGR3Alo + NKFCGR3Ahi)
+
+
+
 
 
 
@@ -785,8 +788,8 @@ ggsave(
     filename = paste(saveDir, "Felzartamab cibersort 1208 (mergedNK).png"),
     plot = panel_pairs,
     dpi = 600,
-    width = 20,
-    height = 20,
+    width = 18,
+    height = 16,
     units = "cm",
     bg = "white"
 )
