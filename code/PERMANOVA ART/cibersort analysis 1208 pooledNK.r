@@ -36,6 +36,12 @@ source("C:/R/CD38-effect-of-treatment/code/PERMANOVA ART/plot.gg_violin_interact
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vienna/G_Rstuff/data/vienna_1208_cibersort_21apr24.RData")
 
 
+# # MERGE NK CELLS ####
+# vienna_1208_cibersort <- vienna_1208_cibersort %>%
+#     dplyr::filter(STUDY_EVALUATION_ID %nin% c(15, 18)) %>%
+#     mutate(NKFCGR3A = NKFCGR3Alo + NKFCGR3Alo)
+
+
 # DEFINE SEED ####
 seed <- 42
 
@@ -62,10 +68,8 @@ myeloidcells <- c(
     "MyeloidFCGR3Alo"
 )
 nkcells <- c(
-    "NKFCGR3Alo",
-    "NKFCGR3Ahi"
+    "NKFCGR3A"
 )
-
 
 
 # DEFINE FEATURES ####
@@ -123,7 +127,9 @@ patient_summary %>%
 
 # DEFINE THE SET ####
 set <- vienna_1208_cibersort %>%
-    dplyr::filter(STUDY_EVALUATION_ID %nin% c(15, 18))
+    dplyr::filter(STUDY_EVALUATION_ID %nin% c(15, 18)) %>%
+    mutate(NKFCGR3A = NKFCGR3Alo + NKFCGR3Alo)
+
 
 
 # WRANGLE THE PHENOTYPE DATA ####
@@ -142,7 +148,7 @@ df00 <- set %>%
             factor(levels = c("Index:NoFelz", "FU1:NoFelz", "FU2:NoFelz", "Index:Felz", "FU1:Felz", "FU2:Felz"))
     ) %>%
     arrange(Patient, Group) %>%
-    expand_grid(category = c("nkcells", "myeloidcells", "bcells","tcells")) %>%
+    expand_grid(category = c("nkcells", "myeloidcells", "bcells", "tcells")) %>%
     nest(.by = category) %>%
     mutate(
         features = map(
@@ -233,7 +239,7 @@ df_univariate_00 <- df_permanova %>%
                         variable = variable %>%
                             factor(
                                 levels = c(
-                                    nkcells, myeloidcells, bcells,tcells
+                                    nkcells, myeloidcells, bcells, tcells
                                 )
                             ),
                         annotation = case_when(
@@ -245,7 +251,7 @@ df_univariate_00 <- df_permanova %>%
                         ) %>%
                             factor(
                                 levels = c(
-                                    "NK cells",  "myeloid cells", "B cells", "T cells"
+                                    "NK cells", "myeloid cells", "B cells", "T cells"
                                 )
                             ),
                         score = case_when(
@@ -256,6 +262,7 @@ df_univariate_00 <- df_permanova %>%
                             variable == "CD8temraTcells" ~ "CD8+ temra",
                             variable == "NKFCGR3Alo" ~ paste("CD16+ Fc", "\u03B3", "RIIIA+lo", sep = ""),
                             variable == "NKFCGR3Ahi" ~ paste("CD16+ Fc", "\u03B3", "RIIIA+hi", sep = ""),
+                            variable == "NKFCGR3A" ~ paste("CD16+ Fc", "\u03B3", "RIIIA", sep = ""),
                             variable == "MyeloidFCGR3Alo" ~ paste("CD14+ Fc", "\u03B3", "RIIIA+lo", sep = ""),
                             variable == "MyeloidFCGR3Ahi" ~ paste("CD16+ Fc", "\u03B3", "RIIIA+hi", sep = ""),
                             variable == "Bcells" ~ "B cells",
@@ -358,8 +365,8 @@ df_univariate_01 <- df_univariate_00 %>%
     )
 
 df_univariate_01$data[[1]]
-df_univariate_01$medians[[1]] 
-df_univariate_01$means[[1]] 
+df_univariate_01$medians[[1]]
+df_univariate_01$means[[1]]
 df_univariate_01$medians_delta[[1]]
 df_univariate_01$means_delta[[1]]
 
@@ -527,7 +534,7 @@ data_delta_formatted <- df_univariate_02 %>%
         )
     ) %>%
     dplyr::select(annotation, score, Group_pairwise, Felz, delta, deltadelta) %>%
-    distinct(Group_pairwise, annotation, score, Felz, .keep_all = TRUE) %>%
+    distinct(Group_pairwise, score, Felz, .keep_all = TRUE) %>%
     nest(
         .by = c(annotation, score, Group_pairwise),
         medians = everything()
@@ -640,7 +647,7 @@ flextable_pairwise <- data_pairwise_formatted %>%
     flextable::add_header_row(top = TRUE, values = header1) %>%
     flextable::add_header_row(top = TRUE, values = rep(title_art_pairwise, ncol_keys(.))) %>%
     flextable::add_footer_row(values = footnoteText[[1]], colwidths = ncol_keys(.)) %>%
-    flextable::merge_v(j = 1) %>%
+    flextable::merge_v(j = 1:2) %>%
     flextable::merge_v(part = "header") %>%
     flextable::merge_h(part = "header") %>%
     flextable::border_remove() %>%
@@ -675,7 +682,7 @@ dodge <- 0.3
 
 # MAKE BIOPSY PAIR PLOTS ####
 plot_violin_pairs <- df_univariate_02 %>%
-    dplyr::filter(variable != "CD8effmemTcells")  %>% 
+    dplyr::filter(variable != "CD8effmemTcells") %>%
     mutate(
         plot_violin = pmap(
             list(data, annotation, variable, score, medians, medians_delta, art_con_interaction_default_tidy),
@@ -750,10 +757,10 @@ panel_pairs <- plot_violin_pairs %>%
     ggarrange(
         plotlist = .,
         common.legend = TRUE,
-        ncol = 5,
+        ncol = 4,
         nrow = 2,
         align = "hv",
-        labels = c("A", "B", "C", "D", "E", "F", "G", "H", "I"),
+        labels = c("A", "B", "C", "D", "E", "F", "G", "H"),
         font.label = list(size = 20, color = "black", face = "bold")
     )
 
@@ -775,7 +782,7 @@ panel_pairs <- plot_violin_pairs %>%
 # SAVE THE PLOTS ####
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/output/"
 ggsave(
-    filename = paste(saveDir, "Felzartamab cibersort 1208.png"),
+    filename = paste(saveDir, "Felzartamab cibersort 1208 (mergedNK).png"),
     plot = panel_pairs,
     dpi = 600,
     width = 60,
