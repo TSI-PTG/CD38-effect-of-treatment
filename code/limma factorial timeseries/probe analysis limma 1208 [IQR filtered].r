@@ -11,7 +11,7 @@ library(limma) # BiocManager::install("limma")
 # Custom operators, functions, and datasets
 "%nin%" <- function(a, b) match(a, b, nomatch = 0) == 0
 # load reference set
-load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vienna/G_Rstuff/data/vienna_1208_6MAr24.RData")
+load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vienna/G_Rstuff/data/vienna_1208_6Mar24.RData")
 # load affymap
 load("Z:/DATA/Datalocks/Other data/affymap219_21Oct2019_1306_JR.RData")
 # load reference expression data
