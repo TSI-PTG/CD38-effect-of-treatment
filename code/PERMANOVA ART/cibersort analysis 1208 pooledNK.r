@@ -682,7 +682,7 @@ dodge <- 0.3
 
 # MAKE BIOPSY PAIR PLOTS ####
 plot_violin_pairs <- df_univariate_02 %>%
-    dplyr::filter(variable != "CD8effmemTcells") %>%
+    dplyr::filter(category == "nkcells") %>%
     mutate(
         plot_violin = pmap(
             list(data, annotation, variable, score, medians, medians_delta, art_con_interaction_default_tidy),
@@ -757,8 +757,8 @@ panel_pairs <- plot_violin_pairs %>%
     ggarrange(
         plotlist = .,
         common.legend = TRUE,
-        ncol = 4,
-        nrow = 2,
+        ncol = 1,
+        nrow = 1,
         align = "hv",
         labels = c("A", "B", "C", "D", "E", "F", "G", "H"),
         font.label = list(size = 20, color = "black", face = "bold")
@@ -785,8 +785,8 @@ ggsave(
     filename = paste(saveDir, "Felzartamab cibersort 1208 (mergedNK).png"),
     plot = panel_pairs,
     dpi = 600,
-    width = 60,
-    height = 22,
+    width = 20,
+    height = 20,
     units = "cm",
     bg = "white"
 )

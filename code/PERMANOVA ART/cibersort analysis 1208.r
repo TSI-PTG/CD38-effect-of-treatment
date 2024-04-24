@@ -32,6 +32,8 @@ log10zero <- scales::trans_new(
 options(dplyr.reframe.inform = FALSE)
 # source plot function
 source("C:/R/CD38-effect-of-treatment/code/PERMANOVA ART/plot.gg_violin_interaction cibersort.r")
+source("C:/R/CD38-effect-of-treatment/code/PERMANOVA ART/plot.gg_violin_interaction cibersort kidneycells.r")
+
 # load reference set
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vienna/G_Rstuff/data/vienna_1208_cibersort_21apr24.RData")
 
@@ -65,60 +67,20 @@ nkcells <- c(
     "NKFCGR3Alo",
     "NKFCGR3Ahi"
 )
-
+kidneycells <- c(
+    "Podocytes",
+    "ProximalTubulecells",
+    "LoopofHenle",
+    "Intercalatedcells",
+    "Endothelialcellsglomerular",
+    "Endothelialcellsperitubular",
+    "Endothelialcellsvasarecta",
+    "vascularsmoothmusclepericytes"
+)
 
 
 # DEFINE FEATURES ####
-features <- c(tcells, bcells, myeloidcells, nkcells)
-
-
-# PATIENT SUMMARIES ####
-patient_summary <- vienna_1208_cibersort %>%
-    dplyr::select(Center, STUDY_EVALUATION_ID, Felzartamab_presumed, CEL, Group) %>%
-    tibble() %>%
-    mutate(
-        Followup = case_when(Group == "Index" ~ "Index\n(Baseline)", Group == "FU1" ~ "FU1\n(week24)", Group == "FU2" ~ "FU2\n(week52)"),
-        Felzartamab_presumed = Felzartamab_presumed %>% factor(),
-        STUDY_EVALUATION_ID = STUDY_EVALUATION_ID %>% factor()
-    ) %>%
-    dplyr::filter(CEL %nin% c("FBN003_NBN010_B2_(PrimeView).CEL", "FVI022_FVI022_B2_(PrimeView).CEL")) %>%
-    dplyr::select(-Group) %>%
-    pivot_wider(names_from = Followup, values_from = CEL) %>%
-    arrange(STUDY_EVALUATION_ID, Felzartamab_presumed)
-
-patient_summary %>%
-    mutate(across(c("Index\n(Baseline)", "FU1\n(week24)", "FU2\n(week52)"), ~ ifelse(. %>% is.na(), NA, "X"))) %>%
-    flextable::flextable() %>%
-    flextable::add_header_row(values = rep("Felzartamab study population", ncol_keys(.))) %>%
-    flextable::merge_h(part = "header") %>%
-    flextable::merge_v(j = 1:2) %>%
-    flextable::fontsize(size = 8, part = "all") %>%
-    flextable::align(align = "center", part = "all") %>%
-    flextable::bg(bg = "white", part = "all") %>%
-    flextable::colformat_double(j = 2:3, digits = 2) %>%
-    flextable::border_remove() %>%
-    flextable::bold(part = "header") %>%
-    flextable::padding(padding = 0, part = "all") %>%
-    flextable::border(border = fp_border(), part = "all") %>%
-    flextable::autofit()
-# %>%
-# print(preview = "pptx")
-
-# table with cel id's
-patient_summary %>%
-    flextable::flextable() %>%
-    flextable::add_header_row(values = rep("Felzartamab study population", ncol_keys(.))) %>%
-    flextable::merge_h(part = "header") %>%
-    flextable::merge_v(j = 1:2) %>%
-    flextable::fontsize(size = 8, part = "all") %>%
-    flextable::align(align = "center", part = "all") %>%
-    flextable::bg(bg = "white", part = "all") %>%
-    flextable::colformat_double(j = 2:3, digits = 2) %>%
-    flextable::border_remove() %>%
-    flextable::bold(part = "header") %>%
-    flextable::padding(padding = 0, part = "all") %>%
-    flextable::border(border = fp_border(), part = "all") %>%
-    flextable::autofit()
+features <- c(tcells, bcells, myeloidcells, nkcells, kidneycells)
 
 
 # DEFINE THE SET ####
@@ -142,7 +104,7 @@ df00 <- set %>%
             factor(levels = c("Index:NoFelz", "FU1:NoFelz", "FU2:NoFelz", "Index:Felz", "FU1:Felz", "FU2:Felz"))
     ) %>%
     arrange(Patient, Group) %>%
-    expand_grid(category = c("nkcells", "myeloidcells", "bcells","tcells")) %>%
+    expand_grid(category = c("nkcells", "myeloidcells", "tcells", "bcells", "kidneycells")) %>%
     nest(.by = category) %>%
     mutate(
         features = map(
@@ -156,6 +118,8 @@ df00 <- set %>%
                     myeloidcells
                 } else if (category == "bcells") {
                     bcells
+                } else if (category == "kidneycells") {
+                    kidneycells
                 }
             }
         ),
@@ -233,7 +197,7 @@ df_univariate_00 <- df_permanova %>%
                         variable = variable %>%
                             factor(
                                 levels = c(
-                                    nkcells, myeloidcells, bcells,tcells
+                                    nkcells, myeloidcells, tcells, bcells, kidneycells
                                 )
                             ),
                         annotation = case_when(
@@ -241,14 +205,23 @@ df_univariate_00 <- df_permanova %>%
                             variable %in% nkcells ~ "NK cells",
                             variable %in% myeloidcells ~ "myeloid cells",
                             variable %in% bcells ~ "B cells",
+                            variable %in% kidneycells ~ "Kidney cells",
                             TRUE ~ " "
                         ) %>%
                             factor(
                                 levels = c(
-                                    "NK cells",  "myeloid cells", "B cells", "T cells"
+                                    "NK cells", "T cells", "myeloid cells", "B cells", "Kidney cells"
                                 )
                             ),
                         score = case_when(
+                            variable == "Podocytes" ~ "Podocytes",
+                            variable == "ProximalTubulecells" ~ "Proximal tubule",
+                            variable == "LoopofHenle" ~ "Loop of Henle",
+                            variable == "Intercalatedcells" ~ "Intercalated cells",
+                            variable == "Endothelialcellsglomerular" ~ "Endothelial (glomerular)",
+                            variable == "Endothelialcellsperitubular" ~ "Endothelial (peritubular)",
+                            variable == "Endothelialcellsvasarecta" ~ "Endothelial (vasarecta)",
+                            variable == "vascularsmoothmusclepericytes" ~ "Vascular smooth muscle pericytes",
                             variable == "CD4naiveTcells" ~ "CD4+ naive",
                             variable == "CD4memoryTcells" ~ "CD4+ memory",
                             variable == "CD8effectorTcells" ~ "CD8+ effector",
@@ -358,8 +331,8 @@ df_univariate_01 <- df_univariate_00 %>%
     )
 
 df_univariate_01$data[[1]]
-df_univariate_01$medians[[1]] 
-df_univariate_01$means[[1]] 
+df_univariate_01$medians[[1]]
+df_univariate_01$means[[1]]
 df_univariate_01$medians_delta[[1]]
 df_univariate_01$means_delta[[1]]
 
@@ -675,7 +648,7 @@ dodge <- 0.3
 
 # MAKE BIOPSY PAIR PLOTS ####
 plot_violin_pairs <- df_univariate_02 %>%
-    dplyr::filter(variable != "CD8effmemTcells")  %>% 
+    dplyr::filter(variable %nin%  c("CD8effmemTcells", kidneycells)) %>%
     mutate(
         plot_violin = pmap(
             list(data, annotation, variable, score, medians, medians_delta, art_con_interaction_default_tidy),
@@ -685,63 +658,74 @@ plot_violin_pairs <- df_univariate_02 %>%
 plot_violin_pairs$plot_violin[[1]]
 
 
-
-# MAKE JOINT PATIENT PAIR PLOTS ####
-plot_patient_pairs <- df_univariate_02 %>%
+# MAKE BIOPSY PAIR PLOTS ####
+plot_violin_pairs_kidneycells <- df_univariate_02 %>%
+    dplyr::filter(variable %in% kidneycells) %>%
     mutate(
-        plot_patient = pmap(
-            list(data, variable, score),
-            function(data, variable, score) {
-                data <- data %>%
-                    mutate(
-                        variable = variable,
-                        Felz = Felz %>% factor(labels = c("No Felzartamab", "Felzartamab"))
-                    )
-                data %>%
-                    ggplot(
-                        aes(
-                            x = Group,
-                            y = value,
-                            col = Patient,
-                            group = Patient
-                        )
-                    ) +
-                    geom_point(size = 5, position = position_dodge(width = dodge)) +
-                    geom_line(
-                        linewidth = 0.75,
-                        linetype = "dashed",
-                        position = position_dodge(width = dodge),
-                        show.legend = FALSE
-                    ) +
-                    geom_text(
-                        aes(label = Patient),
-                        size = 4,
-                        col = "black",
-                        show.legend = FALSE,
-                        position = position_dodge(width = dodge)
-                    ) +
-                    labs(
-                        x = NULL,
-                        y = score %>% str_replace("\\(", "\n("),
-                        col = "STUDY_EVALUATION_ID     ",
-                        parse = TRUE
-                    ) +
-                    coord_cartesian(xlim = c(1.3, 2.7)) +
-                    theme_bw() +
-                    theme(
-                        axis.title = element_text(size = 15),
-                        axis.text = element_text(size = 12, colour = "black"),
-                        panel.grid = element_blank(),
-                        strip.text = element_text(size = 12, colour = "black"),
-                        legend.position = "top",
-                        legend.title = element_text(size = 15, hjust = 0.66, vjust = 1, face = "bold"),
-                        legend.text = element_text(size = 15),
-                    ) +
-                    facet_wrap(data$Felz) +
-                    guides(col = guide_legend(nrow = 1))
-            }
+        plot_violin = pmap(
+            list(data, annotation, variable, score, medians, medians_delta, art_con_interaction_default_tidy),
+            gg_violin_interaction_kcells
         )
     )
+plot_violin_pairs_kidneycells$plot_violin[[1]]
+
+
+# # MAKE JOINT PATIENT PAIR PLOTS ####
+# plot_patient_pairs <- df_univariate_02 %>%
+#     mutate(
+#         plot_patient = pmap(
+#             list(data, variable, score),
+#             function(data, variable, score) {
+#                 data <- data %>%
+#                     mutate(
+#                         variable = variable,
+#                         Felz = Felz %>% factor(labels = c("No Felzartamab", "Felzartamab"))
+#                     )
+#                 data %>%
+#                     ggplot(
+#                         aes(
+#                             x = Group,
+#                             y = value,
+#                             col = Patient,
+#                             group = Patient
+#                         )
+#                     ) +
+#                     geom_point(size = 5, position = position_dodge(width = dodge)) +
+#                     geom_line(
+#                         linewidth = 0.75,
+#                         linetype = "dashed",
+#                         position = position_dodge(width = dodge),
+#                         show.legend = FALSE
+#                     ) +
+#                     geom_text(
+#                         aes(label = Patient),
+#                         size = 4,
+#                         col = "black",
+#                         show.legend = FALSE,
+#                         position = position_dodge(width = dodge)
+#                     ) +
+#                     labs(
+#                         x = NULL,
+#                         y = score %>% str_replace("\\(", "\n("),
+#                         col = "STUDY_EVALUATION_ID     ",
+#                         parse = TRUE
+#                     ) +
+#                     coord_cartesian(xlim = c(1.3, 2.7)) +
+#                     theme_bw() +
+#                     theme(
+#                         axis.title = element_text(size = 15),
+#                         axis.text = element_text(size = 12, colour = "black"),
+#                         panel.grid = element_blank(),
+#                         strip.text = element_text(size = 12, colour = "black"),
+#                         legend.position = "top",
+#                         legend.title = element_text(size = 15, hjust = 0.66, vjust = 1, face = "bold"),
+#                         legend.text = element_text(size = 15),
+#                     ) +
+#                     facet_wrap(data$Felz) +
+#                     guides(col = guide_legend(nrow = 1))
+#             }
+#         )
+#     )
 
 
 # MAKE JOINT BIOPSY PAIR PLOTS ####
@@ -757,32 +741,41 @@ panel_pairs <- plot_violin_pairs %>%
         font.label = list(size = 20, color = "black", face = "bold")
     )
 
+panel_pairs_kidneycells <- plot_violin_pairs_kidneycells %>%
+    pull(plot_violin) %>%
+    ggarrange(
+        plotlist = .,
+        common.legend = TRUE,
+        ncol = 4,
+        nrow = 2,
+        align = "hv",
+        labels = c("A", "B", "C", "D", "E", "F", "G", "H"),
+        font.label = list(size = 20, color = "black", face = "bold")
+    )
 
-# panel_patient_pairs <- plot_patient_pairs %>%
-#     dplyr::filter(category %in% c("ABMR", "TCMR")) %>%
-#     pull(plot_patient) %>%
-#     ggarrange(
-#         plotlist = .,
-#         common.legend = TRUE,
-#         ncol = 5,
-#         nrow = 2,
-#         align = "hv",
-#         labels = c("A", "B", "C", "D", "E", "F", "G", "H", "I", "J"),
-#         font.label = list(size = 20, color = "black", face = "bold")
-#     )
 
 
 # SAVE THE PLOTS ####
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/output/"
+# ggsave(
+#     filename = paste(saveDir, "Felzartamab cibersort 1208.png"),
+#     plot = panel_pairs,
+#     dpi = 600,
+#     width = 60,
+#     height = 22,
+#     units = "cm",
+#     bg = "white"
+# )
 ggsave(
-    filename = paste(saveDir, "Felzartamab cibersort 1208.png"),
-    plot = panel_pairs,
+    filename = paste(saveDir, "Felzartamab cibersort kidney cells 1208.png"),
+    plot = panel_pairs_kidneycells,
     dpi = 600,
     width = 60,
     height = 22,
     units = "cm",
     bg = "white"
 )
+
 # ggsave(
 #     filename = paste(saveDir, "Felzartamab patient pairs 1208.png"),
 #     plot = panel_patient_pairs,

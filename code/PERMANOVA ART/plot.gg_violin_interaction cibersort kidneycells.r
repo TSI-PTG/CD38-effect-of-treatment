@@ -1,4 +1,4 @@
-gg_violin_interaction <- function(data, annotation, variable, score, medians, medians_delta, art_con_interaction_default_tidy) {
+gg_violin_interaction_kcells <- function(data, annotation, variable, score, medians, medians_delta, art_con_interaction_default_tidy) {
     delta <- medians_delta %>%
         mutate(
             Felz = Felz %>% factor(labels = c("No Felzartamab", "Felzartamab"))
@@ -196,12 +196,12 @@ gg_violin_interaction <- function(data, annotation, variable, score, medians, me
             parse = TRUE
         ) +
         scale_color_gradient2(
-            low = "#00ff00bc",
+            low = "red",
             mid = "grey60",
-            high = "red",
+            high = "#00ff00bc",
             midpoint = 0,
             breaks = c(min(data$delta), max(data$delta)),
-            labels = c("improved", "worsened"),
+            labels = c("worsened","improved"),
             guide = guide_colorbar(
                 title.position = "top",
                 barwidth = 20,
