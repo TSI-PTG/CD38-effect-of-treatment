@@ -25,6 +25,32 @@ if (!exists("selected")) {
     selected <- genefilter(vienna_1208, ff)
 }
 set00 <- vienna_1208[selected, vienna_1208$STUDY_EVALUATION_ID %nin% c(15, 18)]
+set00 <- vienna_1208[,vienna_1208$STUDY_EVALUATION_ID %nin% c(15, 18)]
+
+
+# DEFINE SELECT ABMR GENES BY ABMRpm SCC IN K5086 ####
+abmr_genes <- c(
+    "PLA1A",
+    "ROBO4",
+    "GNLY",
+    "WARS",
+    "SH2D1B",
+    "GBP4",
+    "FGFBP2",
+    "LYPD5",
+    "CCL4",
+    "CDH5",
+    "CXCL11",
+    "PRF1",
+    "APOL3",
+    "IDO1",
+    "CX3CL1",
+    "CXCL9",
+    "ICAM2",
+    "S1PR5",
+    "KLRD1",
+    "RASIP1"
+)
 
 
 # DEFINE SEED ####
@@ -48,9 +74,9 @@ pData(set) <- set %>%
         Felz = Felz %>% factor(labels = c("NoFelz", "Felz")),
         TxBx = TxBx %>% as.numeric(),
         Group_Felz = paste(Group, Felz, sep = "_")
-         %>%
+        %>%
             factor(
-                levels = c("Index_NoFelz", "FU1_NoFelz","FU2_NoFelz", "Index_Felz", "FU1_Felz", "FU2_Felz"),
+                levels = c("Index_NoFelz", "FU1_NoFelz", "FU2_NoFelz", "Index_Felz", "FU1_Felz", "FU2_Felz"),
                 labels = c("Index_NoFelz", "FU1_NoFelz", "FU2_NoFelz", "Index_Felz", "FU1_Felz", "FU2_Felz")
             )
     ) %>%
@@ -65,7 +91,7 @@ set_Index_FU2 <- set[, set$Group != "FU1"]
 
 
 # BLOCK DESIGN FU1 - Index ####
-Group_Felz <- set_Index_FU1$Group_Felz  %>% droplevels
+Group_Felz <- set_Index_FU1$Group_Felz %>% droplevels()
 design_block01 <- model.matrix(~ 0 + Group_Felz)
 contrast_block_01 <- makeContrasts(
     "x =  (Group_FelzFU1_Felz-Group_FelzIndex_Felz)/2 - (Group_FelzFU1_NoFelz-Group_FelzIndex_NoFelz)/2",
@@ -156,9 +182,10 @@ table_block_1 <- tab_block_1 %>%
     # dplyr::relocate(c("BLADpos Mean", "BLADneg Mean"), .before = t) %>%
     dplyr::select(-AveExpr, -B) %>%
     mutate(
-        FC = 2^logFC, 
-        FCfelz = FU1_Felz/Index_Felz,
-        .after = logFC) %>%
+        FC = 2^logFC,
+        FCfelz = FU1_Felz / Index_Felz,
+        .after = logFC
+    ) %>%
     left_join(
         .,
         means_K5086 %>% dplyr::select(-Symb, -Gene, -PBT),
@@ -252,12 +279,12 @@ table_block_1 %>%
 
 
 
-# FORMAT FLEXTABLES ####
+# FORMAT FLEXTABLES block_1 ####
 flextable_block_1 <- table_block_1 %>%
     arrange(FCfelz) %>%
     dplyr::rename(FDR = adj.P.Val, Symbol = Symb) %>%
     dplyr::select(-AffyID, -logFC, -t, -FCfelz) %>%
-    # distinct(Symbol, .keep_all = T) %>%
+    distinct(Symbol, .keep_all = TRUE) %>%
     dplyr::slice(1:20) %>%
     mutate(FC = FC %>% round(2)) %>%
     mutate_at(
@@ -293,6 +320,50 @@ flextable_block_1 <- table_block_1 %>%
     flextable::width(width = cellWidths, unit = "cm") %>%
     flextable::width(., width = dim(.)$widths * 33 / (flextable_dim(.)$widths), unit = "cm")
 
+flextable_block_1_topABMR <- table_block_1 %>%
+    arrange(adj.P.Val) %>%
+    dplyr::rename(FDR = adj.P.Val, Symbol = Symb) %>%
+    dplyr::select(-AffyID, -logFC, -t, -FCfelz) %>%
+    distinct(Symbol, .keep_all = TRUE) %>%
+    dplyr::filter(Symbol %in% abmr_genes) %>%
+    mutate(FC = FC %>% round(2)) %>%
+    mutate_at(
+        vars(contains("p."), FDR),
+        ~ ifelse(
+            . < 0.01,
+            formatC(., digits = 0, format = "e"),
+            formatC(., digits = 3, format = "f")
+        )
+    ) %>%
+    flextable::flextable() %>%
+    flextable::delete_part("header") %>%
+    flextable::add_header_row(top = TRUE, values = header4_Index_FU1) %>%
+    flextable::add_header_row(top = TRUE, values = header3) %>%
+    flextable::add_header_row(top = TRUE, values = header2) %>%
+    flextable::add_header_row(top = TRUE, values = header1) %>%
+    flextable::add_header_row(values = rep(title, ncol_keys(.))) %>%
+    flextable::merge_v(part = "header") %>%
+    flextable::merge_h(part = "header") %>%
+    # flextable::bg(bg = "grey90", part = "header") %>%
+    flextable::bg(bg = "white", part = "all") %>%
+    flextable::border_remove() %>%
+    flextable::border(border = fp_border(), part = "all") %>%
+    flextable::align(part = "header", align = "center") %>%
+    flextable::align(part = "body", align = "center") %>%
+    flextable::valign(i = 2:4, valign = "bottom", part = "header") %>%
+    flextable::padding(padding.left = 3, padding.bottom = 0, padding.top = 0) %>%
+    flextable::font(fontname = "Arial", part = "all") %>%
+    flextable::fontsize(size = 7, part = "body") %>%
+    flextable::fontsize(size = 8, part = "header") %>%
+    flextable::fontsize(i = 1, size = 12, part = "header") %>%
+    flextable::bold(part = "header") %>%
+    flextable::width(width = cellWidths, unit = "cm") %>%
+    flextable::width(., width = dim(.)$widths * 33 / (flextable_dim(.)$widths), unit = "cm")
+
+
+
+
+# FORMAT FLEXTABLES block_2 ####
 flextable_block_2 <- table_block_2 %>%
     dplyr::rename(FDR = adj.P.Val, Symbol = Symb) %>%
     dplyr::select(-AffyID, -logFC, -t) %>%
@@ -332,6 +403,8 @@ flextable_block_2 <- table_block_2 %>%
     flextable::width(width = cellWidths, unit = "cm") %>%
     flextable::width(., width = dim(.)$widths * 33 / (flextable_dim(.)$widths), unit = "cm")
 
+
+# FORMAT FLEXTABLES block_2 ####
 flextable_block_3 <- table_block_3 %>%
     dplyr::rename(FDR = adj.P.Val, Symbol = Symb) %>%
     dplyr::select(-AffyID, -logFC, -t) %>%
@@ -371,8 +444,11 @@ flextable_block_3 <- table_block_3 %>%
     flextable::width(width = cellWidths, unit = "cm") %>%
     flextable::width(., width = dim(.)$widths * 33 / (flextable_dim(.)$widths), unit = "cm")
 
+
 # PRINT THE FLEXTABLES ####
 flextable_block_1 %>% print(preview = "pptx")
+flextable_block_1_topABMR %>% print(preview = "pptx")
+
 flextable_block_2 %>% print(preview = "pptx")
 flextable_block_3 %>% print(preview = "pptx")
 
@@ -388,7 +464,7 @@ limma_tables <- tibble(
         "Index_vs_FU1",
         "FU1_vs_FU2",
         "Index_vs_FU2"
-        ),
+    ),
     table = list(
         table_block_1,
         table_block_2,
