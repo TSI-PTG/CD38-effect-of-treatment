@@ -3,10 +3,13 @@
 library(tidyverse) # install.packages("tidyverse")
 library(readr) # install.packages("readr")
 library(haven) # install.packages("haven")
+library(openxlsx) # install.packages("openxlsx")
 # Bioconductor libraries
 library(Biobase) # BiocManager::install("Biobase")
 # Custom operators, functions, and datasets
 "%nin%" <- function(a, b) match(a, b, nomatch = 0) == 0
+# load affymap
+load("Z:/DATA/Datalocks/Other data/affymap219_21Oct2019_1306_JR.RData")
 # load data
 data <- read_spss("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vienna/G_Rstuff/data/Generalfile_Felzartamab SPSS.sav")
 # load reference set
@@ -44,9 +47,41 @@ vars_molecular <- Hmisc::.q(
 
 
 # DEFINE THE ABMR ACTIVITY GENES ####
-vars_molecular <- Hmisc::.q(
-    
+vars_abmr <- Hmisc::.q(
+    CCL4,
+    KLRD1,
+    GNLY,
+    CXCL11,
+    CXCL9,
+    PRF1,
+    WARS,
+    NKG7,
+    GBP4,
+    XCL1,
+    IRF1,
+    PSMB9,
+    IDO,
+    GZMB,
+    FGFBP2,
+    SH2D1B
 )
+
+data_abmr_genes <- vienna_1208 %>%
+    exprs() %>%
+    as.data.frame() %>%
+    mutate(means = rowMeans(.), .before = 1) %>%
+    as_tibble(rownames = "AffyID") %>%
+    right_join(affymap219 %>% dplyr::select(AffyID, Symb) %>% tibble(), ., by = "AffyID") %>%
+    dplyr::filter(Symb %in% vars_abmr) %>%
+    arrange(Symb, means) %>%
+    distinct(Symb, .keep_all = TRUE) %>%
+    dplyr::select(-AffyID, -means) %>%
+    pivot_longer(
+        -c("Symb"),
+        names_to = "CEL"
+    ) %>%
+    pivot_wider(names_from = Symb, values_from = "value") %>%
+    mutate_if(is.numeric, ~ 2^.)
 
 
 
@@ -100,6 +135,8 @@ data_CEL <- data %>%
         )
     )
 
+
+# WRANGLE THE dateBx FROM SPSS DATA ####
 data_dateBx <- data %>%
     dplyr::select(
         Trial_Center,
@@ -149,6 +186,7 @@ data_g <- data %>%
             Group == "FU2" ~ "Week52",
         )
     )
+
 
 # WRANGLE THE cg SCORES FROM SPSS DATA ####
 data_cg <- data %>%
@@ -392,7 +430,7 @@ data_Borderline_Banff <- data %>%
 
 
 # JOIN THE SPSS AND MOLECULAR SCORE DATA ####
-data_K1208 <- reduce(
+data_K1208_summary <- reduce(
     list(
         data_CEL,
         data_dateBx,
@@ -405,6 +443,7 @@ data_K1208 <- reduce(
 ) %>%
     left_join(data_patient, by = c("Trial_Center", "STUDY_EVALUATION_ID", "Felzartamab")) %>%
     left_join(data_reference, by = c("CEL", "Trial_Center", "STUDY_EVALUATION_ID", "Felzartamab", "Group")) %>%
+    left_join(data_abmr_genes, by = "CEL") %>%
     mutate(
         Trial_Center = Trial_Center %>% as.character(),
         STUDY_EVALUATION_ID = STUDY_EVALUATION_ID %>% as.numeric(),
@@ -413,6 +452,7 @@ data_K1208 <- reduce(
     ) %>%
     relocate(CEL, names(data_patient), .before = 1) %>%
     relocate(Group, dateBx, .after = "Felzartamab") %>%
+    relocate(Followup, .after = "Group") %>%
     dplyr::rename(patient_ID = STUDY_EVALUATION_ID) %>%
     mutate(
         Felzartamab = Felzartamab %>%
@@ -426,7 +466,10 @@ data_K1208 <- reduce(
 
 
 # SAVE THE DATA ####
-save(data_K1208, file = "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vienna/G_Rstuff/data/data_K1208.RData")
+saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/"
+save(data_K1208_summary, file = paste(saveDir, "data_K1208_summary.RData", sep = ""))
+write.xlsx(data_K1208_summary, file = paste(saveDir, "data_K1208_summary_16Mar24.xlsx", sep = ""))
+
 
 
 
