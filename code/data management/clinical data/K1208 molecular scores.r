@@ -968,7 +968,7 @@ data_K1208 <- reduce(
 
 
 # SAVE THE DATA ####
-save(data_K1208, file = "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vienna/G_Rstuff/data/data_K1208.RData")
+# save(data_K1208, file = "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vienna/G_Rstuff/data/data_K1208.RData")
 
 
 

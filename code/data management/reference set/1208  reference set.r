@@ -1,7 +1,7 @@
 # HOUSEKEEPING ####
 # CRAN libraries
 library(tidyverse) # install.packages("tidyverse")
-library(openxlsx)
+library(openxlsx) # install.packages("openxlsx")
 
 # Bioconductor libraries
 library(Biobase) # BiocManager::install("Biobase")
