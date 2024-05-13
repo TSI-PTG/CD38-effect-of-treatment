@@ -16,6 +16,12 @@ load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vi
 load("Z:/DATA/Datalocks/Other data/affymap219_21Oct2019_1306_JR.RData")
 # load reference expression data
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vienna/G_Rstuff/data/mean_expression_K5086_MMDx.RData")
+# load abmr genes
+load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/ABMR_activity_genes.RData")
+
+
+# DEFINE SEED ####
+seed <- 42
 
 
 # IQR FILTER THE DATA ####
@@ -25,36 +31,15 @@ if (!exists("selected")) {
     selected <- genefilter(vienna_1208, ff)
 }
 set00 <- vienna_1208[selected, vienna_1208$STUDY_EVALUATION_ID %nin% c(15, 18)]
-set00 <- vienna_1208[,vienna_1208$STUDY_EVALUATION_ID %nin% c(15, 18)]
+# set00 <- vienna_1208[,vienna_1208$STUDY_EVALUATION_ID %nin% c(15, 18)]
 
 
-# DEFINE SELECT ABMR GENES BY ABMRpm SCC IN K5086 ####
-abmr_genes <- c(
-    "PLA1A",
-    "ROBO4",
-    "GNLY",
-    "WARS",
-    "SH2D1B",
-    "GBP4",
-    "FGFBP2",
-    "LYPD5",
-    "CCL4",
-    "CDH5",
-    "CXCL11",
-    "PRF1",
-    "APOL3",
-    "IDO1",
-    "CX3CL1",
-    "CXCL9",
-    "ICAM2",
-    "S1PR5",
-    "KLRD1",
-    "RASIP1"
-)
+# DEFINE THE ABMR ACTIVITY GENES ####
+abmr_genes <- genes_ABMR_activity %>%
+    dplyr::slice_max(means, by = "Symb") %>%
+    pull(Symb)
 
 
-# DEFINE SEED ####
-seed <- 42
 
 
 # DEFINE THE SET ####
@@ -229,6 +214,7 @@ table_block_3 <- tab_block_3 %>%
         means_K5086 %>% dplyr::select(-Symb, -Gene, -PBT),
         by = "AffyID"
     )
+
 
 # GLOBAL PARAMETERS FOR FLEXTABLES ####
 header1 <- c(

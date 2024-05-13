@@ -33,8 +33,12 @@ options(dplyr.reframe.inform = FALSE)
 # source plot function
 source("C:/R/CD38-effect-of-treatment/code/PERMANOVA ART/plot.gg_violin_interaction.r")
 # load reference set
-load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vienna/G_Rstuff/data/data_K1208.RData")
+# load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vienna/G_Rstuff/data/data_K1208.RData")
+load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/data_K1208_summary.RData")
 
+
+# DEFINE SET ####
+data_K1208 <- data_K1208_summary
 
 
 # DEFINE SEED ####
@@ -58,17 +62,17 @@ features <- c(ABMRrelated, TCMRrelated)
 
 # PATIENT SUMMARIES ####
 patient_summary <- data_K1208 %>%
-    dplyr::select(Trial_Center, STUDY_EVALUATION_ID, Felzartamab, CEL, Group) %>%
+    dplyr::select(CEL, Trial_Center, patient_ID, Felzartamab, Group, Followup) %>%
     tibble() %>%
     mutate(
         Followup = case_when(Group == "Index" ~ "Index\n(Baseline)", Group == "FU1" ~ "FU1\n(week24)", Group == "FU2" ~ "FU2\n(week52)"),
         Felzartamab = Felzartamab %>% factor(),
-        STUDY_EVALUATION_ID = STUDY_EVALUATION_ID %>% factor()
+        patient_ID = patient_ID %>% factor()
     ) %>%
     dplyr::filter(CEL %nin% c("FBN003_NBN010_B2_(PrimeView).CEL", "FVI022_FVI022_B2_(PrimeView).CEL")) %>%
     dplyr::select(-Group) %>%
     pivot_wider(names_from = Followup, values_from = CEL) %>%
-    arrange(STUDY_EVALUATION_ID, Felzartamab)
+    arrange(patient_ID, Felzartamab)
 
 patient_summary %>%
     mutate(
@@ -110,7 +114,7 @@ patient_summary %>%
     flextable::autofit()
 
 data_K1208 %>%
-    dplyr::filter(STUDY_EVALUATION_ID %nin% c(15, 18))  %>% 
+    dplyr::filter(patient_ID %nin% c(15, 18))  %>% 
     dplyr::select(Felzartamab, Group) %>%
     table() %>%
     as_tibble() %>%
@@ -119,15 +123,15 @@ data_K1208 %>%
 
 # DEFINE THE SET ####
 set <- data_K1208 %>%
-    dplyr::filter(STUDY_EVALUATION_ID %nin% c(15, 18))
+    dplyr::filter(patient_ID %nin% c(15, 18))
 
 
-sessionInfo()
+
 # WRANGLE THE PHENOTYPE DATA ####
 df00 <- set %>%
     tibble() %>%
     dplyr::rename(
-        Patient = STUDY_EVALUATION_ID,
+        Patient = patient_ID,
         Felz = Felzartamab
     ) %>%
     mutate(
@@ -691,7 +695,7 @@ plot_patient_pairs <- df_univariate_02 %>%
                     labs(
                         x = NULL,
                         y = score %>% str_replace("\\(", "\n("),
-                        col = "STUDY_EVALUATION_ID     ",
+                        col = "patient_ID     ",
                         parse = TRUE
                     ) +
                     coord_cartesian(xlim = c(1.3, 2.7)) +
