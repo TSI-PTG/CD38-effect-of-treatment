@@ -32,4 +32,3 @@ complex_pivot <- function(data, target, vars, names_to = "Group", values_to = "v
         by = c(vars, names_to)
     )
 }
-

@@ -33,18 +33,18 @@ data_cfdna <- data %>%
             Followup == "Week52" ~ "FU2",
         ) %>% factor(levels = c("Index", "FU0", "FU1", "FU2")),
         Felzartamab = Felzartamab %>% factor(labels = c("Placebo", "Felzartamab")),
-        Group_Felzartamab = paste(Group, Felzartamab, sep = ":") %>%
+        Felzartamab_Group = paste(Group, Felzartamab, sep = ":") %>%
             factor(levels = c(
-                "Index:Placebo", "FU0:Placebo", "FU1:Placebo", "FU2:Placebo",
-                "Index:Felzartamab", "FU0:Felzartamab", "FU1:Felzartamab", "FU2:Felzartamab"
+                "Index:Placebo", "FU1b:Placebo", "FU1:Placebo", "FU2:Placebo",
+                "Index:Felzartamab", "FU1b:Felzartamab", "FU1:Felzartamab", "FU2:Felzartamab"
             )),
-        Group_Followup = paste(Followup, Felzartamab, sep = ":") %>%
+        Felzartamab_Followup = paste(Followup, Felzartamab, sep = ":") %>%
             factor(levels = c(
                 "Day0:Placebo", "Week12:Placebo", "Week24:Placebo", "Week52:Placebo",
                 "Day0:Felzartamab", "Week12:Felzartamab", "Week24:Felzartamab", "Week52:Felzartamab"
             ))
     ) %>%
-    dplyr::select(Center, Patient, Felzartamab, Group, Followup, Group_Felzartamab, Group_Followup, cfDNA)
+    dplyr::select(Center, Patient, Felzartamab, Group, Followup, Felzartamab_Group, Felzartamab_Followup, cfDNA)
 
 
 # SAVE THE DATA ####
