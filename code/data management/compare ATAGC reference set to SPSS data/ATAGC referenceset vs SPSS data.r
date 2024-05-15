@@ -1,7 +1,10 @@
 # HOUSEKEEPING ####
+# CRAN libraries
 library(tidyverse) # install.packages("tidyverse")
 library(readr) # install.packages("readr")
 library(haven) # install.packages("haven")
+# Bioconductor libraries
+library(Biobase) # BiocManager::install("Biobase")
 # Custom operators, functions, and datasets
 "%nin%" <- function(a, b) match(a, b, nomatch = 0) == 0
 # load data
@@ -947,8 +950,8 @@ data_K1208 <- reduce(
         data_TCMRt, data_tgt1, data_igt1, data_TCB, data_QCAT,
         data_AMAT1, data_QCMAT,
         data_BAT, data_cigt1, data_ctgt1, data_IGT, data_MCAT,
-        data_ENDAT, data_KT1, data_KT2, 
-        data_FICOL, data_IRRAT30, data_IRITD3, data_IRITD5, data_GRIT3, 
+        data_ENDAT, data_KT1, data_KT2,
+        data_FICOL, data_IRRAT30, data_IRITD3, data_IRITD5, data_GRIT3,
         data_Rej_RAT, data_RejAA_NR,
         data_ABMRActivity_Banff19, data_Active_ABMR_Banff19, data_Chronic_active_ABMR_Banff19,
         data_Borderline_Banff
@@ -961,7 +964,7 @@ data_K1208 <- reduce(
         Trial_Center = Trial_Center %>% as.character(),
         STUDY_EVALUATION_ID = STUDY_EVALUATION_ID %>% as.numeric(),
         Felzartamab = Felzartamab %>% as.numeric(),
-        Group = Group  %>% factor(levels = c("Index", "FU1", "FU2"))
+        Group = Group %>% factor(levels = c("Index", "FU1", "FU2"))
     ) %>%
     relocate(names(data_patient), .before = 1)
 

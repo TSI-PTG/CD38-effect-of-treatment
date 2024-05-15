@@ -484,16 +484,16 @@ df_plot$data_plot[[1]]$data[[1]] %>%
 df_plot$data_plot[[1]]$data[[1]] %>%
     dplyr::select(Patient, Group, cfDNA, delta, delta2) %>%
     mutate(
-                        delta_prop = case_when(
-                            Group == "Index" ~ lead(cfDNA) / cfDNA,
-                            Group == "FU1" ~ cfDNA / lag(cfDNA),
-                            Group == "FU2" ~ cfDNA / lag(cfDNA),
-                        )%>% log2(),
-                        delta_prop = case_when(
-                            delta_prop == -Inf ~ min(delta_prop[delta_prop != -Inf]),
-                            delta_prop == Inf ~ max(delta_prop[delta_prop != Inf]),
-                            TRUE ~ delta_prop
-                        )
+        delta_prop = case_when(
+            Group == "Index" ~ lead(cfDNA) / cfDNA,
+            Group == "FU1" ~ cfDNA / lag(cfDNA),
+            Group == "FU2" ~ cfDNA / lag(cfDNA),
+        ) %>% log2(),
+        delta_prop = case_when(
+            delta_prop == -Inf ~ min(delta_prop[delta_prop != -Inf]),
+            delta_prop == Inf ~ max(delta_prop[delta_prop != Inf]),
+            TRUE ~ delta_prop
+        )
     ) %>%
     print(n = "all")
 
@@ -514,12 +514,13 @@ plot_violin_pairs <- df_plot %>%
                             Group == "Index" ~ lead(cfDNA) / cfDNA,
                             Group == "FU1" ~ cfDNA / lag(cfDNA),
                             Group == "FU2" ~ cfDNA / lag(cfDNA),
-                        )%>% log2(),
+                        ) %>% log2(),
                         delta_prop = case_when(
                             delta_prop == -Inf ~ min(delta_prop[delta_prop != -Inf]),
                             delta_prop == Inf ~ max(delta_prop[delta_prop != Inf]),
                             TRUE ~ delta_prop
-                        )
+                        ),
+                        Felz = Felz %>% factor(labels = c("Placebo", "Felzartamab"))
                     )
                 delta_delta <- data_plot$delta_delta[[1]]
                 delta_delta_p <- data_plot$delta_delta_p[[1]]
@@ -618,7 +619,7 @@ plot_violin_pairs <- df_plot %>%
                         data = data %>% dplyr::filter(Group %in% c("FU1", "FU2")),
                         mapping = aes(
                             x = Group,
-                            col = delta_prop  %>% lead,
+                            col = delta_prop %>% lead(),
                             group = Patient
                         ),
                         position = position_nudge(
@@ -662,7 +663,7 @@ plot_violin_pairs <- df_plot %>%
                             sep = "\n"
                         ),
                         x = NULL,
-                        y = "dd-cfDNA (cp/mL)",
+                        y = "Donor-derived cell-free DNA\n(dd-cfDNA, cp/mL)",
                         col = "Individual patient response     ",
                         parse = TRUE
                     ) +
@@ -737,7 +738,7 @@ plot_patient_pairs <- df_univariate_02 %>%
                 data <- data %>%
                     mutate(
                         variable = variable,
-                        Felz = Felz %>% factor(labels = c("No Felzartamab", "Felzartamab"))
+                        Felz = Felz %>% factor(labels = c("Placebo", "Felzartamab"))
                     )
                 data %>%
                     ggplot(
@@ -796,9 +797,8 @@ plot_patient_pairs <- df_univariate_02 %>%
     )
 
 
-
 # SAVE THE PLOTS ####
-saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vienna/G_Rstuff/output/"
+saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/output/"
 ggsave(
     filename = paste(saveDir, "Felzartamab ddcfDNA.png"),
     plot = plot_ddcfDNA,
