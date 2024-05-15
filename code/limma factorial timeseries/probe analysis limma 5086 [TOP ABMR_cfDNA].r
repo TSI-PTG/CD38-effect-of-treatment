@@ -19,7 +19,7 @@ load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vi
 # load SCC data
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Trifecta4 subgroups/data/N604_MMDXpooled_quant_SCC [IQR filtered].Rdata")
 # source plot function
-source("C:/R/CD38-effect-of-treatment/code/PERMANOVA ART/plot.gg_violin_interaction.r")
+source("C:/R/CD38-effect-of-treatment/code/functions/plot.gg_violin_interaction.r")
 
 
 # IQR FILTER THE DATA ####

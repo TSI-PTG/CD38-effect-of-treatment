@@ -31,8 +31,8 @@ log10zero <- scales::trans_new(
 # Suppress pesky dplyr reframe info
 options(dplyr.reframe.inform = FALSE)
 # source plot function
-source("C:/R/CD38-effect-of-treatment/code/PERMANOVA ART/plot.gg_violin_interaction cibersort.r")
-source("C:/R/CD38-effect-of-treatment/code/PERMANOVA ART/plot.gg_violin_interaction cibersort kidneycells.r")
+source("C:/R/CD38-effect-of-treatment/code/functions/plot.gg_violin_interaction cibersort.r")
+source("C:/R/CD38-effect-of-treatment/code/functions/plot.gg_violin_interaction cibersort kidneycells.r")
 
 # load reference set
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vienna/G_Rstuff/data/vienna_1208_cibersort_21apr24.RData")

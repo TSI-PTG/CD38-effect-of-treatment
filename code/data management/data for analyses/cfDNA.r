@@ -15,7 +15,7 @@ data_cfdna <- data %>%
         Felzartamab,
         contains("GcfDNA_cp_ml")
     ) %>%
-    dplyr::rename(Center = Trial_Center, Patient = STUDY_EVALUATION_ID)  %>% 
+    dplyr::rename(Center = Trial_Center, Patient = STUDY_EVALUATION_ID) %>%
     mutate_at(vars(contains("cfDNA")), ~ as.numeric(.) %>% suppressWarnings()) %>%
     pivot_longer(
         cols = contains("cfDNA"),
@@ -44,7 +44,8 @@ data_cfdna <- data %>%
                 "Day0:Felzartamab", "Week12:Felzartamab", "Week24:Felzartamab", "Week52:Felzartamab"
             ))
     ) %>%
-    dplyr::select(Center, Patient, Felzartamab, Group, Followup, Felzartamab_Group, Felzartamab_Followup, cfDNA)
+    dplyr::select(Center, Patient, Felzartamab, Group, Followup, Felzartamab_Group, Felzartamab_Followup, cfDNA) %>%
+    arrange(Felzartamab, Patient, Followup)
 
 
 # SAVE THE DATA ####

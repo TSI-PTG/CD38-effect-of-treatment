@@ -31,7 +31,7 @@ log10zero <- scales::trans_new(
 # Suppress pesky dplyr reframe info
 options(dplyr.reframe.inform = FALSE)
 # source plot function
-source("C:/R/CD38-effect-of-treatment/code/PERMANOVA ART/plot.gg_violin_interaction genes.r")
+source("C:/R/CD38-effect-of-treatment/code/functions/plot.gg_violin_interaction genes.r")
 # load affymap
 load("Z:/DATA/Datalocks/Other data/affymap219_21Oct2019_1306_JR.RData")
 # load reference set

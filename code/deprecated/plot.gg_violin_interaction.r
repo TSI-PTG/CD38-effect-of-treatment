@@ -1,111 +1,89 @@
-gg_violin_interaction <- function(data, variable, score, medians_delta, art_con_interaction_default_tidy) {
+gg_violin_interaction <- function(data, variable, score, medians, medians_delta, art_con_interaction_default_tidy) {
     require(tidyverse)
     require(gghalves)
     require(ggprism)
-    log10zero <- scales::trans_new(
-        name = "log10zero",
-        transform = function(x) log10(x + 0.15),
-        inverse = function(x) 10^x - 0.15
-    )
-    if (score %>% stringr::str_detect("Prob")) {
-        ylims <- c(0, 1)
-        point_size <- 2
-    } else if (score %>% stringr::str_detect("cfDNA")) {
-        ylims <- c(0, 1000)
-        point_size <- 2
-    } else {
-        ylims <- c(NA, NA)
-        point_size <- 2
-    }
-    if (variable == "cfDNA") logy <- TRUE else logy <- FALSE
-    log10_ticks <- c(
-        seq(0, 1, length.out = 11),
-        seq(1, 10, length.out = 10),
-        seq(10, 100, length.out = 10),
-        seq(100, 1000, length.out = 10)
-    )
-    log10_labels <- c(0, 1, 10, 100, 1000)
-    xlabels <- data %>%
-        distinct(Followup, .keep_all = TRUE) %>%
-        dplyr::select(Followup, sample_pairs) %>%
-        mutate(xlabels = paste(Followup, "\n(n = ", sample_pairs, ")", sep = "")) %>%
-        pull(xlabels)
-    dodge <- 0.3
+
+
+
+
     delta <- medians_delta %>%
         dplyr::mutate(Felzartamab = Felzartamab %>% factor(labels = c("Placebo", "Felzartamab")))
+
+    # delta %>% print()
     delta_delta <- medians_delta %>%
+        # dplyr::filter(Followup_pairwise != "Index - FU2") %>%
         dplyr::distinct(Followup_pairwise, .keep_all = TRUE) %>%
-        dplyr::mutate(Followup_pairwise = c("Week24 - Day0", "Week52 - Day0", "Week52 - Week24"))
+        dplyr::mutate(Followup_pairwise = c("FU1 - Index", "FU2 - Index", "FU2 - FU1"))
+
     delta_delta_p <- art_con_interaction_default_tidy %>%
+        # dplyr::filter(Followup_pairwise != "Index - FU2") %>%
         dplyr::select(Followup_pairwise, adj.p.value) %>%
-        dplyr::mutate(
-            FDR = ifelse(
-                adj.p.value < 0.01,
-                formatC(adj.p.value, digits = 0, format = "e"),
-                formatC(adj.p.value, digits = 3, format = "f")
-            )
-        )
+        dplyr::mutate(FDR = ifelse(
+            adj.p.value < 0.01,
+            formatC(adj.p.value, digits = 0, format = "e"),
+            formatC(adj.p.value, digits = 3, format = "f")
+        ))
+
     data <- data %>%
         dplyr::mutate(
             variable = variable,
             Felzartamab = Felzartamab %>% factor(labels = c("Placebo", "Felzartamab"))
         )
+
+    ymax <- data$value %>% max()
+    # medians <- data %>%
+    #     reframe(median = median(value), .by = c(Group, Felzartamab)) %>%
+    #     spread(Group, median) %>%
+    #     mutate(delta = FU1 - Index, delta2 = FU2 - FU1)
     data <- data %>%
         dplyr::left_join(
             data %>%
-                dplyr::reframe(median = median(value), .by = c(Followup, Felzartamab, Patient)) %>%
-                rstatix::spread(Followup, median) %>%
-                dplyr::mutate(
-                    delta = dplyr::case_when(
-                        variable == "cfDNA" ~ log2(Week24 / Day0),
-                        TRUE ~ Week24 / Day0
-                    ),
-                    delta = case_when(
-                        delta == -Inf ~ min(delta[delta != -Inf]),
-                        delta == Inf ~ max(delta[delta != Inf]),
-                        TRUE ~ delta
-                    ),
-                    delta2 = dplyr::case_when(
-                        variable == "cfDNA" ~log2( Week52 / Week24),
-                        TRUE ~ Week52 - Week24
-                    ),
-                    delta2 = case_when(
-                        delta2 == -Inf ~ min(delta2[delta2 != -Inf]),
-                        delta2 == Inf ~ max(delta2[delta2 != Inf]),
-                        TRUE ~ delta2
-                    )
-                ) %>%
-                tidyr::pivot_longer(cols = c(Day0, Week24, Week52), names_to = "Followup", values_to = "value") %>%
-                dplyr::select(Felzartamab, Patient, Followup, delta, delta2),
-            by = c("Felzartamab", "Patient", "Followup")
+                dplyr::reframe(median = median(value), .by = c(Group, Felzartamab, Patient)) %>%
+                rstatix::spread(Group, median) %>%
+                dplyr::mutate(delta = FU1 - Index, delta2 = FU2 - FU1) %>%
+                tidyr::pivot_longer(cols = c(Index, FU1, FU2), names_to = "Group", values_to = "value") %>%
+                dplyr::select(Felzartamab, Patient, Group, delta, delta2),
+            by = c("Felzartamab", "Patient", "Group")
         ) %>%
-        dplyr::mutate(Followup = Followup %>% factor(levels = c("Day0", "Week24", "Week52")))
-    bw <- ifelse(data$variable[[1]] %in% c("ABMRpm", "ggt0", "ptcgt0", "TCMRt", "tgt1", "igt1"), 0.05, 0.1)
-    midpoint <- 0
-    plot <- data %>%
-        ggplot2::ggplot(aes(x = Followup, y = value)) +
+        # left_join(
+        #     delta_delta %>%
+        #         dplyr::select(
+        #             Group,
+        #             Felzartamab,
+        #             #   median_delta_delta
+        #         ),
+        #     by = c("Felzartamab", "Group")
+        # ) %>%
+        dplyr::mutate(
+            Group = Group %>% factor(levels = c("Index", "FU1", "FU2")),
+            # delta = delta %>% scale() %>% as.vector()
+        )
+    # bw <- 0.075
+    # plot_proto <-
+    data %>%
+        ggplot2::ggplot(aes(x = Group, y = value)) +
         gghalves::geom_half_violin(
             inherit.aes = FALSE,
-            data = data %>% dplyr::filter(Followup %in% c("Day0")),
+            data = data %>% dplyr::filter(Group %in% c("Index")),
             mapping = ggplot2::aes(
-                x = Followup,
+                x = Group,
                 y = value
             ),
-            bw = bw,
+            bw = ifelse(data$variable[[1]] %in% c("ABMRpm", "ggt0", "ptcgt0", "TCMRt", "tgt1", "igt1"), 0.05, 0.1),
             side = c("l"),
             fill = "grey95",
             col = "grey60",
             trim = FALSE,
             scale = "width"
         ) +
-        ggplot2::geom_violin(
+        dplyr::geom_violin(
             inherit.aes = FALSE,
-            data = data %>% dplyr::filter(Followup == c("Week24")),
+            data = data %>% dplyr::filter(Group == c("FU1")),
             mapping = ggplot2::aes(
-                x = Followup,
+                x = Group,
                 y = value
             ),
-            bw = bw,
+            bw = ifelse(data$variable[[1]] %in% c("ABMRpm", "ggt0", "ptcgt0", "TCMRt", "tgt1", "igt1"), 0.05, 0.1),
             fill = "#f2f2f2ec",
             col = "#cdcdcdb8",
             trim = FALSE,
@@ -113,12 +91,12 @@ gg_violin_interaction <- function(data, variable, score, medians_delta, art_con_
         ) +
         gghalves::geom_half_violin(
             inherit.aes = FALSE,
-            data = data %>% dplyr::filter(Followup %in% c("Week52")),
+            data = data %>% dplyr::filter(Group %in% c("FU2")),
             mapping = ggplot2::aes(
-                x = Followup,
+                x = Group,
                 y = value
             ),
-            bw = bw,
+            bw = ifelse(data$variable[[1]] %in% c("ABMRpm", "ggt0", "ptcgt0", "TCMRt", "tgt1", "igt1"), 0.05, 0.1),
             side = c("r"),
             fill = "grey95",
             col = "grey60",
@@ -127,72 +105,69 @@ gg_violin_interaction <- function(data, variable, score, medians_delta, art_con_
         ) +
         ggplot2::geom_point(
             inherit.aes = FALSE,
-            data = data %>% dplyr::filter(Followup %in% c("Day0")),
+            data = data %>% dplyr::filter(Group %in% c("Index")),
             mapping = ggplot2::aes(
-                x = Followup,
+                x = Group,
                 y = value,
                 col = delta
             ),
             position = ggplot2::position_nudge(x = 0.1),
-            size = 2,
-            alpha = 0.75
+            size = 2, alpha = 0.75
         ) +
         ggplot2::geom_point(
             inherit.aes = FALSE,
-            data = data %>% dplyr::filter(Followup %in% c("Week24")),
+            data = data %>% dplyr::filter(Group %in% c("FU1")),
             mapping = ggplot2::aes(
-                x = Followup,
+                x = Group,
                 y = value,
                 col = delta
             ),
-            size = 2,
-            alpha = 0.75
+            size = 2, alpha = 0.75
         ) +
         ggplot2::geom_point(
             inherit.aes = FALSE,
-            data = data %>% dplyr::filter(Followup %in% c("Week52")),
+            data = data %>% dplyr::filter(Group %in% c("FU2")),
             mapping = ggplot2::aes(
-                x = Followup,
+                x = Group,
                 y = value,
                 col = delta2
             ),
             position = ggplot2::position_nudge(x = -0.1),
-            size = 2,
-            alpha = 0.75
+            size = 2, alpha = 0.75
         ) +
         ggplot2::geom_line(
-            data = data %>% dplyr::filter(Followup %in% c("Day0", "Week24")),
+            data = data %>% dplyr::filter(Group %in% c("Index", "FU1")),
             mapping = aes(
-                x = Followup,
+                x = Group,
                 col = delta,
                 group = Patient
             ),
             position = ggplot2::position_nudge(
                 x = ifelse(data %>%
-                    dplyr::filter(Followup %in% c("Day0", "Week24")) %>%
-                    dplyr::pull(Followup) == "Day0", 0.1, 0)
+                    dplyr::filter(Group %in% c("Index", "FU1")) %>%
+                    dplyr::pull(Group) == "Index", 0.1, 0)
             ),
-            linewidth = 0.5,
-            alpha = 0.25,
+            linewidth = 0.5, alpha = 0.25,
             show.legend = FALSE
         ) +
         ggplot2::geom_line(
-            data = data %>% dplyr::filter(Followup %in% c("Week24", "Week52")),
+            data = data %>% dplyr::filter(Group %in% c("FU1", "FU2")),
             mapping = ggplot2::aes(
-                x = Followup,
+                x = Group,
                 col = delta2,
                 group = Patient
             ),
             position = ggplot2::position_nudge(
                 x = ifelse(data %>%
-                    dplyr::filter(Followup %in% c("Week24", "Week52")) %>%
-                    dplyr::pull(Followup) == "Week24", 0, -0.1)
+                    dplyr::filter(Group %in% c("FU1", "FU2")) %>%
+                    dplyr::pull(Group) == "FU1", 0, -0.1)
             ),
-            linewidth = 0.5,
-            alpha = 0.25,
+            linewidth = 0.5, alpha = 0.25,
             show.legend = FALSE
         ) +
-        ggplot2::stat_summary(fun = median, geom = "point", size = 4) +
+        ggplot2::stat_summary(
+            fun = median, geom = "point", size = 4
+        ) +
         ggplot2::stat_summary(
             ggplot2::aes(group = Felzartamab),
             fun = median,
@@ -231,7 +206,7 @@ gg_violin_interaction <- function(data, variable, score, medians_delta, art_con_
             low = "#00ff00bc",
             mid = "grey60",
             high = "red",
-            midpoint = midpoint,
+            midpoint = 0,
             breaks = c(min(data$delta), max(data$delta)),
             labels = c("improved", "worsened"),
             guide = ggplot2::guide_colorbar(
@@ -241,12 +216,17 @@ gg_violin_interaction <- function(data, variable, score, medians_delta, art_con_
                 label.hjust = c(2, -0.05),
                 label.vjust = 8,
                 reverse = TRUE
-            )
+            ),
         ) +
-        ggplot2::scale_x_discrete(labels = xlabels) +
+        # ggplot2::scale_x_discrete(labels = c("Index\n(n = 11)", "FU1\n(n = 11)", "FU2\n(n = 11)")) +
+        ggplot2::scale_x_discrete(labels = c("Day0", "Week24", "Week52")) +
+        ggplot2::scale_y_continuous(expand = c(0, 0), trans = "identity") +
         ggplot2::coord_cartesian(
             xlim = c(NA, NA),
-            ylim = ylims
+            ylim = c(
+                ifelse(data$variable[[1]] %in% c("ABMRpm", "ggt0", "ptcgt0", "TCMRt", "tgt1", "igt1"), 0, NA),
+                ifelse(data$variable[[1]] %in% c("ABMRpm", "ggt0", "ptcgt0", "TCMRt", "tgt1", "igt1"), 1, NA)
+            )
         ) +
         ggplot2::theme_bw() +
         ggplot2::theme(
@@ -269,19 +249,4 @@ gg_violin_interaction <- function(data, variable, score, medians_delta, art_con_
             )
         ) +
         ggplot2::facet_wrap(~Felzartamab)
-    if (logy) {
-        plot <- plot +
-            ggplot2::scale_y_continuous(
-                trans = log10zero,
-                breaks = log10_labels,
-                labels = log10_labels,
-                minor_breaks = log10_ticks,
-                expand = c(0.05, 0.05)
-            ) +
-            ggplot2::theme(axis.ticks.length.y = unit(0.25, "cm")) +
-            ggplot2::guides(y = ggprism::guide_prism_minor())
-    } else {
-        plot <- plot + ggplot2::scale_y_continuous(expand = c(0, 0), trans = "identity")
-    }
-    plot
 }
