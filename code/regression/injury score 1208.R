@@ -222,10 +222,8 @@ plot_IRRAT30 <- effect_plot_IRRAT30 %>%
     legend.title = element_blank(),
     legend.text = element_text(size = 16),
     legend.key.width = unit(4, "cm"),
-    axis.text.x = element_text(size = 12, color = "black", vjust = -1),
-    axis.text.y = element_text(size = 12, color = "black"),
-    axis.title.x = element_text(size = 12, vjust = -1),
-    axis.title.y = element_text(size = 12),
+    axis.text = element_text(size = 10, color = "black"),
+    axis.title = element_text(size = 12),
     plot.title = element_text(size = 16, face = "bold")
   )
 
@@ -279,10 +277,8 @@ plot_IRITD3 <- effect_plot_IRITD3 %>%
     legend.position = "top",
     legend.title = element_blank(),
     legend.text = element_text(size = 16),
-    axis.text.x = element_text(size = 12, color = "black", vjust = -1),
-    axis.text.y = element_text(size = 12, color = "black"),
-    axis.title.x = element_text(size = 12, vjust = -1),
-    axis.title.y = element_text(size = 12),
+    axis.text = element_text(size = 10, color = "black"),
+    axis.title = element_text(size = 12),
     plot.title = element_text(size = 16, face = "bold")
   )
 
@@ -336,10 +332,8 @@ plot_IRITD5 <- effect_plot_IRITD5 %>%
     legend.position = "top",
     legend.title = element_blank(),
     legend.text = element_text(size = 16),
-    axis.text.x = element_text(size = 12, color = "black", vjust = -1),
-    axis.text.y = element_text(size = 12, color = "black"),
-    axis.title.x = element_text(size = 12, vjust = -1),
-    axis.title.y = element_text(size = 12),
+    axis.text = element_text(size = 10, color = "black"),
+    axis.title = element_text(size = 12),
     plot.title = element_text(size = 16, face = "bold")
   )
 
