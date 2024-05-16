@@ -9,6 +9,7 @@ library(performance) # install.packages("performance")
 library(ggeffects) # install.packages("ggeffects")
 library(flextable) # install.packages("flextable")
 library(ggpubr) # install.packages("ggpubr")
+library(patchwork) # install.packages("patchwork")
 # Custom operators, functions, and datasets
 "%nin%" <- function(a, b) match(a, b, nomatch = 0) == 0
 source("C:/R/CD38-effect-of-treatment/code/functions/get_slope_function.r")
@@ -18,14 +19,16 @@ load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular e
 
 # WRANGLE THE DATA ####
 m <- data_felzartamab_k1208 %>%
+  dplyr::select(Center, Patient, Felzartamab, Group, IRRAT30, IRITD3, IRITD5) %>%
   mutate(
     time = case_when(
       Group == "Index" ~ 0,
       Group == "FU1" ~ 0.46,
       Group == "FU2" ~ 0.99
-    )
+    ),
+    linetype = ifelse(Patient == 9, "solid", "dashed") %>% factor()
   ) %>%
-  dplyr::filter(Group != "FU1b", Patient %nin% c(9, 15, 18))
+  dplyr::filter(Group != "FU1b", Patient %nin% c(15, 18))
 
 
 # FIT MODELS ####
@@ -33,22 +36,22 @@ m <- data_felzartamab_k1208 %>%
 fit_IRRAT30 <- lmer(IRRAT30 ~ Felzartamab * time + (time | Patient), m)
 # summary(fit_IRRAT30)
 # performance::check_model(fit_IRRAT30)
-check_model(fit_IRRAT30)
-check_normality(fit_IRRAT30)
+# check_model(fit_IRRAT30)
+# check_normality(fit_IRRAT30)
 # Get predictions
 effect_plot_IRRAT30 <- ggeffects::ggpredict(fit_IRRAT30, c("time", "Felzartamab"))
 # IRITD3
 fit_IRITD3 <- lmer(IRITD3 ~ Felzartamab * time + (time | Patient), m)
 # summary(fit_IRITD3)
-check_model(fit_IRITD3)
-check_normality(fit_IRITD3)
+# check_model(fit_IRITD3)
+# check_normality(fit_IRITD3)
 # Get predictions
 effect_plot_IRITD3 <- ggeffects::ggpredict(fit_IRITD3, c("time", "Felzartamab"))
 # IRITD5
 fit_IRITD5 <- lmer(IRITD5 ~ Felzartamab * time + (time | Patient), m)
-summary(fit_IRITD5)
-check_model(fit_IRITD5)
-check_normality(fit_IRITD5)
+# summary(fit_IRITD5)
+# check_model(fit_IRITD5)
+# check_normality(fit_IRITD5)
 # Get predictions
 effect_plot_IRITD5 <- ggeffects::ggpredict(fit_IRITD5, c("time", "Felzartamab"))
 
@@ -128,31 +131,41 @@ model_IRITD5 <- slopes_IRITD5 %>%
 
 
 # CREATE TABLE SUMMARIES OF SLOPES ####
-table_slope_IRRAT30 <- qflextable(model_IRRAT30) %>%
+size_font <- 10
+table_slope_IRRAT30 <- model_IRRAT30 %>%
+  dplyr::select(-p_adjusted) %>%
+  qflextable() %>%
   set_table_properties(layout = "autofit") %>%
   set_header_labels(
     name = "Group", result = "IRRAT30 Slope (95%CI)",
     "p_value" = "P-Value"
   ) %>%
-  bold(i = NULL, part = "header")
+  bold(i = NULL, part = "header") %>%
+  flextable::fontsize(size = size_font, part = "all")
 # table_slope_IRRAT30 %>% print(preview = "pptx")
 
-table_slope_IRITD3 <- qflextable(model_IRITD3) %>%
+table_slope_IRITD3 <- model_IRITD3 %>%
+  dplyr::select(-p_adjusted) %>%
+  qflextable() %>%
   set_table_properties(layout = "autofit") %>%
   set_header_labels(
     name = "Group", result = "IRITD3 Slope (95%CI)",
     "p_value" = "P-Value"
   ) %>%
-  bold(i = NULL, part = "header")
+  bold(i = NULL, part = "header") %>%
+  flextable::fontsize(size = size_font, part = "all")
 # table_slope_IRRAT30 %>% print(preview = "pptx")
 
-table_slope_IRITD5 <- qflextable(model_IRITD5) %>%
+table_slope_IRITD5 <- model_IRITD5 %>%
+  dplyr::select(-p_adjusted) %>%
+  qflextable() %>%
   set_table_properties(layout = "autofit") %>%
   set_header_labels(
     name = "Group", result = "IRITD5 Slope (95%CI)",
     "p_value" = "P-Value"
   ) %>%
-  bold(i = NULL, part = "header")
+  bold(i = NULL, part = "header") %>%
+  flextable::fontsize(size = size_font, part = "all")
 # table_slope_IRRAT30 %>% print(preview = "pptx")
 
 
@@ -161,16 +174,25 @@ plot_IRRAT30 <- effect_plot_IRRAT30 %>%
   ggplot(aes(x = x, y = predicted, color = group)) +
   geom_line(aes(group = group), alpha = 1, linewidth = 1.2) +
   geom_ribbon(aes(ymin = conf.low, ymax = conf.high, fill = group), alpha = 0.4, color = NA) +
-  geom_point(data = m, aes(x = time, y = IRRAT30, color = factor(Felzartamab), group = Patient), alpha = 0, size = 0.1) +
+  geom_point(
+    data = m,
+    aes(x = time, y = IRRAT30, color = factor(Felzartamab), group = Patient),
+    alpha = 0,
+    size = 0.1
+  ) +
   geom_line(
-    data = m, aes(x = time, y = IRRAT30, color = factor(Felzartamab), group = Patient), stat = "smooth", method = "lm",
-    alpha = 0.3
+    data = m,
+    aes(x = time, y = IRRAT30, color = factor(Felzartamab), group = Patient, linetype = linetype),
+    stat = "smooth",
+    method = "lm",
+    alpha = 0.3,
+    show.legend = FALSE
   ) +
-  annotate(
-    geom = "text",
-    label = "Slope difference: -0.60 (95%CI -1.10 to -0.10), p=0.055",
-    x = 0.5, y = 1.8, size = 4
-  ) +
+  # annotate(
+  #   geom = "text",
+  #   label = "Slope difference: -0.60 (95%CI -1.10 to -0.10), p=0.055",
+  #   x = 0.5, y = 1.8, size = 4
+  # ) +
   scale_color_manual(
     name = "Treatment",
     values = c("Placebo" = "black", "Felzartamab" = "#bc3c29"),
@@ -187,8 +209,8 @@ plot_IRRAT30 <- effect_plot_IRRAT30 %>%
   ) +
   scale_y_continuous(limits = c(-1.5, 2)) +
   labs(
-    title = "D",
-    x = "Weeks post-treatment",
+    # title = "D",
+    x = "Time post-treatment (weeks)",
     y = "Injury-repair associated transcripts\n(IRRAT30)"
   ) +
   theme_classic() +
@@ -206,19 +228,28 @@ plot_IRITD3 <- effect_plot_IRITD3 %>%
   ggplot(aes(x = x, y = predicted, color = group)) +
   geom_line(aes(group = group), alpha = 1, linewidth = 1.2) +
   geom_ribbon(aes(ymin = conf.low, ymax = conf.high, fill = group), alpha = 0.4, color = NA) +
-  geom_point(data = m, aes(x = time, y = IRITD3, color = factor(Felzartamab), group = Patient), alpha = 0, size = 0.1) +
+  geom_point(
+    data = m,
+    aes(x = time, y = IRITD3, color = factor(Felzartamab), group = Patient),
+    alpha = 0,
+    size = 0.1
+  ) +
   geom_line(
-    data = m, aes(x = time, y = IRITD3, color = factor(Felzartamab), group = Patient), stat = "smooth", method = "lm",
-    alpha = 0.3
+    data = m,
+    aes(x = time, y = IRITD3, color = factor(Felzartamab), group = Patient, linetype = linetype),
+    stat = "smooth",
+    method = "lm",
+    alpha = 0.3,
+    show.legend = FALSE
   ) +
-  annotate(
-    geom = "text",
-    label = "Slope difference: -0.20 (95%CI -0.37 to -0.02), p=0.041",
-    x = 0.5, y = 0.65, size = 4
-  ) +
+  # annotate(
+  #   geom = "text",
+  #   label = "Slope difference: -0.20 (95%CI -0.37 to -0.02), p=0.041",
+  #   x = 0.5, y = 0.65, size = 4
+  # ) +
   labs(
-    title = "E",
-    x = "Weeks post-treatment",
+    # title = "E",
+    x = "Time post-treatment (weeks)",
     y = "Injury-repair induced transcripts, day 3\n(IRITD3)"
   ) +
   scale_color_manual(
@@ -251,19 +282,28 @@ plot_IRITD5 <- effect_plot_IRITD5 %>%
   ggplot(aes(x = x, y = predicted, color = group)) +
   geom_line(aes(group = group), alpha = 1, linewidth = 1.2) +
   geom_ribbon(aes(ymin = conf.low, ymax = conf.high, fill = group), alpha = 0.4, color = NA) +
-  geom_point(data = m, aes(x = time, y = IRITD5, color = factor(Felzartamab), group = Patient), alpha = 0, size = 0.1) +
+  geom_point(
+    data = m,
+    aes(x = time, y = IRITD5, color = factor(Felzartamab), group = Patient),
+    alpha = 0,
+    size = 0.1
+  ) +
   geom_line(
-    data = m, aes(x = time, y = IRITD5, color = factor(Felzartamab), group = Patient), stat = "smooth", method = "lm",
-    alpha = 0.3
+    data = m,
+    aes(x = time, y = IRITD5, color = factor(Felzartamab), group = Patient, linetype = linetype),
+    stat = "smooth",
+    method = "lm",
+    alpha = 0.3,
+    show.legend = FALSE
   ) +
-  annotate(
-    geom = "text",
-    label = "Slope difference: -0.23 (95%CI -0.41 to -0.05), p=0.042",
-    x = 0.5, y = 0.75, size = 4
-  ) +
+  # annotate(
+  #   geom = "text",
+  #   label = "Slope difference: -0.23 (95%CI -0.41 to -0.05), p=0.042",
+  #   x = 0.5, y = 0.75, size = 4
+  # ) +
   labs(
-    title = "F",
-    x = "Weeks post-treatment",
+    # title = "F",
+    x = "Time post-treatment (weeks)",
     y = "Injury-repair induced transcripts, day 5\n(IRITD5)"
   ) +
   scale_color_manual(
@@ -305,21 +345,74 @@ injury_slopes <- qflextable(injury_slopes) %>%
   bold(i = NULL, part = "header") %>%
   bold(i = c(1, 5, 9), j = 1) %>%
   padding(i = c(2:4, 6:8, 10:12), j = 1, padding.left = 20)
-# Print tables 
-injury_slopes %>% print(preview = "pptx")
+# Print tables
+# injury_slopes %>% print(preview = "pptx")
+
+
+# GENERATE GROBS FOR SLOPE TABLES ####
+table_slope_IRRAT30_grob <- table_slope_IRRAT30 %>%
+  gen_grob(fit = "fixed", just = "centre") %>%
+  as_ggplot()
+table_slope_IRITD3_grob <- table_slope_IRITD3 %>%
+  gen_grob(fit = "fixed", just = "centre") %>%
+  as_ggplot()
+table_slope_IRITD5_grob <- table_slope_IRITD5 %>%
+  gen_grob(fit = "fixed", just = "centre") %>%
+  as_ggplot()
+
+
+# EXTRACT LEGEND FOR PLOTS ####
+panel_legend <- plot_IRRAT30 %>%
+  get_legend() %>%
+  as_ggplot()
+
 
 
 # COMBINE THE SLOPE PLOTS ####
+plot_panels <- patchwork::wrap_plots(
+  plot_IRRAT30, plot_IRITD3, plot_IRITD5,
+  table_slope_IRRAT30_grob, table_slope_IRITD3_grob, table_slope_IRITD5_grob,
+  nrow = 2,
+  ncol = 3,
+  guides = "collect",
+  heights = c(1, 0.65)
+) +
+  patchwork::plot_annotation(
+    tag_levels = list(c("A", "B", "C", rep("", 3)))
+  ) &
+  theme(
+    legend.position = "none",
+    plot.title = element_blank(),
+    axis.text = element_text(size = 10, colour = "black"),
+    plot.tag = element_text(size = 20, face = "bold", vjust = 1)
+  )
 
 
+plot_panels_legend <-  (panel_legend / plot_panels) +
+  plot_layout(
+    nrow = 2,
+    heights = c(0.25, 1.5)
+  )
 
+
+# SAVE THE PLOTS ####
+saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/output/"
+ggsave(
+  filename = paste(saveDir, "Felzartamab injury regression.png"),
+  plot = plot_panels_legend,
+  dpi = 300,
+  width = 40,
+  height = 20,
+  units = "cm",
+  bg = "white"
+)
 
 
 
 
 ## Save plot and arrange with violin plots =====
 # ggarrange(panel_pairs_injury,
-# ggarrange(plot_IRRAT30, plot_IRITD3, IRITD5_plot,
+# ggarrange(plot_IRRAT30, plot_IRITD3, plot_IRITD5,
 # nrow = 1, common.legend = T), nrow = 2, ncol = 1)
 
 ### Save Tiff
