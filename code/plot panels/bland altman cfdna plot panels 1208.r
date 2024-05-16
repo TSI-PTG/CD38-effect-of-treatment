@@ -15,9 +15,9 @@ load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular e
 
 # MAKE PANEL OF BLAND ALTMAN PLOTS ####
 panels_bland_altman <- bland_altman_plots %>%
-    dplyr::filter(category %in% c("ABMR", "TCMR")) %>%
+    dplyr::filter(category %in% c("cfDNA")) %>%
     pull(plot_bland_altman) %>%
-    wrap_plots(nrow = 2, ncol = 5) +
+    wrap_plots(nrow = 1, ncol = 1) +
     plot_annotation(
         title = "Week24 - Day0",
         tag_levels = list(c(LETTERS[1:15]))) &
@@ -32,11 +32,11 @@ panels_bland_altman <- bland_altman_plots %>%
 # SAVE THE PLOTS ####
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/output/"
 ggsave(
-    filename = paste(saveDir, "Felzartamab Bland Altman plots ABMR and TCMR scores.png"),
+    filename = paste(saveDir, "Felzartamab Bland Altman plots cfDNA scores.png"),
     plot = panels_bland_altman,
     dpi = 300,
-    width = 60,
-    height = 22,
+    width = 18,
+    height = 11,
     units = "cm",
     bg = "white"
 )
