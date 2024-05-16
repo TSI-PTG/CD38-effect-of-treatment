@@ -42,7 +42,6 @@ gg_bland_altman <- function(data, variable, score, id = "Patient", group = "Felz
             show.legend = FALSE
         ) +
         ggplot2::labs(
-            # title = "Week24 - Day0",
             x = paste("Average", score %>% stringr::str_replace("\\(", "\n("), sep = " "),
             y = paste("\u394", score %>% stringr::str_replace("\\(", "\n("), sep = " "),
             parse = TRUE
