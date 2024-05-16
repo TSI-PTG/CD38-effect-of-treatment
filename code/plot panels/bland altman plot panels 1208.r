@@ -9,27 +9,7 @@ library(ggrepel) # install.packages("ggrepel")
 # source plot function
 source("C:/R/CD38-effect-of-treatment/code/functions/plot.gg_bland_altman.r")
 # load reference data
-load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/felzartamab_ARTanova.RData")
-
-
-# DEFINE THE DATA ####
-data <- felzartamab_ARTanova %>%
-    dplyr::select(category:data)
-
-
-# MAKE INDIVIDUAL PLOTS ####
-bland_altman_plots <- data %>%
-    mutate(
-        plot_bland_altman = pmap(
-            list(data, variable, score),
-            gg_bland_altman
-        )
-    )
-
-
-# SAVE THE PLOT DATA ####
-saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/"
-save(bland_altman_plots, file = paste(saveDir, "Felzartamab_bland_altman_plots.RData", sep = ""))
+load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/Felzartamab_bland_altman_plots.RData")
 
 
 
