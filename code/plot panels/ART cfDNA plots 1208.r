@@ -68,7 +68,6 @@ ggsave(
     units = "cm",
     bg = "white"
 )
-
 ggsave(
     filename = paste(saveDir, "Felzartamab violin legend.png"),
     plot = panel_legend,
