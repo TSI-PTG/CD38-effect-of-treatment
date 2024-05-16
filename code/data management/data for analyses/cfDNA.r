@@ -24,14 +24,15 @@ data_cfdna <- data %>%
     ) %>%
     mutate(
         Patient = Patient %>% factor(),
-        Followup = Followup %>% str_remove("GcfDNA_cp_ml_") %>%
-            factor(levels = c("Day0", "Week12", "Week24", "Week52")),
+        Followup = Followup %>% str_remove("GcfDNA_cp_ml_"),
+        Followup = ifelse(Followup == "Day0", "Baseline", Followup) %>%
+            factor(levels = c("Baseline", "Week12", "Week24", "Week52")),
         Group = case_when(
-            Followup == "Day0" ~ "Index",
-            Followup == "Week12" ~ "FU0",
+            Followup == "Baseline" ~ "Index",
+            Followup == "Week12" ~ "FU1b",
             Followup == "Week24" ~ "FU1",
             Followup == "Week52" ~ "FU2",
-        ) %>% factor(levels = c("Index", "FU0", "FU1", "FU2")),
+        ) %>% factor(levels = c("Index", "FU1b", "FU1", "FU2")),
         Felzartamab = Felzartamab %>% factor(labels = c("Placebo", "Felzartamab")),
         Felzartamab_Group = paste(Group, Felzartamab, sep = ":") %>%
             factor(levels = c(
@@ -40,8 +41,8 @@ data_cfdna <- data %>%
             )),
         Felzartamab_Followup = paste(Followup, Felzartamab, sep = ":") %>%
             factor(levels = c(
-                "Day0:Placebo", "Week12:Placebo", "Week24:Placebo", "Week52:Placebo",
-                "Day0:Felzartamab", "Week12:Felzartamab", "Week24:Felzartamab", "Week52:Felzartamab"
+                "Baseline:Placebo", "Week12:Placebo", "Week24:Placebo", "Week52:Placebo",
+                "Baseline:Felzartamab", "Week12:Felzartamab", "Week24:Felzartamab", "Week52:Felzartamab"
             ))
     ) %>%
     dplyr::select(Center, Patient, Felzartamab, Group, Followup, Felzartamab_Group, Felzartamab_Followup, cfDNA) %>%
