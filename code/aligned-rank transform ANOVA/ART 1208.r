@@ -35,7 +35,7 @@ seed <- 42
 vars_cfDNA <- c("cfDNA")
 vars_abmr <- c("ABMRpm", "ggt0", "ptcgt0", "DSAST", "NKB") # "cggt0", "RejAA_EABMR", "RejAA_FABMR", "RejAA_LABMR")
 vars_tcmr <- c("TCMRt", "tgt1", "igt1", "QCAT", "TCB") # , "TCMR-RAT", )
-
+vars_injury <- c("IRRAT30", "IRITD3", "IRITD5")
 # Endothelium <- c("ENDAT")
 # Parenchyma <- c("KT1", "KT2")
 # Macrophage <- c("AMAT1", "QCMAT")
@@ -45,7 +45,7 @@ vars_tcmr <- c("TCMRt", "tgt1", "igt1", "QCAT", "TCB") # , "TCMR-RAT", )
 
 # DEFINE VARIABLES TO ASSESS ####
 # vars <- c("cfDNA", "ABMRpm", "ggt0", "ptcgt0", "DSAST", "NKB", "TCMRt", "tgt1", "igt1", "QCAT", "TCB")
-vars <- c(vars_cfDNA, vars_abmr, vars_tcmr)
+vars <- c(vars_cfDNA, vars_abmr, vars_tcmr, vars_injury)
 
 
 # DEFINE THE data ####
@@ -60,7 +60,7 @@ data <- data_felzartamab_k1208 %>%
 
 # WRANGLE THE PHENOTYPE DATA ####
 data_00 <- data %>%
-    expand_grid(category = c("cfDNA", "ABMR", "TCMR")) %>%
+    expand_grid(category = c("cfDNA", "ABMR", "TCMR", "injury")) %>%
     nest(.by = category) %>%
     mutate(
         features = map(
@@ -72,6 +72,8 @@ data_00 <- data %>%
                     vars_abmr
                 } else if (category == "TCMR") {
                     vars_tcmr
+                } else if (category == "injury") {
+                    vars_injury
                 }
             }
         ),
@@ -105,23 +107,21 @@ data_01 <- data_00 %>%
                     mutate(
                         variable = variable %>%
                             factor(
-                                levels = c(
-                                    "cfDNA",
-                                    "ABMRpm", "ggt0", "cggt0", "ptcgt0", "NKB", "DSAST",
-                                    "TCMRt", "tgt1", "igt1", "TCB", "TCMR-RAT", "QCAT"
-                                )
+                                levels = vars
                             ),
                         annotation = case_when(
                             variable %in% vars_cfDNA ~ "cfDNA",
                             variable %in% vars_tcmr ~ "TCMR-related",
                             variable %in% vars_abmr ~ "ABMR-related",
+                            variable %in% vars_injury ~ "injury-related",
                             TRUE ~ " "
                         ) %>%
                             factor(
                                 levels = c(
                                     "cfDNA",
                                     "ABMR-related",
-                                    "TCMR-related"
+                                    "TCMR-related",
+                                    "injury-related"
                                 )
                             ),
                         score = case_when(

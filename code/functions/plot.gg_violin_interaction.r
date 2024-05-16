@@ -79,7 +79,10 @@ gg_violin_interaction <- function(data, variable, score, medians_delta, art_con_
                 dplyr::select(Felzartamab, Patient, Followup, delta, delta2),
             by = c("Felzartamab", "Patient", "Followup")
         ) %>%
-        dplyr::mutate(Followup = Followup %>% factor(levels = c("Baseline", "Week24", "Week52")))
+        dplyr::mutate(
+            Followup = Followup %>% factor(levels = c("Baseline", "Week24", "Week52")),
+            shape = ifelse(Patient == 9, 17, 19)
+        )
     bw <- ifelse(data$variable[[1]] %in% c("ABMRpm", "ggt0", "ptcgt0", "TCMRt", "tgt1", "igt1"), 0.05, 0.1)
     midpoint <- 0
     min_delta <- data %>%
@@ -141,6 +144,7 @@ gg_violin_interaction <- function(data, variable, score, medians_delta, art_con_
                 y = value,
                 col = delta
             ),
+            shape = data %>% dplyr::filter(Followup %in% c("Baseline")) %>% dplyr::pull(shape),
             position = ggplot2::position_nudge(x = 0.1),
             size = 2,
             alpha = 0.75
@@ -153,6 +157,7 @@ gg_violin_interaction <- function(data, variable, score, medians_delta, art_con_
                 y = value,
                 col = delta
             ),
+            shape = data %>% dplyr::filter(Followup %in% c("Week24")) %>% dplyr::pull(shape),
             size = 2,
             alpha = 0.75
         ) +
@@ -164,6 +169,7 @@ gg_violin_interaction <- function(data, variable, score, medians_delta, art_con_
                 y = value,
                 col = delta2
             ),
+            shape = data %>% dplyr::filter(Followup %in% c("Week52")) %>% dplyr::pull(shape),
             position = ggplot2::position_nudge(x = -0.1),
             size = 2,
             alpha = 0.75

@@ -38,7 +38,7 @@ felzartamab_plots <- felzartamab_ARTanova %>%
         )
     )
 
-# felzartamab_plots$plot_violin[[11]]
+felzartamab_plots$plot_violin[[12]]
 # felzartamab_plots$plot_patient_pairs[[3]]
 
 

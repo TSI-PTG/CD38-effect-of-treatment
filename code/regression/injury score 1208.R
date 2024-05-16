@@ -10,11 +10,14 @@ library(ggeffects) # install.packages("ggeffects")
 library(flextable) # install.packages("flextable")
 library(ggpubr) # install.packages("ggpubr")
 library(patchwork) # install.packages("patchwork")
+library(ggprism) # install.packages("ggprism")
 # Custom operators, functions, and datasets
 "%nin%" <- function(a, b) match(a, b, nomatch = 0) == 0
 source("C:/R/CD38-effect-of-treatment/code/functions/get_slope_function.r")
 # load reference data
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/data_felzartamab_k1208.RData")
+# load violin plots
+load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/Felzartamab_plots.RData")
 
 
 # WRANGLE THE DATA ####
@@ -211,14 +214,18 @@ plot_IRRAT30 <- effect_plot_IRRAT30 %>%
   labs(
     # title = "D",
     x = "Time post-treatment (weeks)",
-    y = "Injury-repair associated transcripts\n(IRRAT30)"
+    y = "Injury-repair associated\n(IRRAT30)"
   ) +
   theme_classic() +
   theme(
-    axis.text.x = element_text(size = 14, color = "black", vjust = -1),
-    axis.text.y = element_text(size = 14, color = "black"),
-    axis.title.x = element_text(size = 16, vjust = -1),
-    axis.title.y = element_text(size = 16),
+    legend.position = "top",
+    legend.title = element_blank(),
+    legend.text = element_text(size = 16),
+    legend.key.width = unit(4, "cm"),
+    axis.text.x = element_text(size = 12, color = "black", vjust = -1),
+    axis.text.y = element_text(size = 12, color = "black"),
+    axis.title.x = element_text(size = 12, vjust = -1),
+    axis.title.y = element_text(size = 12),
     plot.title = element_text(size = 16, face = "bold")
   )
 
@@ -250,7 +257,7 @@ plot_IRITD3 <- effect_plot_IRITD3 %>%
   labs(
     # title = "E",
     x = "Time post-treatment (weeks)",
-    y = "Injury-repair induced transcripts, day 3\n(IRITD3)"
+    y = "Injury-repair induced, day 3\n(IRITD3)"
   ) +
   scale_color_manual(
     name = "Treatment",
@@ -269,10 +276,13 @@ plot_IRITD3 <- effect_plot_IRITD3 %>%
   scale_y_continuous(limits = c(-0.7, 0.7)) +
   theme_classic() +
   theme(
-    axis.text.x = element_text(size = 14, color = "black", vjust = -1),
-    axis.text.y = element_text(size = 14, color = "black"),
-    axis.title.x = element_text(size = 16, vjust = -1),
-    axis.title.y = element_text(size = 16),
+    legend.position = "top",
+    legend.title = element_blank(),
+    legend.text = element_text(size = 16),
+    axis.text.x = element_text(size = 12, color = "black", vjust = -1),
+    axis.text.y = element_text(size = 12, color = "black"),
+    axis.title.x = element_text(size = 12, vjust = -1),
+    axis.title.y = element_text(size = 12),
     plot.title = element_text(size = 16, face = "bold")
   )
 
@@ -304,7 +314,7 @@ plot_IRITD5 <- effect_plot_IRITD5 %>%
   labs(
     # title = "F",
     x = "Time post-treatment (weeks)",
-    y = "Injury-repair induced transcripts, day 5\n(IRITD5)"
+    y = "Injury-repair induced, day 5\n(IRITD5)"
   ) +
   scale_color_manual(
     name = "Treatment",
@@ -323,10 +333,13 @@ plot_IRITD5 <- effect_plot_IRITD5 %>%
   scale_y_continuous(limits = c(-0.20, 0.8)) +
   theme_classic() +
   theme(
-    axis.text.x = element_text(size = 14, color = "black", vjust = -1),
-    axis.text.y = element_text(size = 14, color = "black"),
-    axis.title.x = element_text(size = 16, vjust = -1),
-    axis.title.y = element_text(size = 16),
+    legend.position = "top",
+    legend.title = element_blank(),
+    legend.text = element_text(size = 16),
+    axis.text.x = element_text(size = 12, color = "black", vjust = -1),
+    axis.text.y = element_text(size = 12, color = "black"),
+    axis.title.x = element_text(size = 12, vjust = -1),
+    axis.title.y = element_text(size = 12),
     plot.title = element_text(size = 16, face = "bold")
   )
 
@@ -361,25 +374,42 @@ table_slope_IRITD5_grob <- table_slope_IRITD5 %>%
   as_ggplot()
 
 
-# EXTRACT LEGEND FOR PLOTS ####
-panel_legend <- plot_IRRAT30 %>%
-  get_legend() %>%
-  as_ggplot()
+# EXTRACT LEGEND FOR VIOLIN PLOTS ####
+panel_legend_violin <- felzartamab_plots %>%
+  dplyr::filter(category == "cfDNA") %>%
+  pull(plot_violin) %>%
+  ggpubr::get_legend() %>%
+  ggpubr::as_ggplot() +
+  theme(plot.margin = unit(c(0, 0, -1, 0), "cm"))
+
+
+# EXTRACT LEGEND FOR REGRESSION PLOTS ####
+panel_legend_regression <- plot_IRRAT30  %>%
+  ggpubr::get_legend() %>%
+  ggpubr::as_ggplot()
+
+
+# EXTRACT JOINT LEGEND FOR REGRESSION AND VIOLIN PLOTS ####
+panel_legend_all_injury <- panel_legend_violin + panel_legend_regression
 
 
 
-# COMBINE THE SLOPE PLOTS ####
-plot_panels <- patchwork::wrap_plots(
+# EXTRACT INJURY VIOLIN PLOTS ####
+plots_violin <- felzartamab_plots %>%
+  dplyr::filter(category %in% c("injury")) %>%
+  pull(plot_violin)
+
+
+# MAKE PANEL OF SLOPE PLOTS ####
+plot_panels_regression <- patchwork::wrap_plots(
   plot_IRRAT30, plot_IRITD3, plot_IRITD5,
   table_slope_IRRAT30_grob, table_slope_IRITD3_grob, table_slope_IRITD5_grob,
   nrow = 2,
   ncol = 3,
   guides = "collect",
-  heights = c(1, 0.65)
+  heights = c(1, 0.5)
 ) +
-  patchwork::plot_annotation(
-    tag_levels = list(c("A", "B", "C", rep("", 3)))
-  ) &
+  patchwork::plot_annotation(tag_levels = list(c("D", "E", "F", rep("", 3)))) &
   theme(
     legend.position = "none",
     plot.title = element_blank(),
@@ -387,27 +417,89 @@ plot_panels <- patchwork::wrap_plots(
     plot.tag = element_text(size = 20, face = "bold", vjust = 1)
   )
 
+plot_panels_regression_legend <- ggarrange(
+  panel_legend_regression,
+  plot_panels_regression,
+  nrow = 2,
+  heights = c(0.15, 1.5)
+)
 
-plot_panels_legend <-  (panel_legend / plot_panels) +
-  plot_layout(
-    nrow = 2,
-    heights = c(0.25, 1.5)
+
+# MAKE PANEL OF VIOLIN PLOTS ####
+plot_panel_violin <- plots_violin %>%
+  wrap_plots(nrow = 1, ncol = 3) +
+  plot_annotation(tag_levels = list(c(LETTERS[1:15]))) &
+  theme(
+    legend.position = "none",
+    axis.text = element_text(size = 10, colour = "black"), plot.tag = element_text(size = 20, face = "bold", vjust = 1)
   )
+
+panels_violin_legend <- ggarrange(
+  panel_legend_violin,
+  plot_panel_violin,
+  nrow = 2,
+  heights = c(0.25, 1.5)
+)
+
+
+# MAKE PANEL OF SLOPE AND VIOLIN PLOTS ####
+plot_panels_all_injury <- patchwork::wrap_plots(
+  plots_violin[[1]], plots_violin[[2]], plots_violin[[3]],
+  plot_IRRAT30, plot_IRITD3, plot_IRITD5,
+  table_slope_IRRAT30_grob, table_slope_IRITD3_grob, table_slope_IRITD5_grob,
+  nrow = 3,
+  ncol = 3,
+  guides = "collect",
+  heights = c(1, 1, 0.5)
+) +
+  patchwork::plot_annotation(tag_levels = list(c(LETTERS[1:6], rep("", 3)))) &
+  theme(
+    legend.position = "none",
+    # plot.title = element_blank(),
+    axis.text = element_text(size = 10, colour = "black"),
+    axis.title = element_text(size = 12, colour = "black"),
+    plot.tag = element_text(size = 20, face = "bold", vjust = 1)
+  )
+
+panels_all_injury <- ggarrange(
+  panel_legend_all_injury,
+  plot_panels_all_injury,
+  nrow = 2,
+  heights = c(0.15, 1.5)
+)
 
 
 # SAVE THE PLOTS ####
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/output/"
 ggsave(
   filename = paste(saveDir, "Felzartamab injury regression.png"),
-  plot = plot_panels_legend,
+  plot = plot_panels_regression_legend,
   dpi = 300,
   width = 40,
-  height = 20,
+  height = 15,
   units = "cm",
   bg = "white"
 )
 
+ggsave(
+  filename = paste(saveDir, "Felzartamab injury ART.png"),
+  plot = panels_violin_legend,
+  dpi = 300,
+  width = 36,
+  height = 11,
+  units = "cm",
+  bg = "white"
+)
 
+ggsave(
+  filename = paste(saveDir, "Felzartamab injury ART and regression.png"),
+  plot = panels_all_injury,
+  dpi = 300,
+  width = 40,
+  height = 26,
+  units = "cm",
+  bg = "white"
+)
 
 
 ## Save plot and arrange with violin plots =====
