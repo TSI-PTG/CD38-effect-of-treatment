@@ -26,7 +26,8 @@ m <- data_felzartamab_k1208 %>%
       Group == "FU2" ~ 0.99
     )
   ) %>%
-  dplyr::filter(Patient != c(9, 15, 18))
+  dplyr::filter(Group != "FU1b", Patient %nin% c(9, 15, 18))
+
 
 
 
