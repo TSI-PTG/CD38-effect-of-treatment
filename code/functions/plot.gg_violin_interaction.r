@@ -26,10 +26,10 @@ gg_violin_interaction <- function(data, variable, score, medians_delta, art_con_
     )
     log10_labels <- c(0, 1, 10, 100, 1000)
     xlabels <- data %>%
-        distinct(Followup, .keep_all = TRUE) %>%
+        dplyr::distinct(Followup, .keep_all = TRUE) %>%
         dplyr::select(Followup, sample_pairs) %>%
-        mutate(xlabels = paste(Followup, "\n(n = ", sample_pairs, ")", sep = "")) %>%
-        pull(xlabels)
+        dplyr::mutate(xlabels = paste(Followup, "\n(n = ", sample_pairs, ")", sep = "")) %>%
+        dplyr::pull(xlabels)
     dodge <- 0.3
     delta <- medians_delta %>%
         dplyr::mutate(Felzartamab = Felzartamab %>% factor(labels = c("Placebo", "Felzartamab")))
@@ -66,7 +66,7 @@ gg_violin_interaction <- function(data, variable, score, medians_delta, art_con_
                         TRUE ~ delta
                     ),
                     delta2 = dplyr::case_when(
-                        variable == "cfDNA" ~log2( Week52 / Week24),
+                        variable == "cfDNA" ~ log2(Week52 / Week24),
                         TRUE ~ Week52 - Week24
                     ),
                     delta2 = case_when(
@@ -82,6 +82,14 @@ gg_violin_interaction <- function(data, variable, score, medians_delta, art_con_
         dplyr::mutate(Followup = Followup %>% factor(levels = c("Day0", "Week24", "Week52")))
     bw <- ifelse(data$variable[[1]] %in% c("ABMRpm", "ggt0", "ptcgt0", "TCMRt", "tgt1", "igt1"), 0.05, 0.1)
     midpoint <- 0
+    min_delta <- data %>%
+        dplyr::select(delta, delta2) %>%
+        flatten_dbl() %>%
+        min()
+    max_delta <- data %>%
+        dplyr::select(delta, delta2) %>%
+        flatten_dbl() %>%
+        max()
     plot <- data %>%
         ggplot2::ggplot(aes(x = Followup, y = value)) +
         gghalves::geom_half_violin(
@@ -238,8 +246,8 @@ gg_violin_interaction <- function(data, variable, score, medians_delta, art_con_
                 title.position = "top",
                 barwidth = 20,
                 ticks = FALSE,
-                label.hjust = c(2, -0.05),
-                label.vjust = 8,
+                label.hjust = c(5.35, min_delta), # first value is improved, second value worsened (i.e., reverse = TRUE)
+                label.vjust = 7.75,
                 reverse = TRUE
             )
         ) +

@@ -29,6 +29,7 @@ log10zero <- scales::trans_new(
 options(dplyr.reframe.inform = FALSE)
 # source plot function
 source("C:/R/CD38-effect-of-treatment/code/functions/plot.gg_violin_interaction.r")
+source("C:/R/CD38-effect-of-treatment/code/functions/plot.gg_patient_pairs_interaction.r")
 # load data
 # load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felzartamab CD38 Vienna/G_Rstuff/data/data_cfDNA.RData")
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/data_felzartamab_k1208.RData")
@@ -134,14 +135,7 @@ df_univariate_02 <- df_univariate_01 %>%
             function(art_con_interaction_default_tidy) {
                 art_con_interaction_default_tidy %>%
                     as.data.frame() %>%
-                    cldList(adj.p.value ~ Followup:Felzartamab, data = .) # %>%
-                #         arrange(Group %>%
-                #             factor(
-                #                 levels = c(
-                #                     "Index,Placebo", "FU1,Placebo",
-                #                     "Index,Felzartamab", "FU1,Felzartamab"
-                #                 )
-                #             ))
+                    cldList(adj.p.value ~ Followup:Felzartamab, data = .) 
             }
         )
     )
@@ -326,7 +320,7 @@ data_pairwise_formatted <- data_delta_formatted %>%
 #     unnest(everything(), names_repair = tidyr_legacy)
 
 
-# FORMAT FLEXTABLE ####
+# UNIVERSAL VARIABLES FOR FLEXTABLE ####
 # define sample sizes
 # df_n <- df_00 %>%
 #     group_by(Group_Felz) %>%
@@ -409,99 +403,20 @@ flextable_pairwise <- data_pairwise_formatted %>%
 
 
 # MAKE BIOPSY PAIR PLOTS ####
-df_univariate_02$data[[1]]
-
-plot_violin_pairs <- df_univariate_02 %>%
+plot_cfDNA <- df_univariate_02 %>%
     mutate(
         plot_violin = pmap(
             list(data, variable, score, medians_delta, art_con_interaction_default_tidy),
             gg_violin_interaction
+        ),
+        plot_patient_pairs = pmap(
+            list(data, variable, score),
+            gg_patient_pairs_interaction
         )
     )
 
-plot_violin_pairs$plot_violin[[1]]
-
-
-
-plot_ddcfDNA <- plot_violin_pairs$plot_violin[[1]] %>% ggarrange(common.legend = TRUE)
-
-
-
-# # MAKE JOINT PATIENT PAIR PLOTS ####
-# log_ticks <- c(
-#     seq(0, 1, length.out = 11),
-#     seq(1, 10, length.out = 10),
-#     seq(10, 100, length.out = 10),
-#     seq(100, 1000, length.out = 10)
-# )
-# labels <- c(0, 1, 10, 100, 1000)
-# dodge <- 0.3
-
-# plot_patient_pairs <- df_univariate_02 %>%
-#     mutate(
-#         gg_line = pmap(
-#             list(data, variable, score),
-#             function(data, variable, score) {
-#                 data <- data %>%
-#                     mutate(
-#                         variable = variable,
-#                         Felzartamab = Felzartamab %>% factor(labels = c("Placebo", "Felzartamab"))
-#                     )
-#                 data %>%
-#                     ggplot(
-#                         aes(
-#                             x = Group,
-#                             y = value,
-#                             col = Patient,
-#                             group = Patient
-#                         )
-#                     ) +
-#                     geom_point(size = 5, position = position_dodge(width = dodge)) +
-#                     geom_line(
-#                         linewidth = 0.75,
-#                         linetype = "dashed",
-#                         position = position_dodge(width = dodge),
-#                         show.legend = FALSE
-#                     ) +
-#                     geom_text(
-#                         aes(label = Patient),
-#                         size = 4,
-#                         col = "black",
-#                         show.legend = FALSE,
-#                         position = position_dodge(width = dodge)
-#                     ) +
-#                     labs(
-#                         x = NULL,
-#                         y = "dd-cfDNA (cp/mL)",
-#                         col = "Patient     ",
-#                         parse = TRUE
-#                     ) +
-#                     scale_y_continuous(
-#                         breaks = c(0, 1, 10, 100, 1000),
-#                         labels = c(0, 1, 10, 100, 1000),
-#                         minor_breaks = log_ticks,
-#                         trans = log10zero
-#                     ) +
-#                     coord_cartesian(xlim = c(1.3, 2.7), ylim = c(0, 1000)) +
-#                     theme_bw() +
-#                     theme(
-#                         axis.ticks.length.y = unit(0.25, "cm"),
-#                         axis.title = element_text(size = 15),
-#                         axis.text = element_text(size = 12, colour = "black"),
-#                         panel.grid = element_blank(),
-#                         strip.text = element_text(size = 12, colour = "black"),
-#                         legend.position = "none",
-#                         legend.title = element_text(size = 15, hjust = 0.66, vjust = 1, face = "bold"),
-#                         legend.text = element_text(size = 15),
-#                     ) +
-#                     facet_wrap(data$Felzartamab) +
-#                     guides(
-#                         col = guide_legend(nrow = 1),
-#                         y = ggprism::guide_prism_minor()
-#                     )
-#             }
-#         )
-#     )
+plot_cfDNA$plot_violin[[1]]
+plot_cfDNA$plot_patient_pairs[[1]]
 
 
 # # SAVE THE PLOTS ####
@@ -526,5 +441,10 @@ plot_ddcfDNA <- plot_violin_pairs$plot_violin[[1]] %>% ggarrange(common.legend =
 # )
 
 
+# SAVE DATA NEST ####
+saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0T7 Trifecta7 effect of treatment/data/"
+save(plot_cfDNA, file = paste(saveDir, "Felzartamab_cfDNA_results.RData", sep = ""))
 
-# # END ####
+
+
+# END ####

@@ -89,7 +89,7 @@ data_patient <- data %>%
         Felzartamab,
         all_of(vars_patient)
     )
-
+data_patient %>% colnames
 
 # WRANGLE THE CEL IDS FROM SPSS DATA ####
 data_CEL <- data %>%
@@ -104,12 +104,14 @@ data_CEL <- data %>%
         names_to = "Group",
         names_pattern = "^(\\w+)_.*",
         values_to = "CEL"
-    )
+    ) %>%
+    mutate(Group = Group  %>% str_remove("Bx"))
 
 
 # JOIN THE SPSS AND MOLECULAR SCORE DATA ####
 data_K1208 <- data_scores %>%
     left_join(data_patient, by = c("Trial_Center", "STUDY_EVALUATION_ID", "Felzartamab")) %>%
+    left_join(data_CEL, by = c("Trial_Center", "STUDY_EVALUATION_ID", "Felzartamab", "Group")) %>%
     dplyr::rename(Center = Trial_Center, Patient = STUDY_EVALUATION_ID) %>%
     mutate(
         Patient = Patient %>% factor(),
@@ -134,7 +136,7 @@ data_K1208 <- data_scores %>%
             ))
     ) %>%
     relocate(
-        Center, Patient, Felzartamab, Group, Followup, Felzartamab_Group, Felzartamab_Followup,
+        Center, Patient, CEL, Felzartamab, Group, Followup, Felzartamab_Group, Felzartamab_Followup,
         all_of(vars_patient),
         .before = 1
     ) %>%
