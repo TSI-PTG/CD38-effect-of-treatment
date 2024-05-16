@@ -92,7 +92,7 @@ gg_patient_pairs_interaction <- function(data, variable, score) {
             ggplot2::theme(axis.ticks.length.y = unit(0.25, "cm")) +
             ggplot2::guides(y = ggprism::guide_prism_minor())
     } else {
-        plot <- plot + ggplot2::scale_y_continuous(expand = c(0, 0), trans = "identity")
+        plot 
     }
     plot
 }

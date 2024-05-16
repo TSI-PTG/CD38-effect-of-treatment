@@ -10,7 +10,7 @@ gg_violin_interaction <- function(data, variable, score, medians_delta, art_con_
     if (score %>% stringr::str_detect("Prob")) {
         ylims <- c(0, 1)
         point_size <- 2
-    } else if (score %>% stringr::str_detect("cfDNA")) {
+    } else if (variable == "cfDNA") {
         ylims <- c(0, 1000)
         point_size <- 2
     } else {
@@ -58,9 +58,9 @@ gg_violin_interaction <- function(data, variable, score, medians_delta, art_con_
                 dplyr::mutate(
                     delta = dplyr::case_when(
                         variable == "cfDNA" ~ log2(Week24 / Day0),
-                        TRUE ~ Week24 / Day0
+                        TRUE ~ Week24 - Day0
                     ),
-                    delta = case_when(
+                    delta = dplyr::case_when(
                         delta == -Inf ~ min(delta[delta != -Inf]),
                         delta == Inf ~ max(delta[delta != Inf]),
                         TRUE ~ delta
@@ -69,7 +69,7 @@ gg_violin_interaction <- function(data, variable, score, medians_delta, art_con_
                         variable == "cfDNA" ~ log2(Week52 / Week24),
                         TRUE ~ Week52 - Week24
                     ),
-                    delta2 = case_when(
+                    delta2 = dplyr::case_when(
                         delta2 == -Inf ~ min(delta2[delta2 != -Inf]),
                         delta2 == Inf ~ max(delta2[delta2 != Inf]),
                         TRUE ~ delta2

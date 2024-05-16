@@ -442,7 +442,7 @@ plot_cfDNA$plot_patient_pairs[[1]]
 
 
 # SAVE DATA NEST ####
-saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0T7 Trifecta7 effect of treatment/data/"
+saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/"
 save(plot_cfDNA, file = paste(saveDir, "Felzartamab_cfDNA_results.RData", sep = ""))
 
 
