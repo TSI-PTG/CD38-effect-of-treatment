@@ -17,8 +17,6 @@ log10zero <- scales::trans_new(
     transform = function(x) log10(x + 0.001),
     inverse = function(x) 10^x - 0.001
 )
-# Suppress pesky dplyr reframe info
-options(dplyr.reframe.inform = FALSE)
 # source plot function
 source("C:/R/CD38-effect-of-treatment/code/functions/plot.gg_violin_interaction.r")
 source("C:/R/CD38-effect-of-treatment/code/functions/plot.gg_patient_pairs_interaction.r")
