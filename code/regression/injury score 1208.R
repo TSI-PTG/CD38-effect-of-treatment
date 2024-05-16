@@ -137,37 +137,37 @@ model_IRITD5 <- slopes_IRITD5 %>%
 size_font <- 10
 table_slope_IRRAT30 <- model_IRRAT30 %>%
   dplyr::select(-p_adjusted) %>%
-  qflextable() %>%
-  set_table_properties(layout = "autofit") %>%
-  set_header_labels(
+  flextable::qflextable() %>%
+  flextable::set_table_properties(layout = "autofit") %>%
+  flextable::set_header_labels(
     name = "Group", result = "IRRAT30 Slope (95%CI)",
     "p_value" = "P-Value"
   ) %>%
-  bold(i = NULL, part = "header") %>%
+  flextable::bold(i = NULL, part = "header") %>%
   flextable::fontsize(size = size_font, part = "all")
 # table_slope_IRRAT30 %>% print(preview = "pptx")
 
 table_slope_IRITD3 <- model_IRITD3 %>%
   dplyr::select(-p_adjusted) %>%
-  qflextable() %>%
-  set_table_properties(layout = "autofit") %>%
-  set_header_labels(
+  flextable::qflextable() %>%
+  flextable::set_table_properties(layout = "autofit") %>%
+  flextable::set_header_labels(
     name = "Group", result = "IRITD3 Slope (95%CI)",
     "p_value" = "P-Value"
   ) %>%
-  bold(i = NULL, part = "header") %>%
+  flextable::bold(i = NULL, part = "header") %>%
   flextable::fontsize(size = size_font, part = "all")
 # table_slope_IRRAT30 %>% print(preview = "pptx")
 
 table_slope_IRITD5 <- model_IRITD5 %>%
   dplyr::select(-p_adjusted) %>%
-  qflextable() %>%
-  set_table_properties(layout = "autofit") %>%
-  set_header_labels(
+  flextable::qflextable() %>%
+  flextable::set_table_properties(layout = "autofit") %>%
+  flextable::set_header_labels(
     name = "Group", result = "IRITD5 Slope (95%CI)",
     "p_value" = "P-Value"
   ) %>%
-  bold(i = NULL, part = "header") %>%
+  flextable::bold(i = NULL, part = "header") %>%
   flextable::fontsize(size = size_font, part = "all")
 # table_slope_IRRAT30 %>% print(preview = "pptx")
 
