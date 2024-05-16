@@ -118,11 +118,11 @@ data_K1208 <- data_scores %>%
         Group = Group %>%
             factor(levels = c("Index", "FU1b", "FU1", "FU2")),
         Followup = case_when(
-            Group == "Index" ~ "Day0",
+            Group == "Index" ~ "Baseline",
             Group == "FU1b" ~ "Week12",
             Group == "FU1" ~ "Week24",
             Group == "FU2" ~ "Week52"
-        ) %>% factor(levels = c("Day0", "Week12", "Week24", "Week52")),
+        ) %>% factor(levels = c("Baseline", "Week12", "Week24", "Week52")),
         Felzartamab = Felzartamab %>% factor(labels = c("Placebo", "Felzartamab")),
         Felzartamab_Group = paste(Group, Felzartamab, sep = ":") %>%
             factor(levels = c(
@@ -131,8 +131,8 @@ data_K1208 <- data_scores %>%
             )),
         Felzartamab_Followup = paste(Followup, Felzartamab, sep = ":") %>%
             factor(levels = c(
-                "Day0:Placebo", "Week12:Placebo", "Week24:Placebo", "Week52:Placebo",
-                "Day0:Felzartamab", "Week12:Felzartamab", "Week24:Felzartamab", "Week52:Felzartamab"
+                "Baseline:Placebo", "Week12:Placebo", "Week24:Placebo", "Week52:Placebo",
+                "Baseline:Felzartamab", "Week12:Felzartamab", "Week24:Felzartamab", "Week52:Felzartamab"
             ))
     ) %>%
     relocate(

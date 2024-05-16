@@ -205,8 +205,8 @@ data_02 <- data_01 %>%
                         .by = c(Felzartamab)
                     ) %>%
                     mutate(
-                        Followup_pairwise = rep(c("Day0 - Week24", "Day0 - Week52", "Week24 - Week52"), 2) %>%
-                            factor(levels = c("Day0 - Week24", "Day0 - Week52", "Week24 - Week52")),
+                        Followup_pairwise = rep(c("Baseline - Week24", "Baseline - Week52", "Week24 - Week52"), 2) %>%
+                            factor(levels = c("Baseline - Week24", "Baseline - Week52", "Week24 - Week52")),
                         .before = sample_pairs
                     ) %>%
                     mutate(
