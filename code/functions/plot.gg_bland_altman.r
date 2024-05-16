@@ -10,15 +10,15 @@ gg_bland_altman <- function(data, variable, score, id = "Patient", group = "Felz
         dplyr::select(id, group, split, value) %>%
         tidyr::pivot_wider(names_from = split, values_from = value) %>%
         dplyr::mutate(
-            average = (Day0 + Week24) / 2,
-            diff = Week24 - Day0,
+            average = (Baseline + Week24) / 2,
+            diff = Week24 - Baseline,
             mean_diff = diff %>% mean(),
             lower = mean_diff - 1.96 * sd(diff),
             upper = mean_diff + 1.96 * sd(diff),
             .by = group
         ) %>%
         dplyr::select(
-            id, group, Day0, Week24, Week52,
+            id, group, Baseline, Week24, Week52,
             average, diff, mean_diff, lower, upper
         )
 

@@ -35,7 +35,7 @@ gg_violin_interaction <- function(data, variable, score, medians_delta, art_con_
         dplyr::mutate(Felzartamab = Felzartamab %>% factor(labels = c("Placebo", "Felzartamab")))
     delta_delta <- medians_delta %>%
         dplyr::distinct(Followup_pairwise, .keep_all = TRUE) %>%
-        dplyr::mutate(Followup_pairwise = c("Week24 - Day0", "Week52 - Day0", "Week52 - Week24"))
+        dplyr::mutate(Followup_pairwise = c("Week24 - Baseline", "Week52 - Baseline", "Week52 - Week24"))
     delta_delta_p <- art_con_interaction_default_tidy %>%
         dplyr::select(Followup_pairwise, adj.p.value) %>%
         dplyr::mutate(
@@ -57,8 +57,8 @@ gg_violin_interaction <- function(data, variable, score, medians_delta, art_con_
                 rstatix::spread(Followup, median) %>%
                 dplyr::mutate(
                     delta = dplyr::case_when(
-                        variable == "cfDNA" ~ log2(Week24 / Day0),
-                        TRUE ~ Week24 - Day0
+                        variable == "cfDNA" ~ log2(Week24 / Baseline),
+                        TRUE ~ Week24 - Baseline
                     ),
                     delta = dplyr::case_when(
                         delta == -Inf ~ min(delta[delta != -Inf]),
@@ -75,11 +75,11 @@ gg_violin_interaction <- function(data, variable, score, medians_delta, art_con_
                         TRUE ~ delta2
                     )
                 ) %>%
-                tidyr::pivot_longer(cols = c(Day0, Week24, Week52), names_to = "Followup", values_to = "value") %>%
+                tidyr::pivot_longer(cols = c(Baseline, Week24, Week52), names_to = "Followup", values_to = "value") %>%
                 dplyr::select(Felzartamab, Patient, Followup, delta, delta2),
             by = c("Felzartamab", "Patient", "Followup")
         ) %>%
-        dplyr::mutate(Followup = Followup %>% factor(levels = c("Day0", "Week24", "Week52")))
+        dplyr::mutate(Followup = Followup %>% factor(levels = c("Baseline", "Week24", "Week52")))
     bw <- ifelse(data$variable[[1]] %in% c("ABMRpm", "ggt0", "ptcgt0", "TCMRt", "tgt1", "igt1"), 0.05, 0.1)
     midpoint <- 0
     min_delta <- data %>%
@@ -94,7 +94,7 @@ gg_violin_interaction <- function(data, variable, score, medians_delta, art_con_
         ggplot2::ggplot(aes(x = Followup, y = value)) +
         gghalves::geom_half_violin(
             inherit.aes = FALSE,
-            data = data %>% dplyr::filter(Followup %in% c("Day0")),
+            data = data %>% dplyr::filter(Followup %in% c("Baseline")),
             mapping = ggplot2::aes(
                 x = Followup,
                 y = value
@@ -135,7 +135,7 @@ gg_violin_interaction <- function(data, variable, score, medians_delta, art_con_
         ) +
         ggplot2::geom_point(
             inherit.aes = FALSE,
-            data = data %>% dplyr::filter(Followup %in% c("Day0")),
+            data = data %>% dplyr::filter(Followup %in% c("Baseline")),
             mapping = ggplot2::aes(
                 x = Followup,
                 y = value,
@@ -169,7 +169,7 @@ gg_violin_interaction <- function(data, variable, score, medians_delta, art_con_
             alpha = 0.75
         ) +
         ggplot2::geom_line(
-            data = data %>% dplyr::filter(Followup %in% c("Day0", "Week24")),
+            data = data %>% dplyr::filter(Followup %in% c("Baseline", "Week24")),
             mapping = aes(
                 x = Followup,
                 col = delta,
@@ -177,8 +177,8 @@ gg_violin_interaction <- function(data, variable, score, medians_delta, art_con_
             ),
             position = ggplot2::position_nudge(
                 x = ifelse(data %>%
-                    dplyr::filter(Followup %in% c("Day0", "Week24")) %>%
-                    dplyr::pull(Followup) == "Day0", 0.1, 0)
+                    dplyr::filter(Followup %in% c("Baseline", "Week24")) %>%
+                    dplyr::pull(Followup) == "Baseline", 0.1, 0)
             ),
             linewidth = 0.5,
             alpha = 0.25,

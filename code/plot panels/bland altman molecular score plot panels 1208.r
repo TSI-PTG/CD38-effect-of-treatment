@@ -19,7 +19,7 @@ panels_bland_altman <- bland_altman_plots %>%
     pull(plot_bland_altman) %>%
     wrap_plots(nrow = 2, ncol = 5) +
     plot_annotation(
-        title = "Week24 - Day0",
+        title = "Week24 - Baseline",
         tag_levels = list(c(LETTERS[1:15]))) &
     theme(
         legend.position = "none",
