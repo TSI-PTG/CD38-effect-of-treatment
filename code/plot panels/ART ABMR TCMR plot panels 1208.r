@@ -14,8 +14,9 @@ load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular e
 panel_legend <- felzartamab_plots %>%
     dplyr::filter(category == "cfDNA") %>%
     pull(plot_violin) %>%
-    get_legend() %>%
-    as_ggplot()
+    ggpubr::get_legend() %>%
+    ggpubr::as_ggplot() +
+    theme(plot.margin = unit(c(0, 0, -1, 0), "cm"))
 
 
 # MAKE PANEL OF VIOLIN PLOTS ####
