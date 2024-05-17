@@ -371,7 +371,7 @@ table_slope_IRITD5_grob <- table_slope_IRITD5 %>%
 
 # EXTRACT LEGEND FOR VIOLIN PLOTS ####
 panel_legend_violin <- felzartamab_plots %>%
-  dplyr::filter(category == "cfDNA") %>%
+  dplyr::filter(variable == "AMAT1") %>%
   pull(plot_violin) %>%
   ggpubr::get_legend() %>%
   ggpubr::as_ggplot() +

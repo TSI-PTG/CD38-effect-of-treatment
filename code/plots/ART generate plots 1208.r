@@ -38,7 +38,9 @@ felzartamab_plots <- felzartamab_ARTanova %>%
         )
     )
 
-felzartamab_plots$plot_violin[[12]]
+felzartamab_plots$plot_violin[[12]] # reference legend1
+felzartamab_plots$plot_violin[[17]] # reference legend2
+
 # felzartamab_plots$plot_patient_pairs[[3]]
 
 

@@ -87,10 +87,15 @@ gg_violin_interaction <- function(data, variable, score, medians_delta, art_con_
     midpoint <- 0
     if (variable %in% c("KT1", "KT2")) {
         gradient_labels <- c("worsened", "improved")
+        gradient_labels_hjust <- c(-0.075, 1.55)
+        col_low <- "red"
+        col_high <- "#00ff00bc"
     } else {
         gradient_labels <- c("improved", "worsened")
+        col_low <- "#00ff00bc"
+        col_high <- "red"
+        gradient_labels_hjust <- c(-0.075, 1.85)
     }
-    gradient_labels %>% print()
     plot <- data %>%
         ggplot2::ggplot(aes(x = Followup, y = value)) +
         gghalves::geom_half_violin(
@@ -240,9 +245,9 @@ gg_violin_interaction <- function(data, variable, score, medians_delta, art_con_
             parse = TRUE
         ) +
         ggplot2::scale_color_gradient2(
-            low = "#00ff00bc",
+            low = col_low,
             mid = "grey60",
-            high = "red",
+            high = col_high,
             midpoint = midpoint,
             breaks = c(min(data$delta), max(data$delta)),
             labels = gradient_labels,
@@ -252,7 +257,7 @@ gg_violin_interaction <- function(data, variable, score, medians_delta, art_con_
                 barwidth = 20,
                 draw.ulim = FALSE,
                 draw.llim = FALSE,
-                label.hjust = c(-0.075, 1.85), # first value is improved, second value worsened (i.e., reverse = TRUE)
+                label.hjust = gradient_labels_hjust, # first value is improved, second value worsened (i.e., reverse = TRUE)
                 label.vjust = 7.75,
                 reverse = TRUE
             )

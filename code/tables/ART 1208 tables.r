@@ -163,7 +163,7 @@ data_pairwise_formatted <- data_delta_formatted %>%
     ) %>%
     dplyr::select(-medians, -contrasts) %>%
     pivot_wider(names_from = Followup_pairwise, values_from = data) %>%
-    relocate(`Week24 - Week52`, .before = `Day0 - Week52`)
+    relocate(`Week24 - Week52`, .before = `Baseline - Week52`)
 
 # data_pairwise_formatted %>%
 #     dplyr::slice(1) %>%
@@ -200,7 +200,7 @@ header2 <- c(
     rep(c("\u394 Placebo\n(N=10)", "\u394 Felzartamab\n(N=10)", "\u394\u394", "\u394\u394 FDR"), 2)
 )
 
-cellWidths <- c(4, 11, rep(c(3, 3, 3, 2), 3))
+cellWidths <- c(4, 11, rep(c(3.5, 3.5, 3.5, 2), 3))
 
 category_vec1 <- str_remove(data_pairwise_formatted$score, "Prob\\)")
 category_vec2 <- str_extract(data_pairwise_formatted$score, "Prob")
@@ -238,7 +238,7 @@ flextable_pairwise <- data_pairwise_formatted %>%
     flextable::bold(j = 1, part = "body") %>%
     flextable::bg(bg = "white", part = "all") %>%
     flextable::bg(i = ~ as.numeric(FDR_interaction) < 0.05, j = 2:ncol_keys(.), bg = "grey90", part = "body") %>%
-    flextable::bold(i = ~ as.numeric(FDR_interaction) < 0.05, j = ncol_keys(.), part = "body") %>%
+    # flextable::bold(i = ~ as.numeric(FDR_interaction) < 0.05, j = ncol_keys(.), part = "body") %>%
     flextable::padding(padding = 0, part = "all") %>%
     flextable::width(width = cellWidths, unit = "cm") %>%
     flextable::width(., width = dim(.)$widths * 30 / (flextable_dim(.)$widths), unit = "cm")

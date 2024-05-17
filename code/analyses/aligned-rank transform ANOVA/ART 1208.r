@@ -23,7 +23,7 @@ log10zero <- scales::trans_new(
 options(dplyr.reframe.inform = FALSE)
 # load reference data
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/data_felzartamab_k1208.RData")
-
+data_felzartamab_k1208 %>% colnames()
 
 
 # DEFINE SEED ####
@@ -39,13 +39,14 @@ vars_injury <- c("IRRAT30", "IRITD3", "IRITD5")
 # Endothelium <- c("ENDAT")
 vars_parenchyma <- c("KT1", "KT2")
 vars_macrophage <- c("AMAT1", "QCMAT")
+vars_archetypes <- c("RejAA_NR",  "RejAA_EABMR", "RejAA_FABMR", "RejAA_LABMR","RejAA_TCMR1", "RejAA_Mixed")
 # Injuryrecent <- c("FICOL", "IRRAT30", "IRITD3", "IRITD5")
 # Injurylate <- c("IGT", "MCAT", "BAT", "cigt1", "ctgt1")
 
 
 # DEFINE VARIABLES TO ASSESS ####
 # vars <- c("cfDNA", "ABMRpm", "ggt0", "ptcgt0", "DSAST", "NKB", "TCMRt", "tgt1", "igt1", "QCAT", "TCB")
-vars <- c(vars_cfDNA, vars_abmr, vars_tcmr, vars_macrophage, vars_injury, vars_parenchyma)
+vars <- c(vars_cfDNA, vars_abmr, vars_tcmr, vars_macrophage, vars_injury, vars_parenchyma, vars_archetypes)
 
 
 # DEFINE THE data ####
@@ -60,7 +61,7 @@ data <- data_felzartamab_k1208 %>%
 
 # WRANGLE THE PHENOTYPE DATA ####
 data_00 <- data %>%
-    expand_grid(category = c("cfDNA", "ABMR", "TCMR", "macrophage", "injury", "parenchyma")) %>%
+    expand_grid(category = c("cfDNA", "ABMR", "TCMR", "macrophage", "injury", "parenchyma", "archetypes")) %>%
     nest(.by = category) %>%
     mutate(
         features = map(
@@ -78,6 +79,8 @@ data_00 <- data %>%
                     vars_injury
                 } else if (category == "parenchyma") {
                     vars_parenchyma
+                } else if (category == "archetypes") {
+                    vars_archetypes
                 }
             }
         ),
@@ -119,6 +122,7 @@ data_01 <- data_00 %>%
                             variable %in% vars_macrophage ~ "macrophage-related",
                             variable %in% vars_injury ~ "injury-related",
                             variable %in% vars_parenchyma ~ "parenchyma-related",
+                            variable %in% vars_archetypes ~ "archetypes",
                             TRUE ~ " "
                         ) %>%
                             factor(
@@ -128,7 +132,8 @@ data_01 <- data_00 %>%
                                     "TCMR-related",
                                     "macrophage-related",
                                     "injury-related",
-                                    "parenchyma-related"
+                                    "parenchyma-related",
+                                    "archetypes"
                                 )
                             ),
                         score = case_when(
@@ -171,6 +176,8 @@ data_01 <- data_00 %>%
                             variable == "KT1" ~ "Kidney parenchymal (KT1)",
                             variable == "KT2" ~ "Kindey parenchymal - no solute carriers (KT2)",
                             variable == "RejAA_NR" ~ "Archetypal No Rejection score (NR)",
+                            variable == "RejAA_TCMR1" ~ "Archetypal TCMR score (TCMR)",
+                            variable == "RejAA_Mixed" ~ "Archetypal Mixed score (Mixed)",
                             variable == "RejAA_EABMR" ~ "Archetypal Early ABMR score (EABMR)",
                             variable == "RejAA_FABMR" ~ "Archetypal Full ABMR score (FABMR)",
                             variable == "RejAA_LABMR" ~ "Archetypal Late ABMR score (LABMR)",

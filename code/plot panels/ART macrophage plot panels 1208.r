@@ -13,7 +13,7 @@ load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular e
 
 # EXTRACT LEGEND FOR PLOTS ####
 panel_legend <- felzartamab_plots %>%
-    dplyr::filter(variable == "KT1") %>%
+    dplyr::filter(variable == "AMAT1") %>%
     pull(plot_violin) %>%
     ggpubr::get_legend() %>%
     ggpubr::as_ggplot() +
@@ -22,7 +22,7 @@ panel_legend <- felzartamab_plots %>%
 
 # MAKE PANEL OF VIOLIN PLOTS ####
 panel_violin <- felzartamab_plots %>%
-    dplyr::filter(category %in% c("parenchyma")) %>%
+    dplyr::filter(category %in% c("macrophage")) %>%
     pull(plot_violin) %>%
     wrap_plots(nrow = 1, ncol = 2) &
     # plot_annotation(tag_levels = list(c(LETTERS[1:15]))) &
@@ -41,7 +41,7 @@ panels_violin_legend <- (panel_legend / panel_violin) +
 
 # MAKE PANEL OF PATIENT PAIR PLOTS ####
 panel_patient <- felzartamab_plots %>%
-    dplyr::filter(category %in% c("parenchyma")) %>%
+    dplyr::filter(category %in% c("macrophage")) %>%
     pull(plot_patient_pairs) %>%
     wrap_plots(nrow = 1, ncol = 2) &
     # plot_annotation(tag_levels = list(c(LETTERS[1:15]))) &
@@ -54,7 +54,7 @@ panel_patient <- felzartamab_plots %>%
 # SAVE THE PLOTS ####
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/output/"
 ggsave(
-    filename = paste(saveDir, "Felzartamab violin plots parenchyma scores.png"),
+    filename = paste(saveDir, "Felzartamab violin plots macrophage scores.png"),
     plot = panels_violin_legend,
     dpi = 300,
     width = 30,
@@ -63,7 +63,7 @@ ggsave(
     bg = "white"
 )
 ggsave(
-    filename = paste(saveDir, "Felzartamab patient plots parenchyma scores.png"),
+    filename = paste(saveDir, "Felzartamab patient plots macrophage scores.png"),
     plot = panel_patient,
     dpi = 300,
     width = 30,
@@ -71,15 +71,15 @@ ggsave(
     units = "cm",
     bg = "white"
 )
-ggsave(
-    filename = paste(saveDir, "Felzartamab violin legend.png"),
-    plot = panel_legend,
-    dpi = 300,
-    width = 22,
-    height = 5,
-    units = "cm",
-    bg = "white"
-)
+# ggsave(
+#     filename = paste(saveDir, "Felzartamab violin legend.png"),
+#     plot = panel_legend,
+#     dpi = 300,
+#     width = 22,
+#     height = 5,
+#     units = "cm",
+#     bg = "white"
+# )
 
 
 
