@@ -34,7 +34,7 @@ options(dplyr.reframe.inform = FALSE)
 source("C:/R/CD38-effect-of-treatment/code/functions/plot.gg_violin_interaction.r")
 source("C:/R/CD38-effect-of-treatment/code/functions/plot.gg_patient_pairs_interaction.r")
 # load reference set
-load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/data_felzartamab_k1208.RData")
+load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/data_scores_k1208.RData")
 
 
 
@@ -62,7 +62,7 @@ vars <- c(vars_cfDNA, vars_abmr, vars_tcmr)
 
 
 # DEFINE THE data ####
-data <- data_felzartamab_k1208 %>%
+data <- data_scores_k1208 %>%
     dplyr::select(Center, Patient, Felzartamab, Group, Followup, Felzartamab_Group, Felzartamab_Followup, all_of(vars)) %>%
     dplyr::filter(Group != "FU1b", Patient %nin% c(15, 18)) %>%
     left_join(., summarise(., sample_pairs = n(), .by = Felzartamab_Followup), by = "Felzartamab_Followup") %>%

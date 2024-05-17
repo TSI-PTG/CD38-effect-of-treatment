@@ -9,12 +9,12 @@ library(officer) # install.packages("officer")
 source("C:/R/CD38-effect-of-treatment/code/functions/plot.gg_violin_interaction.r")
 source("C:/R/CD38-effect-of-treatment/code/functions/plot.gg_patient_pairs_interaction.r")
 # load reference set
-load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/data_felzartamab_k1208.RData")
+load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/data_scores_k1208.RData")
 
 
 
 # DEFINE SET ####
-data_K1208 <- data_felzartamab_k1208
+data_K1208 <- data_scores_k1208
 
 
 # PATIENT SUMMARIES ####

@@ -31,7 +31,8 @@ if (!exists("selected")) {
     selected <- genefilter(vienna_1208, ff)
 }
 set00 <- vienna_1208[selected, vienna_1208$STUDY_EVALUATION_ID %nin% c(15, 18)]
-# set00 <- vienna_1208[,vienna_1208$STUDY_EVALUATION_ID %nin% c(15, 18)]
+
+
 
 
 # DEFINE THE ABMR ACTIVITY GENES ####

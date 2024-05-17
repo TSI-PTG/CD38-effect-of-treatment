@@ -2,17 +2,14 @@
 # CRAN libraries
 library(tidyverse) # install.packages("tidyverse")
 library(openxlsx) # install.packages("openxlsx")
-
 # Bioconductor libraries
 library(Biobase) # BiocManager::install("Biobase")
 # Custom operators, functions, and datasets
 "%nin%" <- function(a, b) match(a, b, nomatch = 0) == 0
-# Load new reference set
-load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vienna/G_Rstuff/data/OLD_Felz_6March24.RData") # N=52
-# Load previous reference set
-# load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vienna/G_Rstuff/data/Vienna.RData") # N=52
-# Load additional phenotype data
-IDs <- read.xlsx("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vienna/G_Rstuff/data/Felzartamab excel sheet Updated 5March2024.xlsx", detectDates = T)
+# load the reference set
+load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/data_cfdna.RData")
+
+
 
 
 # DEFINE SET ####

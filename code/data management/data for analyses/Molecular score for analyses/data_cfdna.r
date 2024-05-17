@@ -51,4 +51,4 @@ data_cfdna <- data %>%
 
 # SAVE THE DATA ####
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/"
-save(data_cfdna, file = paste(saveDir, "data_cfDNA.RData", sep = ""))
+save(data_cfdna, file = paste(saveDir, "data_cfdna.RData", sep = ""))

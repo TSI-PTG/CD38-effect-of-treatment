@@ -31,8 +31,8 @@ options(dplyr.reframe.inform = FALSE)
 source("C:/R/CD38-effect-of-treatment/code/functions/plot.gg_violin_interaction.r")
 source("C:/R/CD38-effect-of-treatment/code/functions/plot.gg_patient_pairs_interaction.r")
 # load data
-# load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felzartamab CD38 Vienna/G_Rstuff/data/data_cfDNA.RData")
-load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/data_felzartamab_k1208.RData")
+# load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felzartamab CD38 Vienna/G_Rstuff/data/data_cfdna.RData")
+load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/data_scores_k1208.RData")
 
 
 # DEFINE SEED ####
@@ -40,7 +40,7 @@ seed <- 42
 
 
 # DEFINE DATA ####
-data_cfdna <- data_felzartamab_k1208 %>%
+data_cfdna <- data_scores_k1208 %>%
     dplyr::select(Center, Patient, Felzartamab, Group, Followup, Felzartamab_Group, Felzartamab_Followup, cfDNA) %>%
     dplyr::filter(Group != "FU1b", Patient %nin% c(15, 18)) %>%
     drop_na(cfDNA) %>%

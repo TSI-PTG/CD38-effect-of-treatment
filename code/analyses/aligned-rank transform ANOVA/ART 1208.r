@@ -22,8 +22,8 @@ log10zero <- scales::trans_new(
 # Suppress pesky dplyr reframe info
 options(dplyr.reframe.inform = FALSE)
 # load reference data
-load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/data_felzartamab_k1208.RData")
-data_felzartamab_k1208 %>% colnames()
+load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/data_scores_k1208.RData")
+data_scores_k1208 %>% colnames()
 
 
 # DEFINE SEED ####
@@ -50,7 +50,7 @@ vars <- c(vars_cfDNA, vars_abmr, vars_tcmr, vars_macrophage, vars_injury, vars_p
 
 
 # DEFINE THE data ####
-data <- data_felzartamab_k1208 %>%
+data <- data_scores_k1208 %>%
     dplyr::select(Center, Patient, Felzartamab, Group, Followup, Felzartamab_Group, Felzartamab_Followup, all_of(vars)) %>%
     dplyr::filter(Group != "FU1b", Patient %nin% c(15, 18)) %>%
     left_join(., summarise(., sample_pairs = n(), .by = Felzartamab_Followup), by = "Felzartamab_Followup") %>%

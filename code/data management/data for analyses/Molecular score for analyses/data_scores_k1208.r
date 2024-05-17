@@ -1,34 +1,34 @@
 # HOUSEKEEPING ####
 # CRAN libraries
 library(tidyverse) # install.packages("tidyverse")
-library(readr) # install.packages("readr")
 library(haven) # install.packages("haven")
 # Custom operators, functions, and datasets
 "%nin%" <- function(a, b) match(a, b, nomatch = 0) == 0
 source("C:/R/CD38-effect-of-treatment/code/functions/complex_pivot.R")
 # load data
 data <- read_spss("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vienna/G_Rstuff/data/Generalfile_Felzartamab SPSS.sav")
-# load reference set
-load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vienna/G_Rstuff/data/vienna_1208_6Mar24.RData")
 # load the processed cfDNA data
-load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/data_cfDNA.RData")
+load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/data_cfdna.RData")
 
 
 
 # DEFINE PATIENT VARIABLES ####
 vars_patient <- Hmisc::.q(
-    Female_gender, Age_at_Tx, LD_Tx, Donor_Age, MM_ABDR,
+    Date_Tx, 
+    Female_gender, 
+    Age_at_Tx, Donor_Age, 
+    MM_ABDR, LD_Tx, 
     Age_at_Screening, Years_to_ScreeningVisit, Screening_GFR, Screening_Prot_Krea,
     DSA_HLA_class_I_Only_Screening, DSA_HLA_class_II_Only_Screening, DSA_HLA_class_I_and_II_Screening, HLA_DQ_DSA_Screening,
-    # mfi_immunodominant,
     HLA_DQ_DSA_Screening, DSA_Number_Screening
 )
-# data %>% dplyr::select(contains("mfi"))
+data %>% dplyr::select(contains("Bx_date"))
 
 
 # DEFINE VARIABLES ####
 vars <- c(
     # "GcfDNA_cp_ml",
+    # "Bx_date",
     "_ABMRpm_1208Set",
     "_ggt0_1208Set",
     "_ptcgt0_1208Set",
@@ -108,6 +108,25 @@ data_CEL <- data %>%
     mutate(Group = Group  %>% str_remove("Bx"))
 
 
+# WRANGLE THE BIOPSY DATES FROM SPSS DATA ####
+data_CEL <- data %>%
+    dplyr::select(
+        Date_IndexBx, FU1_CEL, FU1bBx_CEL, FU2_CEL,
+        Trial_Center,
+        STUDY_EVALUATION_ID,
+        Felzartamab
+    ) %>%
+    pivot_longer(
+        cols = contains("CEL"),
+        names_to = "Group",
+        names_pattern = "^(\\w+)_.*",
+        values_to = "CEL"
+    ) %>%
+    mutate(Group = Group %>% str_remove("Bx"))
+
+
+
+
 # JOIN THE SPSS AND MOLECULAR SCORE DATA ####
 data_K1208 <- data_scores %>%
     left_join(data_patient, by = c("Trial_Center", "STUDY_EVALUATION_ID", "Felzartamab")) %>%
@@ -144,11 +163,11 @@ data_K1208 <- data_scores %>%
 
 
 # JOIN THE cfDNA AND MOLECULAR DATA ####
-data_felzartamab_k1208 <- data_K1208 %>%
+data_scores_k1208 <- data_K1208 %>%
     left_join(data_cfdna, by = c("Center", "Patient", "Felzartamab", "Group", "Followup", "Felzartamab_Group", "Felzartamab_Followup")) %>%
     relocate(cfDNA, .before = "ABMRpm")
 
 
 # SAVE THE DATA ####
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/"
-save(data_felzartamab_k1208, file = paste(saveDir, "data_felzartamab_k1208.RData", sep = ""))
+save(data_scores_k1208, file = paste(saveDir, "data_scores_k1208.RData", sep = ""))

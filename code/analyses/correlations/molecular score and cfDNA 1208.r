@@ -17,7 +17,7 @@ corPvalueStudent <- function(cor, nSamples) {
     2 * pt(abs(T), nSamples - 2, lower.tail = FALSE)
 }
 # load reference data
-load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/data_felzartamab_k1208.RData")
+load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/data_scores_k1208.RData")
 
 
 # DEFINE SEED ####
@@ -43,7 +43,7 @@ vars <- c(vars_cfDNA, vars_abmr, vars_tcmr, vars_injury)
 
 
 # DEFINE THE DATA ####
-data <- data_felzartamab_k1208 %>%
+data <- data_scores_k1208 %>%
     dplyr::select(Center, Patient, Felzartamab, Group, Followup, Felzartamab_Group, Felzartamab_Followup, all_of(vars)) %>%
     dplyr::filter(Group != "FU1b", Patient %nin% c(15, 18)) %>%
     left_join(., summarise(., sample_pairs = n(), .by = Felzartamab_Followup), by = "Felzartamab_Followup") %>%
