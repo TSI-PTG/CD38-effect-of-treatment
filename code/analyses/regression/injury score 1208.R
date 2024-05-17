@@ -34,6 +34,7 @@ m <- data_felzartamab_k1208 %>%
   dplyr::filter(Group != "FU1b", Patient %nin% c(15, 18))
 
 
+
 # FIT MODELS ####
 # IRRAT30
 fit_IRRAT30 <- lmer(IRRAT30 ~ Felzartamab * time + (time | Patient), m)
