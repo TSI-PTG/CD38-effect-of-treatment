@@ -11,7 +11,7 @@ library(biobroom) # BiocManager::install("biobroom")
 # Custom operators, functions, and datasets
 "%nin%" <- function(a, b) match(a, b, nomatch = 0) == 0
 # load reference set
-load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vienna/G_Rstuff/data/Vienna44_18Oct23.RData")
+load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/data_expressionset_k1208.RData")
 # load affymap
 load("Z:/DATA/Datalocks/Other data/affymap219_21Oct2019_1306_JR.RData")
 
@@ -21,38 +21,19 @@ seed <- 42
 
 
 # DEFINE THE SET ####
-set <- Vienna44
-
-
-# WRANGLE THE PHENOTYPE DATA ####
-pData(set) <- set %>%
-    pData() %>%
-    dplyr::rename(
-        Patient = STUDY_EVALUATION_ID,
-        Felz = Felzartamab_presumed
-    ) %>%
-    mutate(
-        Patient = Patient %>% factor(),
-        Group = Group %>% factor(levels = c("Index", "FU1")),
-        Felz = Felz %>% factor(labels = c("NoFelz", "Felz")),
-        TxBx = TxBx %>% as.numeric(),
-        Group_Felz = paste(Group, Felz, sep = ":") %>%
-            factor(
-                levels = c("Index:NoFelz", "FU1:NoFelz", "Index:Felz", "FU1:Felz"),
-                labels = c("Index_NoFelz", "FU1_NoFelz", "Index_Felz", "FU1_Felz")
-            )
-    ) %>%
-    dplyr::select(CEL, Patient, Center, Group, Felz, Group_Felz, TxBx)
+set <- data_expressionset_k1208
+set  %>% pData  %>% colnames
 
 
 
 # BLOCK DESIGN #1 ####
-Group_Felz <- set$Group_Felz
-design_block <- model.matrix(~ 0 + Group_Felz)
+Felzartamab_Followup <- set$Felzartamab_Followup
+design_block <- model.matrix(~ 0 + Felzartamab_Followup)
 contrast_block_01 <- makeContrasts(
     "x =  (Group_FelzIndex_NoFelz-Group_FelzFU1_NoFelz)/2 - (Group_FelzIndex_Felz-Group_FelzFU1_Felz)/2",
     levels = design_block
 )
+
 
 
 # BLOCK DESIGN #2 ####

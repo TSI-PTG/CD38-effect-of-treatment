@@ -14,10 +14,10 @@ load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular e
 
 # DEFINE PATIENT VARIABLES ####
 vars_patient <- Hmisc::.q(
-    Date_Tx, 
-    Female_gender, 
-    Age_at_Tx, Donor_Age, 
-    MM_ABDR, LD_Tx, 
+    Date_Tx,
+    Female_gender,
+    Age_at_Tx, Donor_Age,
+    MM_ABDR, LD_Tx,
     Age_at_Screening, Years_to_ScreeningVisit, Screening_GFR, Screening_Prot_Krea,
     DSA_HLA_class_I_Only_Screening, DSA_HLA_class_II_Only_Screening, DSA_HLA_class_I_and_II_Screening, HLA_DQ_DSA_Screening,
     HLA_DQ_DSA_Screening, DSA_Number_Screening
@@ -89,7 +89,8 @@ data_patient <- data %>%
         Felzartamab,
         all_of(vars_patient)
     )
-data_patient %>% colnames
+data_patient %>% colnames()
+
 
 # WRANGLE THE CEL IDS FROM SPSS DATA ####
 data_CEL <- data %>%
@@ -105,25 +106,25 @@ data_CEL <- data %>%
         names_pattern = "^(\\w+)_.*",
         values_to = "CEL"
     ) %>%
-    mutate(Group = Group  %>% str_remove("Bx"))
+    mutate(Group = Group %>% str_remove("Bx"))
 
 
 # WRANGLE THE BIOPSY DATES FROM SPSS DATA ####
-data_CEL <- data %>%
+data_dateBx <- data %>%
     dplyr::select(
-        Date_IndexBx, FU1_CEL, FU1bBx_CEL, FU2_CEL,
+        IndexBx_Date, FU1Bx_Date, FU1b_Bx_Date, FU2Bx_Date,
         Trial_Center,
         STUDY_EVALUATION_ID,
         Felzartamab
     ) %>%
+    mutate(FU1b_Bx_Date = NA %>% as.Date()) %>%
     pivot_longer(
-        cols = contains("CEL"),
+        cols = contains("Date"),
         names_to = "Group",
         names_pattern = "^(\\w+)_.*",
-        values_to = "CEL"
+        values_to = "dateBx"
     ) %>%
-    mutate(Group = Group %>% str_remove("Bx"))
-
+    mutate(Group = Group %>% str_remove("Bx") %>% str_remove("_"))
 
 
 
@@ -131,6 +132,7 @@ data_CEL <- data %>%
 data_K1208 <- data_scores %>%
     left_join(data_patient, by = c("Trial_Center", "STUDY_EVALUATION_ID", "Felzartamab")) %>%
     left_join(data_CEL, by = c("Trial_Center", "STUDY_EVALUATION_ID", "Felzartamab", "Group")) %>%
+    left_join(data_dateBx, by = c("Trial_Center", "STUDY_EVALUATION_ID", "Felzartamab", "Group")) %>%
     dplyr::rename(Center = Trial_Center, Patient = STUDY_EVALUATION_ID) %>%
     mutate(
         Patient = Patient %>% factor(),
@@ -155,7 +157,7 @@ data_K1208 <- data_scores %>%
             ))
     ) %>%
     relocate(
-        Center, Patient, CEL, Felzartamab, Group, Followup, Felzartamab_Group, Felzartamab_Followup,
+        Center, Patient, CEL, dateBx, Felzartamab, Group, Followup, Felzartamab_Group, Felzartamab_Followup,
         all_of(vars_patient),
         .before = 1
     ) %>%

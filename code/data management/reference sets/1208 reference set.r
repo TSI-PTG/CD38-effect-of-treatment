@@ -27,11 +27,6 @@ vars <- Hmisc::.q(
     Date_Bx
 )
 
-
-
-
-
-
 # DEFINE SET ####
 set <- NEW
 set$CEL <- set %>% sampleNames()
@@ -56,104 +51,100 @@ cels <- data %>%
     drop_na(CEL) %>%
     pull(CEL)
 
-
 set$CEL[set$CEL %nin% cels]
 
 
-
-
-
 # TRIM SET TO PHENOTYPE DATA ####
-set_vienna <- set[, which(set$CEL %in% c(ccels))]
-# set_vienna  %>% pData
+set_felzartamab <- set[, which(set$CEL %in% c(cels))]
+# set_felzartamab  %>% pData
 
 
 
 # WRANGLE THE PHENOTYPE DATA ####
-set_vienna$STUDY_EVALUATION_ID <- NA
-set_vienna$Felzartamab_presumed <- NA
-set_vienna$Center <- NA
-set_vienna$Date_birth <- as.Date(NA)
-set_vienna$Date_Tx <- as.Date(NA)
-set_vienna$Date_Bx <- as.Date(NA)
-set_vienna$cg <- NA
-set_vienna$MVI_Score <- NA
-set_vienna$ID_MMDx <- NA
-set_vienna$Group <- NA
+set_felzartamab$STUDY_EVALUATION_ID <- NA
+set_felzartamab$Felzartamab_presumed <- NA
+set_felzartamab$Center <- NA
+set_felzartamab$Date_birth <- as.Date(NA)
+set_felzartamab$Date_Tx <- as.Date(NA)
+set_felzartamab$Date_Bx <- as.Date(NA)
+set_felzartamab$cg <- NA
+set_felzartamab$MVI_Score <- NA
+set_felzartamab$ID_MMDx <- NA
+set_felzartamab$Group <- NA
 
-# set_vienna$DateBx <- NULL # REDCap entries
-# set_vienna$DateTx <- NULL
+# set_felzartamab$DateBx <- NULL # REDCap entries
+# set_felzartamab$DateTx <- NULL
 
-sel <- which(IDs$IndexCEL %in% sampleNames(set_vienna))
-sel2 <- match(IDs$IndexCEL[sel], sampleNames(set_vienna))
-set_vienna$STUDY_EVALUATION_ID[sel2] <- IDs$STUDY_EVALUATION_ID[sel]
-set_vienna$Felzartamab_presumed[sel2] <- IDs$Felzartamab_presumed[sel]
-set_vienna$Center[sel2] <- IDs$Center[sel]
-set_vienna$Date_birth[sel2] <- IDs$Date_birth[sel]
-set_vienna$Date_Tx[sel2] <- IDs$Date_Tx[sel]
-set_vienna$Date_Bx[sel2] <- IDs$IndexBx_Date[sel]
-set_vienna$cg[sel2] <- IDs$IndexBx_cg[sel]
-set_vienna$MVI_Score[sel2] <- IDs$IndexBx_MVI_Score[sel]
-set_vienna$ID_MMDx[sel2] <- IDs$IndexBx_ID_MMDx[sel]
-set_vienna$Group[sel2] <- "Index"
+sel <- which(IDs$IndexCEL %in% sampleNames(set_felzartamab))
+sel2 <- match(IDs$IndexCEL[sel], sampleNames(set_felzartamab))
+set_felzartamab$STUDY_EVALUATION_ID[sel2] <- IDs$STUDY_EVALUATION_ID[sel]
+set_felzartamab$Felzartamab_presumed[sel2] <- IDs$Felzartamab_presumed[sel]
+set_felzartamab$Center[sel2] <- IDs$Center[sel]
+set_felzartamab$Date_birth[sel2] <- IDs$Date_birth[sel]
+set_felzartamab$Date_Tx[sel2] <- IDs$Date_Tx[sel]
+set_felzartamab$Date_Bx[sel2] <- IDs$IndexBx_Date[sel]
+set_felzartamab$cg[sel2] <- IDs$IndexBx_cg[sel]
+set_felzartamab$MVI_Score[sel2] <- IDs$IndexBx_MVI_Score[sel]
+set_felzartamab$ID_MMDx[sel2] <- IDs$IndexBx_ID_MMDx[sel]
+set_felzartamab$Group[sel2] <- "Index"
 
-sel <- which(IDs$FU1CEL %in% sampleNames(set_vienna))
-sel2 <- match(IDs$FU1CEL[sel], sampleNames(set_vienna))
-set_vienna$STUDY_EVALUATION_ID[sel2] <- IDs$STUDY_EVALUATION_ID[sel]
-set_vienna$Felzartamab_presumed[sel2] <- IDs$Felzartamab_presumed[sel]
-set_vienna$Center[sel2] <- IDs$Center[sel]
-set_vienna$Date_birth[sel2] <- IDs$Date_birth[sel]
-set_vienna$Date_Tx[sel2] <- IDs$Date_Tx[sel]
-set_vienna$Date_Bx[sel2] <- IDs$FU1Bx_Date[sel]
-set_vienna$cg[sel2] <- IDs$FU1Bx_cg[sel]
-set_vienna$MVI_Score[sel2] <- IDs$FU1Bx_MVI_Score[sel]
-set_vienna$ID_MMDx[sel2] <- IDs$FU1Bx_ID_MMDx[sel]
-set_vienna$Group[sel2] <- "FU1"
+sel <- which(IDs$FU1CEL %in% sampleNames(set_felzartamab))
+sel2 <- match(IDs$FU1CEL[sel], sampleNames(set_felzartamab))
+set_felzartamab$STUDY_EVALUATION_ID[sel2] <- IDs$STUDY_EVALUATION_ID[sel]
+set_felzartamab$Felzartamab_presumed[sel2] <- IDs$Felzartamab_presumed[sel]
+set_felzartamab$Center[sel2] <- IDs$Center[sel]
+set_felzartamab$Date_birth[sel2] <- IDs$Date_birth[sel]
+set_felzartamab$Date_Tx[sel2] <- IDs$Date_Tx[sel]
+set_felzartamab$Date_Bx[sel2] <- IDs$FU1Bx_Date[sel]
+set_felzartamab$cg[sel2] <- IDs$FU1Bx_cg[sel]
+set_felzartamab$MVI_Score[sel2] <- IDs$FU1Bx_MVI_Score[sel]
+set_felzartamab$ID_MMDx[sel2] <- IDs$FU1Bx_ID_MMDx[sel]
+set_felzartamab$Group[sel2] <- "FU1"
 
-sel <- which(IDs$FU2CEL %in% sampleNames(set_vienna))
-sel2 <- match(IDs$FU2CEL[sel], sampleNames(set_vienna))
-set_vienna$STUDY_EVALUATION_ID[sel2] <- IDs$STUDY_EVALUATION_ID[sel]
-set_vienna$Felzartamab_presumed[sel2] <- IDs$Felzartamab_presumed[sel]
-set_vienna$Center[sel2] <- IDs$Center[sel]
-set_vienna$Date_birth[sel2] <- IDs$Date_birth[sel]
-set_vienna$Date_Tx[sel2] <- IDs$Date_Tx[sel]
-set_vienna$Date_Bx[sel2] <- IDs$FU2Bx_Date[sel]
-# set_vienna$cg[sel2]<-IDs$FU2Bx_cg[sel]
-# set_vienna$MVI_Score[sel2]<-IDs$FU2Bx_MVI_Score[sel]
-set_vienna$ID_MMDx[sel2] <- IDs$FU2Bx_ID_MMDx[sel]
-set_vienna$Group[sel2] <- "FU2"
+sel <- which(IDs$FU2CEL %in% sampleNames(set_felzartamab))
+sel2 <- match(IDs$FU2CEL[sel], sampleNames(set_felzartamab))
+set_felzartamab$STUDY_EVALUATION_ID[sel2] <- IDs$STUDY_EVALUATION_ID[sel]
+set_felzartamab$Felzartamab_presumed[sel2] <- IDs$Felzartamab_presumed[sel]
+set_felzartamab$Center[sel2] <- IDs$Center[sel]
+set_felzartamab$Date_birth[sel2] <- IDs$Date_birth[sel]
+set_felzartamab$Date_Tx[sel2] <- IDs$Date_Tx[sel]
+set_felzartamab$Date_Bx[sel2] <- IDs$FU2Bx_Date[sel]
+# set_felzartamab$cg[sel2]<-IDs$FU2Bx_cg[sel]
+# set_felzartamab$MVI_Score[sel2]<-IDs$FU2Bx_MVI_Score[sel]
+set_felzartamab$ID_MMDx[sel2] <- IDs$FU2Bx_ID_MMDx[sel]
+set_felzartamab$Group[sel2] <- "FU2"
 
 
-set_vienna$TxBx <- set_vienna$Date_Bx - set_vienna$Date_Tx
-set_vienna$RejAA_NR <- set_vienna$AARej6[, 1]
-set_vienna$RejAA_TCMR <- set_vienna$AARej6[, 2]
-set_vienna$RejAA_Mixed <- set_vienna$AARej6[, 3]
-set_vienna$RejAA_EABMR <- set_vienna$AARej6[, 4]
-set_vienna$RejAA_FABMR <- set_vienna$AARej6[, 5]
-set_vienna$RejAA_LABMR <- set_vienna$AARej6[, 6]
-set_vienna$RejAA_Clust <- ifelse(set_vienna$AARejClust == 1, "NR",
-    ifelse(set_vienna$AARejClust == 2, "TCMR",
-        ifelse(set_vienna$AARejClust == 3, "Mixed",
-            ifelse(set_vienna$AARejClust == 4, "EABMR",
-                ifelse(set_vienna$AARejClust == 5, "FABMR",
-                    ifelse(set_vienna$AARejClust == 6, "LABMR", "Missing")
+set_felzartamab$TxBx <- set_felzartamab$Date_Bx - set_felzartamab$Date_Tx
+set_felzartamab$RejAA_NR <- set_felzartamab$AARej6[, 1]
+set_felzartamab$RejAA_TCMR <- set_felzartamab$AARej6[, 2]
+set_felzartamab$RejAA_Mixed <- set_felzartamab$AARej6[, 3]
+set_felzartamab$RejAA_EABMR <- set_felzartamab$AARej6[, 4]
+set_felzartamab$RejAA_FABMR <- set_felzartamab$AARej6[, 5]
+set_felzartamab$RejAA_LABMR <- set_felzartamab$AARej6[, 6]
+set_felzartamab$RejAA_Clust <- ifelse(set_felzartamab$AARejClust == 1, "NR",
+    ifelse(set_felzartamab$AARejClust == 2, "TCMR",
+        ifelse(set_felzartamab$AARejClust == 3, "Mixed",
+            ifelse(set_felzartamab$AARejClust == 4, "EABMR",
+                ifelse(set_felzartamab$AARejClust == 5, "FABMR",
+                    ifelse(set_felzartamab$AARejClust == 6, "LABMR", "Missing")
                 )
             )
         )
     )
 )
 
-# set_vienna$InjAA_MildCKD <- set_vienna$Inj5Score[, 1]
-# set_vienna$InjAA_CKDAKI <- set_vienna$Inj5Score[, 2]
-# set_vienna$InjAA_AKI1 <- set_vienna$Inj5Score[, 3]
-# set_vienna$InjAA_AKI2 <- set_vienna$Inj5Score[, 4]
-# set_vienna$InjAA_Normal <- set_vienna$Inj5Score[, 5]
+# set_felzartamab$InjAA_MildCKD <- set_felzartamab$Inj5Score[, 1]
+# set_felzartamab$InjAA_CKDAKI <- set_felzartamab$Inj5Score[, 2]
+# set_felzartamab$InjAA_AKI1 <- set_felzartamab$Inj5Score[, 3]
+# set_felzartamab$InjAA_AKI2 <- set_felzartamab$Inj5Score[, 4]
+# set_felzartamab$InjAA_Normal <- set_felzartamab$Inj5Score[, 5]
 
-# set_vienna$InjAA_Clust <- ifelse(set_vienna$Inj5Clust == 1, "MildCKD",
-#     ifelse(set_vienna$Inj5Clust == 2, "CKDAKI",
-#         ifelse(set_vienna$Inj5Clust == 3, "AKI1",
-#             ifelse(set_vienna$Inj5Clust == 4, "AKI2",
-#                 ifelse(set_vienna$Inj5Clust == 5, "Normal", "Missing")
+# set_felzartamab$InjAA_Clust <- ifelse(set_felzartamab$Inj5Clust == 1, "MildCKD",
+#     ifelse(set_felzartamab$Inj5Clust == 2, "CKDAKI",
+#         ifelse(set_felzartamab$Inj5Clust == 3, "AKI1",
+#             ifelse(set_felzartamab$Inj5Clust == 4, "AKI2",
+#                 ifelse(set_felzartamab$Inj5Clust == 5, "Normal", "Missing")
 #             )
 #         )
 #     )
@@ -161,7 +152,7 @@ set_vienna$RejAA_Clust <- ifelse(set_vienna$AARejClust == 1, "NR",
 
 
 # SAVE NEW DATALOCK ####
-vienna_1208 <- set_vienna
+vienna_1208 <- set_felzartamab
 save(vienna_1208, file = "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vienna/G_Rstuff/data/vienna_1208_6Mar24.RData")
 
 
