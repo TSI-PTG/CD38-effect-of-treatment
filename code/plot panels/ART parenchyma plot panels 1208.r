@@ -12,7 +12,7 @@ load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular e
 
 # EXTRACT LEGEND FOR PLOTS ####
 panel_legend <- felzartamab_plots %>%
-    dplyr::filter(variable == "AMAT1") %>%
+    dplyr::filter(category == "AMAT1") %>%
     pull(plot_violin) %>%
     ggpubr::get_legend() %>%
     ggpubr::as_ggplot() +
@@ -21,9 +21,9 @@ panel_legend <- felzartamab_plots %>%
 
 # MAKE PANEL OF VIOLIN PLOTS ####
 panel_violin <- felzartamab_plots %>%
-    dplyr::filter(category %in% c("ABMR", "TCMR")) %>%
+    dplyr::filter(category %in% c("parenchyma")) %>%
     pull(plot_violin) %>%
-    wrap_plots(nrow = 2, ncol = 5) +
+    wrap_plots(nrow = 1, ncol = 2) +
     plot_annotation(tag_levels = list(c(LETTERS[1:15]))) &
     theme(
         legend.position = "none",
@@ -39,7 +39,7 @@ panels_violin_legend <- (panel_legend / panel_violin) +
 
 # MAKE PANEL OF PATIENT PAIR PLOTS ####
 panel_patient <- felzartamab_plots %>%
-    dplyr::filter(category %in% c("ABMR", "TCMR")) %>%
+    dplyr::filter(category %in% c("parenchyma")) %>%
     pull(plot_patient_pairs) %>%
     wrap_plots(nrow = 2, ncol = 5) +
     plot_annotation(tag_levels = list(c(LETTERS[1:15]))) &

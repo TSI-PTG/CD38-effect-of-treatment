@@ -85,14 +85,12 @@ gg_violin_interaction <- function(data, variable, score, medians_delta, art_con_
         )
     bw <- ifelse(data$variable[[1]] %in% c("ABMRpm", "ggt0", "ptcgt0", "TCMRt", "tgt1", "igt1"), 0.05, 0.1)
     midpoint <- 0
-    min_delta <- data %>%
-        dplyr::select(delta, delta2) %>%
-        flatten_dbl() %>%
-        min()
-    max_delta <- data %>%
-        dplyr::select(delta, delta2) %>%
-        flatten_dbl() %>%
-        max()
+    if (variable %in% c("KT1", "KT2")) {
+        gradient_labels <- c("worsened", "improved")
+    } else {
+        gradient_labels <- c("improved", "worsened")
+    }
+    gradient_labels %>% print()
     plot <- data %>%
         ggplot2::ggplot(aes(x = Followup, y = value)) +
         gghalves::geom_half_violin(
@@ -247,12 +245,14 @@ gg_violin_interaction <- function(data, variable, score, medians_delta, art_con_
             high = "red",
             midpoint = midpoint,
             breaks = c(min(data$delta), max(data$delta)),
-            labels = c("improved", "worsened"),
+            labels = gradient_labels,
+            # labels = c("fuck", "you"),
             guide = ggplot2::guide_colorbar(
                 title.position = "top",
                 barwidth = 20,
-                ticks = FALSE,
-                label.hjust = c(5.35, min_delta), # first value is improved, second value worsened (i.e., reverse = TRUE)
+                draw.ulim = FALSE,
+                draw.llim = FALSE,
+                label.hjust = c(-0.075, 1.85), # first value is improved, second value worsened (i.e., reverse = TRUE)
                 label.vjust = 7.75,
                 reverse = TRUE
             )

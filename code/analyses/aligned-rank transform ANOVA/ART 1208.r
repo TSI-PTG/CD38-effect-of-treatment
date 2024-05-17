@@ -37,15 +37,15 @@ vars_abmr <- c("ABMRpm", "ggt0", "ptcgt0", "DSAST", "NKB") # "cggt0", "RejAA_EAB
 vars_tcmr <- c("TCMRt", "tgt1", "igt1", "QCAT", "TCB") # , "TCMR-RAT", )
 vars_injury <- c("IRRAT30", "IRITD3", "IRITD5")
 # Endothelium <- c("ENDAT")
-# Parenchyma <- c("KT1", "KT2")
-# Macrophage <- c("AMAT1", "QCMAT")
+vars_parenchyma <- c("KT1", "KT2")
+vars_macrophage <- c("AMAT1", "QCMAT")
 # Injuryrecent <- c("FICOL", "IRRAT30", "IRITD3", "IRITD5")
 # Injurylate <- c("IGT", "MCAT", "BAT", "cigt1", "ctgt1")
 
 
 # DEFINE VARIABLES TO ASSESS ####
 # vars <- c("cfDNA", "ABMRpm", "ggt0", "ptcgt0", "DSAST", "NKB", "TCMRt", "tgt1", "igt1", "QCAT", "TCB")
-vars <- c(vars_cfDNA, vars_abmr, vars_tcmr, vars_injury)
+vars <- c(vars_cfDNA, vars_abmr, vars_tcmr, vars_macrophage, vars_injury, vars_parenchyma)
 
 
 # DEFINE THE data ####
@@ -60,7 +60,7 @@ data <- data_felzartamab_k1208 %>%
 
 # WRANGLE THE PHENOTYPE DATA ####
 data_00 <- data %>%
-    expand_grid(category = c("cfDNA", "ABMR", "TCMR", "injury")) %>%
+    expand_grid(category = c("cfDNA", "ABMR", "TCMR", "macrophage", "injury", "parenchyma")) %>%
     nest(.by = category) %>%
     mutate(
         features = map(
@@ -72,8 +72,12 @@ data_00 <- data %>%
                     vars_abmr
                 } else if (category == "TCMR") {
                     vars_tcmr
+                } else if (category == "macrophage") {
+                    vars_macrophage
                 } else if (category == "injury") {
                     vars_injury
+                } else if (category == "parenchyma") {
+                    vars_parenchyma
                 }
             }
         ),
@@ -88,7 +92,6 @@ data_00 <- data %>%
             }
         )
     )
-
 
 
 # WRANGLE THE DATA FOR UNIVARIATE TESTS ####
@@ -113,7 +116,9 @@ data_01 <- data_00 %>%
                             variable %in% vars_cfDNA ~ "cfDNA",
                             variable %in% vars_tcmr ~ "TCMR-related",
                             variable %in% vars_abmr ~ "ABMR-related",
+                            variable %in% vars_macrophage ~ "macrophage-related",
                             variable %in% vars_injury ~ "injury-related",
+                            variable %in% vars_parenchyma ~ "parenchyma-related",
                             TRUE ~ " "
                         ) %>%
                             factor(
@@ -121,7 +126,9 @@ data_01 <- data_00 %>%
                                     "cfDNA",
                                     "ABMR-related",
                                     "TCMR-related",
-                                    "injury-related"
+                                    "macrophage-related",
+                                    "injury-related",
+                                    "parenchyma-related"
                                 )
                             ),
                         score = case_when(
@@ -161,8 +168,8 @@ data_01 <- data_00 %>%
                             variable == "IGT" ~ "Immunoglobulin transcripts (IGT)",
                             variable == "BAT" ~ "B cell–associated transcripts (BAT)",
                             variable == "MCAT" ~ "Mast cell-associated transcripts (MCAT)",
-                            variable == "KT1" ~ "Kidney parenchymal transcripts (KT1)",
-                            variable == "KT2" ~ "Kindey parenchymal transcripts - no solute carriers (KT2)",
+                            variable == "KT1" ~ "Kidney parenchymal (KT1)",
+                            variable == "KT2" ~ "Kindey parenchymal - no solute carriers (KT2)",
                             variable == "RejAA_NR" ~ "Archetypal No Rejection score (NR)",
                             variable == "RejAA_EABMR" ~ "Archetypal Early ABMR score (EABMR)",
                             variable == "RejAA_FABMR" ~ "Archetypal Full ABMR score (FABMR)",

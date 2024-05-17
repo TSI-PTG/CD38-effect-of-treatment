@@ -81,8 +81,6 @@ felzartamab_cfdna_cor_plots <- felzartamab_cfdna_cor_k1208 %>%
             }
         )
     )
-
-
 felzartamab_cfdna_cor_plots$plot_scatter[[1]]
 
 

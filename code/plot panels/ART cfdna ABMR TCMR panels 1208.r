@@ -13,7 +13,7 @@ load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular e
 
 # EXTRACT LEGEND FOR PLOTS ####
 panel_legend <- felzartamab_plots %>%
-    dplyr::filter(category == "cfDNA") %>%
+    dplyr::filter(variable == "AMAT1") %>%
     pull(plot_violin) %>%
     ggpubr::get_legend() %>%
     ggpubr::as_ggplot() +
