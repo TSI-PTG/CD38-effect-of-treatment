@@ -61,7 +61,12 @@ felzartamab_cfdna_cor_plots <- felzartamab_cfdna_cor_k1208 %>%
                         col = "black",
                         show.legend = FALSE
                     ) +
-                    ggpubr::stat_cor(geom = "label", method = "spearman", size = 4) +
+                    ggpubr::stat_cor(
+                        geom = "label",
+                        method = "spearman",
+                        cor.coef.name = "SCC",
+                        size = 4
+                    ) +
                     ggplot2::labs(
                         x = paste("\u394", score %>% stringr::str_replace("\\(", "\n("), sep = " "),
                         y = "\u394 Donor-derived cell-free DNA\n(dd-cfDNA, cp/mL)",
@@ -78,7 +83,7 @@ felzartamab_cfdna_cor_plots <- felzartamab_cfdna_cor_k1208 %>%
     )
 
 
-# felzartamab_cfdna_cor_plots$plot_scatter[[1]]
+felzartamab_cfdna_cor_plots$plot_scatter[[1]]
 
 
 # SAVE THE PLOT DATA ####
