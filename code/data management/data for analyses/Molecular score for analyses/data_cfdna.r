@@ -34,15 +34,15 @@ data_cfdna <- data %>%
             Followup == "Week52" ~ "FU2",
         ) %>% factor(levels = c("Index", "FU1b", "FU1", "FU2")),
         Felzartamab = Felzartamab %>% factor(labels = c("Placebo", "Felzartamab")),
-        Felzartamab_Group = paste(Group, Felzartamab, sep = ":") %>%
+        Felzartamab_Group = paste(Group, Felzartamab, sep = "_") %>%
             factor(levels = c(
-                "Index:Placebo", "FU1b:Placebo", "FU1:Placebo", "FU2:Placebo",
-                "Index:Felzartamab", "FU1b:Felzartamab", "FU1:Felzartamab", "FU2:Felzartamab"
+                "Index_Placebo", "FU1b_Placebo", "FU1_Placebo", "FU2_Placebo",
+                "Index_Felzartamab", "FU1b_Felzartamab", "FU1_Felzartamab", "FU2_Felzartamab"
             )),
-        Felzartamab_Followup = paste(Followup, Felzartamab, sep = ":") %>%
+        Felzartamab_Followup = paste(Followup, Felzartamab, sep = "_") %>%
             factor(levels = c(
-                "Baseline:Placebo", "Week12:Placebo", "Week24:Placebo", "Week52:Placebo",
-                "Baseline:Felzartamab", "Week12:Felzartamab", "Week24:Felzartamab", "Week52:Felzartamab"
+                "Baseline_Placebo", "Week12_Placebo", "Week24_Placebo", "Week52_Placebo",
+                "Baseline_Felzartamab", "Week12_Felzartamab", "Week24_Felzartamab", "Week52_Felzartamab"
             ))
     ) %>%
     dplyr::select(Center, Patient, Felzartamab, Group, Followup, Felzartamab_Group, Felzartamab_Followup, cfDNA) %>%

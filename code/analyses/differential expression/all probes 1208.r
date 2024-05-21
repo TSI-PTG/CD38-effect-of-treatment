@@ -25,24 +25,34 @@ set <- data_expressionset_k1208
 set  %>% pData  %>% colnames
 
 
+# WRANGLE THE GROUPING NAMES ####
+
+set$Felzartamab_Followup  %>% factor
+
+
 
 # BLOCK DESIGN #1 ####
 Felzartamab_Followup <- set$Felzartamab_Followup
 design_block <- model.matrix(~ 0 + Felzartamab_Followup)
 contrast_block_01 <- makeContrasts(
-    "x =  (Group_FelzIndex_NoFelz-Group_FelzFU1_NoFelz)/2 - (Group_FelzIndex_Felz-Group_FelzFU1_Felz)/2",
+    "x =  (Felzartamab_FollowupBaseline_Placebo-Felzartamab_FollowupWeek24_Placebo)/2 - (Felzartamab_FollowupBaseline_Felzartamab-Felzartamab_FollowupWeek24_Felzartamab)/2",
     levels = design_block
 )
 
 
 
 # BLOCK DESIGN #2 ####
-Group_Felz <- set$Group_Felz
-design_block <- model.matrix(~ 0 + Group_Felz)
+Felzartamab_Followup <- set$Felzartamab_Followup
+design_block <- model.matrix(~ 0 + Felzartamab_Followup)
 contrast_block_2 <- makeContrasts(
-    "x =  Group_FelzFU1_Felz - (Group_FelzIndex_Felz + Group_FelzIndex_NoFelz + Group_FelzFU1_NoFelz)/3",
+    "x =  Felzartamab_FollowupFU1_Felz - (Felzartamab_FollowupIndex_Felz + Felzartamab_FollowupIndex_NoFelz + Felzartamab_FollowupFU1_NoFelz)/3",
     levels = design_block
 )
+
+
+
+
+
 
 
 # FACTORIAL DESIGN ####
@@ -83,7 +93,7 @@ means <- fit_block_1 %>%
     rownames_to_column("AffyID") %>%
     tibble() %>%
     mutate_if(is.numeric, ~ 2^. %>% round(0)) %>%
-    rename_at(vars(contains("Felz")), ~str_remove(., "Group_Felz"))
+    rename_at(vars(contains("Felz")), ~str_remove(., "Felzartamab_Followup"))
 
 
 # FORMAT TOPTABLES ####

@@ -101,7 +101,7 @@ df00 <- set %>%
         Felz = Felz %>% factor(labels = c("NoFelz", "Felz")),
         TxBx = TxBx %>% as.numeric(),
         Group_Felz = paste(Group, Felz, sep = ":") %>%
-            factor(levels = c("Index:NoFelz", "FU1:NoFelz", "FU2:NoFelz", "Index:Felz", "FU1:Felz", "FU2:Felz"))
+            factor(levels = c("Index_NoFelz", "FU1_NoFelz", "FU2_NoFelz", "Index_Felz", "FU1_Felz", "FU2_Felz"))
     ) %>%
     arrange(Patient, Group) %>%
     expand_grid(category = c("nkcells", "myeloidcells", "tcells", "bcells", "kidneycells")) %>%
@@ -264,8 +264,8 @@ df_univariate_01 <- df_univariate_00 %>%
                     mutate(
                         Group_Felz = paste(Felz, Group, sep = ":") %>%
                             factor(levels = c(
-                                # "Index:NoFelz", "FU1:NoFelz", "FU2:NoFelz",
-                                # "Index:Felz", "FU1:Felz", "FU2:Felz"
+                                # "Index_NoFelz", "FU1_NoFelz", "FU2_NoFelz",
+                                # "Index_Felz", "FU1_Felz", "FU2_Felz"
                                 "NoFelz:Index", "NoFelz:FU1", "NoFelz:FU2",
                                 "Felz:Index", "Felz:FU1", "Felz:FU2"
                             ))
@@ -285,8 +285,8 @@ df_univariate_01 <- df_univariate_00 %>%
                     mutate(
                         Group_Felz = paste(Felz, Group, sep = ":") %>%
                             factor(levels = c(
-                                # "Index:NoFelz", "FU1:NoFelz", "FU2:NoFelz",
-                                # "Index:Felz", "FU1:Felz", "FU2:Felz"
+                                # "Index_NoFelz", "FU1_NoFelz", "FU2_NoFelz",
+                                # "Index_Felz", "FU1_Felz", "FU2_Felz"
                                 "NoFelz:Index", "NoFelz:FU1", "NoFelz:FU2",
                                 "Felz:Index", "Felz:FU1", "Felz:FU2"
                             ))

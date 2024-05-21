@@ -64,7 +64,8 @@ vars <- c(
     "ABMRActivity_Banff19",
     "Bx_Active_ABMR_Banff19",
     "Bx_Chronic_active_ABMR_Banff19",
-    "Bx_Borderline_Banff"
+    "Bx_Borderline_Banff",
+    "Bx_MVI_Score"
 )
 
 
@@ -79,9 +80,11 @@ data_scores <- data %>% complex_pivot(
 )
 
 data_scores %>% print(n = "all")
+data %>% dplyr::select(contains("mvi"))
 
 
-# WRANGLE THE PATIENT DATA #### %>%
+
+# WRANGLE THE PATIENT DATA ####
 data_patient <- data %>%
     dplyr::select(
         Trial_Center,
@@ -145,15 +148,15 @@ data_K1208 <- data_scores %>%
             Group == "FU2" ~ "Week52"
         ) %>% factor(levels = c("Baseline", "Week12", "Week24", "Week52")),
         Felzartamab = Felzartamab %>% factor(labels = c("Placebo", "Felzartamab")),
-        Felzartamab_Group = paste(Group, Felzartamab, sep = ":") %>%
+        Felzartamab_Group = paste(Group, Felzartamab, sep = "_") %>%
             factor(levels = c(
-                "Index:Placebo", "FU1b:Placebo", "FU1:Placebo", "FU2:Placebo",
-                "Index:Felzartamab", "FU1b:Felzartamab", "FU1:Felzartamab", "FU2:Felzartamab"
+                "Index_Placebo", "FU1b_Placebo", "FU1_Placebo", "FU2_Placebo",
+                "Index_Felzartamab", "FU1b_Felzartamab", "FU1_Felzartamab", "FU2_Felzartamab"
             )),
-        Felzartamab_Followup = paste(Followup, Felzartamab, sep = ":") %>%
+        Felzartamab_Followup = paste(Followup, Felzartamab, sep = "_") %>%
             factor(levels = c(
-                "Baseline:Placebo", "Week12:Placebo", "Week24:Placebo", "Week52:Placebo",
-                "Baseline:Felzartamab", "Week12:Felzartamab", "Week24:Felzartamab", "Week52:Felzartamab"
+                "Baseline_Placebo", "Week12_Placebo", "Week24_Placebo", "Week52_Placebo",
+                "Baseline_Felzartamab", "Week12_Felzartamab", "Week24_Felzartamab", "Week52_Felzartamab"
             ))
     ) %>%
     relocate(

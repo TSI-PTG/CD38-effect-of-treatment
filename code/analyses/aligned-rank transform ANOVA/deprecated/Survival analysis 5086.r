@@ -61,7 +61,7 @@ df00 <- set %>%
         Felz = Felz %>% factor(labels = c("NoFelz", "Felz")),
         TxBx = TxBx %>% as.numeric(),
         Group_Felz = paste(Group, Felz, sep = ":") %>%
-            factor(levels = c("Index:NoFelz", "FU1:NoFelz", "FU2:NoFelz", "Index:Felz", "FU1:Felz", "FU2:Felz"))
+            factor(levels = c("Index_NoFelz", "FU1_NoFelz", "FU2_NoFelz", "Index_Felz", "FU1_Felz", "FU2_Felz"))
     ) %>%
     arrange(Patient, Group) %>%
     expand_grid(category = c("Survival"),  annotation = "Survival", score = "Survival", variable = "Survival") %>%
