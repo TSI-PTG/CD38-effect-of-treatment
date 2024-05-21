@@ -39,14 +39,20 @@ vars_injury <- c("IRRAT30", "IRITD3", "IRITD5")
 # Endothelium <- c("ENDAT")
 vars_parenchyma <- c("KT1", "KT2")
 vars_macrophage <- c("AMAT1", "QCMAT")
-vars_archetypes <- c("RejAA_NR",  "RejAA_EABMR", "RejAA_FABMR", "RejAA_LABMR","RejAA_TCMR1", "RejAA_Mixed")
+vars_archetypes <- c("RejAA_NR", "RejAA_EABMR", "RejAA_FABMR", "RejAA_LABMR", "RejAA_TCMR1", "RejAA_Mixed")
+vars_rejpc <- c("RejPC1", "RejPC2", "RejPC3")
+vars_injpc <- c("InjPC1_5086Set", "InjPC2_5086Set", "InjPC3_5086Set")
+
 # Injuryrecent <- c("FICOL", "IRRAT30", "IRITD3", "IRITD5")
 # Injurylate <- c("IGT", "MCAT", "BAT", "cigt1", "ctgt1")
 
 
 # DEFINE VARIABLES TO ASSESS ####
 # vars <- c("cfDNA", "ABMRpm", "ggt0", "ptcgt0", "DSAST", "NKB", "TCMRt", "tgt1", "igt1", "QCAT", "TCB")
-vars <- c(vars_cfDNA, vars_abmr, vars_tcmr, vars_macrophage, vars_injury, vars_parenchyma, vars_archetypes)
+vars <- c(
+    vars_cfDNA, vars_abmr, vars_tcmr, vars_macrophage, vars_injury, vars_parenchyma,
+    vars_archetypes, vars_rejpc, vars_injpc
+)
 
 
 # DEFINE THE data ####
@@ -61,7 +67,7 @@ data <- data_scores_k1208 %>%
 
 # WRANGLE THE PHENOTYPE DATA ####
 data_00 <- data %>%
-    expand_grid(category = c("cfDNA", "ABMR", "TCMR", "macrophage", "injury", "parenchyma", "archetypes")) %>%
+    expand_grid(category = c("cfDNA", "ABMR", "TCMR", "macrophage", "injury", "parenchyma", "archetypes", "rejectionPC", "injuryPC")) %>%
     nest(.by = category) %>%
     mutate(
         features = map(
@@ -81,6 +87,10 @@ data_00 <- data %>%
                     vars_parenchyma
                 } else if (category == "archetypes") {
                     vars_archetypes
+                } else if (category == "rejectionPC") {
+                    vars_rejpc
+                } else if (category == "injuryPC") {
+                    vars_injpc
                 }
             }
         ),
@@ -123,6 +133,8 @@ data_01 <- data_00 %>%
                             variable %in% vars_injury ~ "injury-related",
                             variable %in% vars_parenchyma ~ "parenchyma-related",
                             variable %in% vars_archetypes ~ "archetypes",
+                            variable %in% vars_rejpc ~ "rejection PC",
+                            variable %in% vars_injpc ~ "injury PC",
                             TRUE ~ " "
                         ) %>%
                             factor(
@@ -133,7 +145,9 @@ data_01 <- data_00 %>%
                                     "macrophage-related",
                                     "injury-related",
                                     "parenchyma-related",
-                                    "archetypes"
+                                    "archetypes",
+                                    "rejection PC",
+                                    "injury PC"
                                 )
                             ),
                         score = case_when(
@@ -181,6 +195,12 @@ data_01 <- data_00 %>%
                             variable == "RejAA_EABMR" ~ "Archetypal Early ABMR score (EABMR)",
                             variable == "RejAA_FABMR" ~ "Archetypal Full ABMR score (FABMR)",
                             variable == "RejAA_LABMR" ~ "Archetypal Late ABMR score (LABMR)",
+                            variable == "RejPC1" ~ "Rejection PC 1 (RejPC1)",
+                            variable == "RejPC2" ~ "Rejection PC 2 (RejPC2)",
+                            variable == "RejPC3" ~ "Rejection PC 3 (RejPC3)",
+                            variable == "InjPC1_5086Set" ~ "Injury PC 1 (InjPC1)",
+                            variable == "InjPC2_5086Set" ~ "Injury PC 2 (InjPC2)",
+                            variable == "InjPC3_5086Set" ~ "Injury PC 3 (InjPC3)"
                         ), .before = 1
                     ) %>%
                     arrange(annotation, variable)
@@ -193,6 +213,9 @@ data_01 <- data_00 %>%
 
 
 # UNIVARIATE MEANS AND MEDIANS ####
+data_01$data[[1]]
+
+
 data_02 <- data_01 %>%
     mutate(
         medians = map(
@@ -235,6 +258,8 @@ data_02 <- data_01 %>%
 data_02$data[[1]]
 data_02$medians[[1]]
 data_02$medians_delta[[1]]
+
+
 
 
 # UNIVARIATE NONPARAMETRIC TESTS ####

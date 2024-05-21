@@ -174,7 +174,7 @@ ggsave(
     width = 80,
     height = 22,
     units = "cm",
-    bg = "transparent"
+    bg = "white"
 )
 # ggsave(
 #     filename = paste(saveDir, "Felzartamab patient plots ABMR and TCMR scores.png"),

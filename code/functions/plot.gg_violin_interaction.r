@@ -83,7 +83,11 @@ gg_violin_interaction <- function(data, variable, score, medians_delta, art_con_
             Followup = Followup %>% factor(levels = c("Baseline", "Week24", "Week52")),
             shape = ifelse(Patient == 9, 17, 19)
         )
-    bw <- ifelse(data$variable[[1]] %in% c("ABMRpm", "ggt0", "ptcgt0", "TCMRt", "tgt1", "igt1"), 0.05, 0.1)
+    bw <- dplyr::case_when(
+        data$variable[[1]] %>% stringr::str_detect("ABMRpm|ggt0|ptcgt0|TCMRt|tgt1|igt1") ~ 0.05,
+         data$variable[[1]] %>% stringr::str_detect("PC") ~ 0.2,
+         TRUE ~ 0.1
+    )
     midpoint <- 0
     if (variable %in% c("KT1", "KT2")) {
         gradient_labels <- c("worsened", "improved")
