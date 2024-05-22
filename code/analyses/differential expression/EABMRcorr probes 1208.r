@@ -166,8 +166,8 @@ table_block_2 <- tab_block_2 %>%
         logFC, P.Value, adj.P.Val,
     ) %>%
     mutate(
-        pFC = (Week52_Placebo / Week24_Placebo) %>% round(2),
-        fFC = (Week52_Felzartamab / Week24_Felzartamab) %>% round(2),
+        pFC = (log2(Week52_Placebo) / log2(Week24_Placebo)) %>% round(2),
+        fFC = (log2(Week52_Felzartamab) / Week24_Felzartamab) %>% round(2),
         FC = 2^logFC,
         .after = logFC
     )
@@ -229,7 +229,7 @@ title1 <- paste("Table i. Effect of Felzartamab treatment on expression of top 2
 title2 <- paste("Table i. Effect of Felzartamab treatment on expression of top 20 genes correlated with EABMR in Week24 vs Week52 (by P-value)", sep = "")
 title3 <- paste("Table i. Effect of Felzartamab treatment on expression of top 20 genes correlated with EABMR in Baseline vs Week52 (by P-value)", sep = "")
 
-cellWidths <- c(1.5, 5, 3, 1, 1, 1, 1, 1, rep(1.1, 4)) # for individual tables up or down
+cellWidths <- c(1, 4, 2, 1, 1, 1, 1, 1, rep(1.1, 4)) # for individual tables up or down
 cellWidths %>% length()
 
 

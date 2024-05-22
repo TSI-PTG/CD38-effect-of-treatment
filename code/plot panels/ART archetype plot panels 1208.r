@@ -22,7 +22,7 @@ panel_legend <- felzartamab_plots %>%
 # MAKE PANEL OF VIOLIN PLOTS ####
 panel_violin <- felzartamab_plots %>%
     dplyr::filter(category %in% c("archetypes")) %>%
-    dplyr::filter(variable %in% c("RejAA_NR", "RejAA_FABMR", "RejAA_TCMR1"))  %>% 
+    dplyr::filter(variable %in% c("RejAA_NR", "RejAA_FABMR", "RejAA_TCMR1")) %>%
     pull(plot_violin) %>%
     wrap_plots(nrow = 1, ncol = 3) +
     plot_annotation(tag_levels = list(c(LETTERS[1:15]))) &
@@ -31,13 +31,19 @@ panel_violin <- felzartamab_plots %>%
         axis.text = element_text(size = 10, colour = "black"), plot.tag = element_text(size = 20, face = "bold", vjust = 1)
     )
 
-panels_violin_legend <- (panel_legend / panel_violin) +
-    plot_layout(
-        nrow = 2,
-        heights = c(0.5, 1.5)
-    )
+# panels_violin_legend <- (panel_legend / panel_violin) +
+#     plot_layout(
+#         nrow = 2,
+#         heights = c(0.5, 1.5)
+#     )
 
 
+panels_violin_legend <- ggarrange(
+    panel_legend,
+    panel_violin,
+    nrow = 2,
+    heights = c(0.5, 1.5)
+)
 
 # SAVE THE PLOTS ####
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/output/"
