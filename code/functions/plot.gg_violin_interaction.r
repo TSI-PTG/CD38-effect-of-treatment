@@ -89,7 +89,7 @@ gg_violin_interaction <- function(data, variable, score, medians_delta, art_con_
          TRUE ~ 0.1
     )
     midpoint <- 0
-    if (variable %in% c("KT1", "KT2")) {
+    if (variable %in% c("KT1", "KT2", "InjPC2_5086Set")) {
         gradient_labels <- c("worsened", "improved")
         gradient_labels_hjust <- c(-0.075, 1.55)
         col_low <- "red"
