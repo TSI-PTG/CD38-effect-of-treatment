@@ -186,8 +186,8 @@ table_block_3 <- tab_block_3 %>%
         logFC, P.Value, adj.P.Val,
     ) %>%
     mutate(
-        pFC = (Week52_Placebo / Baseline_Placebo) %>% round(2),
-        fFC = (Week52_Felzartamab / Baseline_Felzartamab) %>% round(2),
+        pFC = (Week52_Placebo / Baseline_Placebo),
+        fFC = (Week52_Felzartamab / Baseline_Felzartamab),
         FC = 2^logFC,
         .after = logFC
     )
@@ -237,7 +237,11 @@ cellWidths %>% length()
 flextable_block_1 <- table_block_1 %>%
     dplyr::rename(FDR = adj.P.Val, Symbol = Symb) %>%
     dplyr::select(-AffyID, -logFC) %>%
-    mutate(FC = FC %>% round(2)) %>%
+    mutate(
+        pFC = pFC %>% round(2),
+        fFC =fFC %>% round(2),
+        FC = FC %>% round(2)
+    ) %>%
     mutate_at(
         vars(contains("p."), FDR),
         ~ ifelse(
@@ -277,7 +281,11 @@ flextable_block_1 <- table_block_1 %>%
 flextable_block_2 <- table_block_2 %>%
     dplyr::rename(FDR = adj.P.Val, Symbol = Symb) %>%
     dplyr::select(-AffyID, -logFC) %>%
-    mutate(FC = FC %>% round(2)) %>%
+    mutate(
+        pFC = pFC %>% round(2),
+        fFC =fFC %>% round(2),
+        FC = FC %>% round(2)
+    ) %>%
     mutate_at(
         vars(contains("p."), FDR),
         ~ ifelse(
@@ -317,7 +325,11 @@ flextable_block_2 <- table_block_2 %>%
 flextable_block_3 <- table_block_3 %>%
     dplyr::rename(FDR = adj.P.Val, Symbol = Symb) %>%
     dplyr::select(-AffyID, -logFC) %>%
-    mutate(FC = FC %>% round(2)) %>%
+    mutate(
+        pFC = pFC %>% round(2),
+        fFC = fFC %>% round(2),
+        FC
+    ) %>%
     mutate_at(
         vars(contains("p."), FDR),
         ~ ifelse(
@@ -359,7 +371,7 @@ flextable_block_3 <- table_block_3 %>%
 # PRINT THE FLEXTABLES ####
 # flextable_block_1 %>% print(preview = "pptx")
 # flextable_block_2 %>% print(preview = "pptx")
-flextable_block_3 %>% print(preview = "pptx")
+# flextable_block_3 %>% print(preview = "pptx")
 
 
 
@@ -374,6 +386,11 @@ limma_tables <- tibble(
         "Week24_vs_Week52",
         "Index_vs_Week52"
     ),
+    toptable = list(
+        tab_block_1,
+        tab_block_2,
+        tab_block_3
+    ),
     table = list(
         table_block_1,
         table_block_2,
@@ -383,15 +400,7 @@ limma_tables <- tibble(
 
 
 # EXPORT THE DATA AS AN EXCEL SHEET ####
-# savedir1 <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vienna/G_Rstuff/output/"
+saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/"
+names(limma_tables$table) <- limma_tables$design
+save(limma_tables, file = paste(saveDir, "EABMRcorr probes limma 1208.RData", sep = ""))
 
-# names(limma_tables$table) <- limma_tables$design
-# openxlsx::write.xlsx(limma_tables$table,
-#     asTable = TRUE,
-#     file = paste(savedir1, "IQR_filtered_probes_limma_vienna_5086_7Mar24",
-#         # Sys.Date(),
-#         # format(Sys.time(), "_%I%M%p"),
-#         ".xlsx",
-#         sep = ""
-#     )
-# )
