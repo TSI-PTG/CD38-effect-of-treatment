@@ -4,7 +4,7 @@ library(tidyverse) # install.packages("tidyverse")
 library(flextable) # install.packages("flextable") #for table outputs
 library(officer) # install.packages("officer")
 library(openxlsx) # install.packages("openxlsx")
-library(readxl)
+library(readxl) # install.packages("readxl")
 # Bioconductor libraries
 library(Biobase) # BiocManager::install("Biobase")
 library(genefilter) # BiocManager::install("genefilter")
@@ -52,10 +52,6 @@ Felzartamab_Followup <- set$Felzartamab_Followup %>% droplevels()
 # BLOCK DESIGN week24 - baseline ####
 design_block01 <- model.matrix(~ 0 + Felzartamab_Followup)
 contrast_block_01 <- makeContrasts(
-    "x =  (Felzartamab_FollowupWeek24_Placebo-Felzartamab_FollowupBaseline_Placebo)/2 - (Felzartamab_FollowupWeek24_Felzartamab-Felzartamab_FollowupBaseline_Felzartamab)/2",
-    levels = design_block01
-)
-contrast_block_01 <- makeContrasts(
     "x =  (Felzartamab_FollowupWeek24_Felzartamab-Felzartamab_FollowupBaseline_Felzartamab)/2 -(Felzartamab_FollowupWeek24_Placebo-Felzartamab_FollowupBaseline_Placebo)/2",
     levels = design_block01
 )
@@ -64,7 +60,7 @@ contrast_block_01 <- makeContrasts(
 # BLOCK DESIGN week52 - week24 ####
 design_block02 <- model.matrix(~ 0 + Felzartamab_Followup)
 contrast_block_02 <- makeContrasts(
-    "x =  (Felzartamab_FollowupWeek52_Placebo-Felzartamab_FollowupWeek24_Placebo)/2 - (Felzartamab_FollowupWeek52_Felzartamab-Felzartamab_FollowupWeek24_Felzartamab)/2",
+    "x =  (Felzartamab_FollowupWeek52_Felzartamab-Felzartamab_FollowupWeek24_Felzartamab)/2 - (Felzartamab_FollowupWeek52_Placebo-Felzartamab_FollowupWeek24_Placebo)/2",
     levels = design_block02
 )
 
@@ -72,7 +68,7 @@ contrast_block_02 <- makeContrasts(
 # BLOCK DESIGN week52 - baseline####
 design_block03 <- model.matrix(~ 0 + Felzartamab_Followup)
 contrast_block_03 <- makeContrasts(
-    "x =  (Felzartamab_FollowupWeek52_Placebo-Felzartamab_FollowupBaseline_Placebo)/2 - (Felzartamab_FollowupWeek52_Felzartamab-Felzartamab_FollowupBaseline_Felzartamab)/2",
+    "x =  (Felzartamab_FollowupWeek52_Felzartamab-Felzartamab_FollowupBaseline_Felzartamab)/2 - (Felzartamab_FollowupWeek52_Placebo-Felzartamab_FollowupBaseline_Placebo)/2",
     levels = design_block03
 )
 
@@ -110,7 +106,7 @@ means_baseline_week24 <- fit_block_1 %>%
     tibble() %>%
     mutate_if(is.numeric, ~ 2^. %>% round(0)) %>%
     rename_at(vars(contains("Felz")), ~ str_remove(., "Felzartamab_Followup")) %>%
-    dplyr::select(-contains("week52"))
+    dplyr::select(-contains("Week52"), -contains("Week12"))
 
 means_week24_week52 <- fit_block_2 %>%
     avearrays() %>%
@@ -119,7 +115,7 @@ means_week24_week52 <- fit_block_2 %>%
     tibble() %>%
     mutate_if(is.numeric, ~ 2^. %>% round(0)) %>%
     rename_at(vars(contains("Felz")), ~ str_remove(., "Felzartamab_Followup")) %>%
-    dplyr::select(-contains("baseline"))
+    dplyr::select(-contains("Baseline"), -contains("Week12"))
 
 means_week52_baseline <- fit_block_3 %>%
     avearrays() %>%
@@ -128,7 +124,7 @@ means_week52_baseline <- fit_block_3 %>%
     tibble() %>%
     mutate_if(is.numeric, ~ 2^. %>% round(0)) %>%
     rename_at(vars(contains("Felz")), ~ str_remove(., "Felzartamab_Followup")) %>%
-    dplyr::select(-contains("week24"))
+    dplyr::select(-contains("Week24"), -contains("Week12"))
 
 
 # FORMAT TOPTABLES ####
@@ -146,8 +142,8 @@ table_block_1 <- tab_block_1 %>%
         logFC, P.Value, adj.P.Val,
     ) %>%
     mutate(
-        pFC = (Week24_Placebo / Baseline_Placebo) %>% round(2),
-        fFC = (Week24_Felzartamab / Baseline_Felzartamab) %>% round(2),
+        pFC = 2^(log2(Week24_Placebo) - log2(Baseline_Placebo)) %>% round(2),
+        fFC = 2^(log2(Week24_Felzartamab) - log2(Baseline_Felzartamab)) %>% round(2),
         FC = 2^logFC,
         .after = logFC
     )
@@ -166,11 +162,16 @@ table_block_2 <- tab_block_2 %>%
         logFC, P.Value, adj.P.Val,
     ) %>%
     mutate(
-        pFC = (log2(Week52_Placebo) / log2(Week24_Placebo)) %>% round(2),
-        fFC = (log2(Week52_Felzartamab) / Week24_Felzartamab) %>% round(2),
+        pFC = 2^(log2(Week52_Placebo) - log2(Week24_Placebo)) %>% round(2),
+        fFC = 2^(log2(Week52_Felzartamab) - log2(Week24_Felzartamab)) %>% round(2),
         FC = 2^logFC,
         .after = logFC
     )
+# log2(148) - log2(166)
+# log2(132) - log2(67)
+# 2^(log2(148) - log2(166))
+# 2^(log2(132) - log2(67))
+
 
 table_block_3 <- tab_block_3 %>%
     as.data.frame() %>%
@@ -186,8 +187,8 @@ table_block_3 <- tab_block_3 %>%
         logFC, P.Value, adj.P.Val,
     ) %>%
     mutate(
-        pFC = (Week52_Placebo / Baseline_Placebo),
-        fFC = (Week52_Felzartamab / Baseline_Felzartamab),
+        pFC = 2^(log2(Week52_Placebo) - log2(Baseline_Placebo)) %>% round(2),
+        fFC = 2^(log2(Week52_Felzartamab) - log2(Baseline_Felzartamab)) %>% round(2),
         FC = 2^logFC,
         .after = logFC
     )
@@ -327,8 +328,8 @@ flextable_block_3 <- table_block_3 %>%
     dplyr::select(-AffyID, -logFC) %>%
     mutate(
         pFC = pFC %>% round(2),
-        fFC = fFC %>% round(2),
-        FC
+        fFC =fFC %>% round(2),
+        FC = FC %>% round(2)
     ) %>%
     mutate_at(
         vars(contains("p."), FDR),
@@ -376,10 +377,6 @@ flextable_block_3 <- table_block_3 %>%
 
 
 # MERGE TABLES FOR SIMPLE EXPORT ####
-# limma_tables <- tibble(
-#     design = c("interaction", "groupwise"),
-#     table = list(table_block_1, table_block_2)
-# )
 limma_tables <- tibble(
     design = c(
         "Index_vs_Week24",
@@ -387,9 +384,12 @@ limma_tables <- tibble(
         "Index_vs_Week52"
     ),
     toptable = list(
-        tab_block_1,
-        tab_block_2,
-        tab_block_3
+        tab_block_1 %>%
+            as_tibble(rownames = "AffyID"),
+        tab_block_2 %>%
+            as_tibble(rownames = "AffyID"),
+        tab_block_3 %>%
+            as_tibble(rownames = "AffyID")
     ),
     table = list(
         table_block_1,
