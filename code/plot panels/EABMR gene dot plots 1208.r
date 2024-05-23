@@ -13,7 +13,7 @@ load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular e
 # WRAGNLE THE DATA FOR PLOTTING ####
 data_plot <- limma_tables %>%
     dplyr::select(design, toptable) %>%
-    dplyr::filter(design != "Index_vs_Week52") %>%
+    dplyr::filter(design != "Baseline_vs_Week52") %>%
     unnest(everything())
 
 

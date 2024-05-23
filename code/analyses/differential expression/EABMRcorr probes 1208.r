@@ -379,9 +379,9 @@ flextable_block_3 <- table_block_3 %>%
 # MERGE TABLES FOR SIMPLE EXPORT ####
 limma_tables <- tibble(
     design = c(
-        "Index_vs_Week24",
+        "Baseline_vs_Week24",
         "Week24_vs_Week52",
-        "Index_vs_Week52"
+        "Baseline_vs_Week52"
     ),
     toptable = list(
         tab_block_1 %>%

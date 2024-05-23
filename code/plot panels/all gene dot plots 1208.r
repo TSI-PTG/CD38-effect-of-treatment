@@ -38,7 +38,7 @@ selected <- simplefile %>%
 
 # IDENTIY GENES SUPPRESSED FROM BASELINE TO WEEK24
 probes_supressed <- limma_tables %>%
-    dplyr::filter(design == "Index_vs_Week24") %>%
+    dplyr::filter(design == "Baseline_vs_Week24") %>%
     pull(toptable) %>%
     pluck(1) %>%
     dplyr::filter(logFC < 0 & P.Value < 0.05) %>%
@@ -46,7 +46,7 @@ probes_supressed <- limma_tables %>%
     pull(AffyID)
 
 probes_increased <- limma_tables %>%
-    dplyr::filter(design == "Index_vs_Week24") %>%
+    dplyr::filter(design == "Baseline_vs_Week24") %>%
     pull(toptable) %>%
     pluck(1) %>%
     dplyr::filter(logFC > 0 & P.Value < 0.05) %>%
@@ -56,19 +56,25 @@ probes_increased <- limma_tables %>%
 
 
 # WRANGLE THE DATA FOR PLOTTING ####
+col_up <- "#4fef9f"
+col_dn <- "#d42a2a"
+col_null <- "grey20"
+
+
 data_plot <- limma_tables %>%
     dplyr::select(design, table) %>%
-    dplyr::filter(design != "Index_vs_Week52") %>%
+    dplyr::filter(design != "Baseline_vs_Week52") %>%
     unnest(everything()) %>%
     left_join(probes_eabmr, by = "AffyID") %>%
     mutate(
         ABMRrank = EABMRcorrp %>% rank(),
         col = case_when(
-            AffyID %in% probes_supressed ~ "blue",
-            AffyID %in% probes_increased ~ "red",
-            TRUE ~ "black"
+            AffyID %in% probes_supressed ~ col_up,
+            AffyID %in% probes_increased ~ col_dn,
+            TRUE ~ col_null
         ),
-        order = col %>% factor(levels = c("black", "red", "blue"))
+        alpha = ifelse(col == col_null, 0.5, 0.8),
+        order = col %>% factor(levels = c(col_null, col_up, col_dn))
     ) %>%
     arrange(order)
 
@@ -82,7 +88,7 @@ plot_volcano <- data_plot %>%
     ggplot(aes(x = -log10(P.Value), y = logFC)) +
     geom_hline(yintercept = 0, linetype = "dashed") +
     geom_vline(xintercept = -log10(0.05), linetype = "dashed") +
-    geom_point(col = data_plot$col) +
+    geom_point(shape = 21, fill = data_plot$col, alpha = data_plot$alpha, stroke = 0.125) +
     # geom_point(
     #     # aes(col = direction),
     #     data = data_plot %>% dplyr::filter(AffyID %in% selected),
@@ -96,12 +102,8 @@ plot_volcano <- data_plot %>%
     #     min.segment.length = 0.1,
     #     data = data_plot %>% dplyr::filter(AffyID %in% selected),
     # ) +
-    scale_color_gradient(
-        high = "blue",
-        low = "black",
-    ) +
     labs(
-        y = "Felzartamab effect\n(log2 foldchange)",
+        y = "Felzartamab effect (log2 fold change)",
         x = "-log10 pvalue",
         col = NULL
     ) +
@@ -120,6 +122,80 @@ saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molec
 ggsave(
     plot_volcano,
     file = paste(saveDir, "volcano plot all probes 1208.png", sep = ""),
+    dpi = 300,
+    width = 20,
+    height = 12,
+    units = "cm",
+    bg = "white"
+)
+
+
+
+# MAKE VOLCANO PLOT ###
+min_p <- data_plot %>%
+    slice_min(P.Value) %>%
+    pull(P.Value) %>%
+    log10() * -1.2
+
+data_plot2 <- data_plot %>%
+    mutate(
+        p = ifelse(design == "Week24_vs_Week52", -log10(P.Value) + min_p, -log10(P.Value))
+    )
+
+
+data_plot2_trimmed <- data_plot2 %>%
+    dplyr::filter(AffyID %in% c(probes_supressed, probes_increased)) %>%
+    dplyr::select(AffyID, p, logFC, col, alpha) %>%
+    arrange(AffyID)
+
+
+plot_volcano2 <- data_plot2 %>%
+    ggplot(aes(x = p, y = logFC)) +
+    geom_vline(xintercept = 3.70, linetype = "solid", linewidth = 0.2) +
+    geom_vline(xintercept = 3.85, linetype = "solid", linewidth = 0.2) +
+    geom_hline(yintercept = 0, linetype = "dashed") +
+    geom_vline(xintercept = -log10(0.05), linetype = "dashed") +
+    geom_vline(xintercept = -log10(0.05) + min_p, linetype = "dashed") +
+    geom_point(
+        data = data_plot2 %>% dplyr::filter(AffyID %nin% c(probes_supressed, probes_increased)),
+        shape = 21,
+        fill = "grey20",
+        alpha = 0.5,
+        stroke = 0.125
+    ) +
+    geom_line(
+        data = data_plot2_trimmed,
+        mapping = aes(x = p, y = logFC, group = AffyID),
+        col = data_plot2_trimmed$col,
+        alpha = 0.25,
+        linewidth = 0.5
+    ) +
+    geom_point(
+        data = data_plot2_trimmed,
+        shape = 21,
+        fill = data_plot2_trimmed$col,
+        alpha = data_plot2_trimmed$alpha,
+        stroke = 0.125
+    ) +
+    labs(
+        y = "Felzartamab effect (log2 fold change)",
+        x = "-log10 pvalue",
+        col = NULL
+    ) +
+    theme_bw() +
+    theme(
+        panel.grid = element_blank(),
+        legend.position = "none",
+        axis.title = element_text(size = 15),
+        axis.text = element_text(colour = "black")
+    )
+
+
+# SAVE THE PLOT ####
+saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/output/"
+ggsave(
+    plot_volcano2,
+    file = paste(saveDir, "volcano2 plot all probes 1208.png", sep = ""),
     dpi = 300,
     width = 20,
     height = 12,
