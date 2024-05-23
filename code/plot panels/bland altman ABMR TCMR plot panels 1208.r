@@ -12,7 +12,6 @@ source("C:/R/CD38-effect-of-treatment/code/functions/plot.gg_bland_altman.r")
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/Felzartamab_bland_altman_plots.RData")
 
 
-
 # MAKE PANEL OF BLAND ALTMAN PLOTS ####
 panels_bland_altman <- bland_altman_plots %>%
     dplyr::filter(category %in% c("ABMR", "TCMR")) %>%

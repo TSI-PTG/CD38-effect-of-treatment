@@ -1,8 +1,24 @@
 gg_volcano_timeseries <- function(
     data, data_trimmed, xbreak1, xbreak2, alpha_lines,
     point_size = 2.5, point_size_null = 1.25, col_null = "grey20",
+    label_n = 10, label_size = 2,
     x_label1_x, x_label2_x) {
     require(tidyverse)
+    top_dn <- data %>%
+        dplyr::filter(
+            design == "Baseline_vs_Week24",
+            logFC < 0
+        ) %>%
+        dplyr::slice_min(`<U+0394><U+0394> p`, n = label_n) %>%
+        pull(AffyID)
+    top_up <- data %>%
+        dplyr::filter(
+            design == "Baseline_vs_Week24",
+            logFC > 0
+        ) %>%
+        dplyr::slice_min(`<U+0394><U+0394> p`, n = label_n) %>%
+        pull(AffyID)
+    data_labels <- data %>% dplyr::filter(AffyID %in% c(top_dn, top_up))
     data %>%
         ggplot2::ggplot(mapping = ggplot2::aes(x = p, y = logFC)) +
         ggplot2::geom_vline(xintercept = xbreak1, linetype = "solid", linewidth = 0.2) +
@@ -47,6 +63,25 @@ gg_volcano_timeseries <- function(
             col = data_trimmed$col,
             alpha = alpha_lines,
             linewidth = 0.5
+        ) +
+        ggrepel::geom_label_repel(
+            data = data_labels,
+            mapping = ggplot2::aes(label = Symb),
+            size = label_size,
+            fontface = "bold",
+            min.segment.length = 0,
+            segment.color = "grey20",
+            segment.size = 0.25,
+            col = "white",
+            fill = data_labels %>% dplyr::pull(col),
+            label.padding = 0.1,
+            box.padding = 0.1,
+            label.size = 0.1,
+            direction = "y",
+            # nudge_x = 0.01,
+            nudge_y = ifelse(data_labels$logFC > 0, 0.25, -0.25),
+            show.legend = FALSE,
+            seed = 42
         ) +
         ggplot2::geom_point(
             data = data_trimmed,

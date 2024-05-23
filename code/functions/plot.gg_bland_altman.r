@@ -21,9 +21,8 @@ gg_bland_altman <- function(data, variable, score, id = "Patient", group = "Felz
             id, group, Baseline, Week24, Week52,
             average, diff, mean_diff, lower, upper
         )
-
     data %>%
-        ggplot2::ggplot(mapping = ggplot2::aes(x = average, y = diff)) +
+        ggplot2::ggplot(mapping = ggplot2::aes(x = Baseline, y = diff)) +
         ggplot2::geom_point(pch = 21, size = 7, fill = "grey95") +
         ggplot2::geom_hline(yintercept = 0, linetype = "dotted") +
         ggplot2::geom_hline(mapping = ggplot2::aes(yintercept = mean_diff)) +
@@ -42,7 +41,7 @@ gg_bland_altman <- function(data, variable, score, id = "Patient", group = "Felz
             show.legend = FALSE
         ) +
         ggplot2::labs(
-            x = paste("Average", score %>% stringr::str_replace("\\(", "\n("), sep = " "),
+            x = paste("Baseline", score %>% stringr::str_replace("\\(", "\n("), sep = " "),
             y = paste("\u394", score %>% stringr::str_replace("\\(", "\n("), sep = " "),
             parse = TRUE
         ) +

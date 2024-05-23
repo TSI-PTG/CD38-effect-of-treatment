@@ -110,7 +110,9 @@ plot_volcano2 <- data_plot2 %>%
         col_null = col_null,
         point_size_null = 1.25,
         point_size = 2.5,
-        x_label1_x = 1.5
+        x_label1_x = 1.5,
+        label_n = 5,
+        label_size = 3
     )
 
 plot_volcano <- ggarrange(plot_volcano2) %>%
