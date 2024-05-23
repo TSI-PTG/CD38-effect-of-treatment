@@ -14,7 +14,7 @@ simplefile <- read_excel("Z:/MISC/Phil/AA All papers in progress/A GC papers/000
 
 
 
-# DEFINE PROBE CORRELATIONS WITH EABMR
+# DEFINE PROBE CORRELATIONS WITH EABMR ####
 probes_eabmr <- simplefile %>%
     dplyr::select(Affy, "pvalRej7AA4-EABMR") %>%
     rename(
@@ -36,7 +36,7 @@ selected <- simplefile %>%
     pull(AffyID)
 
 
-# IDENTIY GENES SUPPRESSED FROM BASELINE TO WEEK24
+# IDENTIY GENES SUPPRESSED FROM BASELINE TO WEEK24 ####
 probes_supressed <- limma_tables %>%
     dplyr::filter(design == "Baseline_vs_Week24") %>%
     pull(toptable) %>%
@@ -54,13 +54,13 @@ probes_increased <- limma_tables %>%
     pull(AffyID)
 
 
-
-# WRANGLE THE DATA FOR PLOTTING ####
-col_up <- "#4fef9f"
-col_dn <- "#d42a2a"
+# DEFINE COLORS FOR TOP PROBES ####
+col_up <- "#7accf9"
+col_dn <- "#82fcbf"
 col_null <- "grey20"
 
 
+# WRANGLE THE DATA FOR PLOTTING ####
 data_plot <- limma_tables %>%
     dplyr::select(design, table) %>%
     dplyr::filter(design != "Baseline_vs_Week52") %>%
@@ -79,11 +79,7 @@ data_plot <- limma_tables %>%
     arrange(order)
 
 
-# DEFINE COLORS FOR TOP PROBES ####
-# cols_topprobes <- c("up" = "red", "down" = "blue")
-
-
-# MAKE VOLCANO PLOT ###
+# MAKE VOLCANO PLOT ####
 plot_volcano <- data_plot %>%
     ggplot(aes(x = -log10(P.Value), y = logFC)) +
     geom_hline(yintercept = 0, linetype = "dashed") +
@@ -119,15 +115,15 @@ plot_volcano <- data_plot %>%
 
 # SAVE THE PLOT ####
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/output/"
-ggsave(
-    plot_volcano,
-    file = paste(saveDir, "volcano plot all probes 1208.png", sep = ""),
-    dpi = 300,
-    width = 20,
-    height = 12,
-    units = "cm",
-    bg = "white"
-)
+# ggsave(
+#     plot_volcano,
+#     file = paste(saveDir, "volcano plot all probes 1208.png", sep = ""),
+#     dpi = 300,
+#     width = 20,
+#     height = 12,
+#     units = "cm",
+#     bg = "white"
+# )
 
 
 
@@ -156,18 +152,41 @@ plot_volcano2 <- data_plot2 %>%
     geom_hline(yintercept = 0, linetype = "dashed") +
     geom_vline(xintercept = -log10(0.05), linetype = "dashed") +
     geom_vline(xintercept = -log10(0.05) + min_p, linetype = "dashed") +
+    geom_segment(
+        inherit.aes = FALSE,
+        mapping = aes(x = -Inf, xend = 3.70, y = -Inf),
+        linewidth = 0.2
+    ) +
+    geom_segment(
+        inherit.aes = FALSE,
+        mapping = aes(x = 3.85, xend = Inf, y = -Inf),
+        linewidth = 0.2
+    ) +
+    geom_segment(
+        inherit.aes = FALSE,
+        mapping = aes(x = -Inf, xend = 3.70, y = Inf),
+        linewidth = 0.2
+    ) +
+    geom_segment(
+        inherit.aes = FALSE,
+        mapping = aes(x = 3.85, xend = Inf, y = Inf),
+        linewidth = 0.2
+    ) +
+    geom_segment(
+        inherit.aes = FALSE,
+        mapping = aes(x = Inf, y = -Inf, yend = Inf),
+        linewidth = 0.2
+    ) +
     geom_point(
         data = data_plot2 %>% dplyr::filter(AffyID %nin% c(probes_supressed, probes_increased)),
-        shape = 21,
-        fill = "grey20",
-        alpha = 0.5,
-        stroke = 0.125
+        col = col_null,
+        alpha = 0.25
     ) +
     geom_line(
         data = data_plot2_trimmed,
         mapping = aes(x = p, y = logFC, group = AffyID),
         col = data_plot2_trimmed$col,
-        alpha = 0.25,
+        alpha = 0.125,
         linewidth = 0.5
     ) +
     geom_point(
@@ -177,17 +196,43 @@ plot_volcano2 <- data_plot2 %>%
         alpha = data_plot2_trimmed$alpha,
         stroke = 0.125
     ) +
+    geom_text(
+        x = -Inf,
+        y = Inf,
+        vjust = -0.25,
+        hjust = 0,
+        label = "\u394\u394 Baseline - Week24",
+        fontface = "bold.italic"
+    ) +
+    geom_text(
+        x = 3.85,
+        y = Inf,
+        vjust = -0.25,
+        hjust = 0,
+        label = "\u394\u394 Week24 - Week52",
+        fontface = "bold.italic"
+    ) +
+    scale_x_continuous(
+        breaks = c(0, 1, 2, 3, min_p, 1 + min_p, 2 + min_p, 3 + min_p),
+        labels = 10^-c(0, 1, 2, 3, 0, 1, 2, 3)
+    ) +
+    scale_y_continuous(expand = c(0, 0.05)) +
+    coord_cartesian(clip = "off") +
     labs(
-        y = "Felzartamab effect (log2 fold change)",
-        x = "-log10 pvalue",
+        y = "Treatment effect (log2 fold change)",
+        x = "Treatment effect p-value",
         col = NULL
     ) +
     theme_bw() +
     theme(
+        panel.border = element_blank(),
+        axis.line.x = element_blank(),
+        axis.line.y = element_line(linewidth = 0.2),
         panel.grid = element_blank(),
         legend.position = "none",
-        axis.title = element_text(size = 15),
-        axis.text = element_text(colour = "black")
+        axis.title = element_text(size = 12),
+        axis.text = element_text(colour = "black"),
+        plot.margin = unit(c(0.5, 0.1, 0.1, 0.1), "cm")
     )
 
 
@@ -197,8 +242,8 @@ ggsave(
     plot_volcano2,
     file = paste(saveDir, "volcano2 plot all probes 1208.png", sep = ""),
     dpi = 300,
-    width = 20,
+    width = 18,
     height = 12,
     units = "cm",
     bg = "white"
-)
+) %>% suppressWarnings()

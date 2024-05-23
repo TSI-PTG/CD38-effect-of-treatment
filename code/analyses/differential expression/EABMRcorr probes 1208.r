@@ -222,7 +222,7 @@ header4_week24_week52 <- c(
 header4_week52_Baseline <- c(
     # "AffyID",
     "Symb", "Gene", "PBT",
-    "Week24\n(N=10)", "Week52\n(N=10)", "Week24\n(N=10)", "Week52\n(N=10)",
+    "Baseline\n(N=10)", "Week52\n(N=10)", "Baseline\n(N=10)", "Week52\n(N=10)",
     "\u394\nFC\n(Placebo)", "\u394\nFC\n(Felzartamab)", "\u394\u394\nFC", "\u394\u394\nP", "\u394\u394\nFDR"
 )
 

@@ -185,18 +185,61 @@ limma_tables <- tibble(
             as_tibble(rownames = "AffyID")
     ),
     table = list(
-        table_block_1,
-        table_block_2,
-        table_block_3
+        table_block_1 %>%
+            relocate(logFC, .before = "FC") %>%
+            dplyr::rename(
+                "\u394 placebo FC" = pFC,
+                "\u394 felz FC" = fFC,
+                "\u394\u394 logFC" = logFC,
+                "\u394\u394 FC" = FC,
+                "\u394\u394 p" = P.Value,
+                "\u394\u394 FDR" = adj.P.Val
+            ),
+        table_block_2 %>%
+            relocate(logFC, .before = "FC") %>%
+            dplyr::rename(
+                "\u394 placebo FC" = pFC,
+                "\u394 felz FC" = fFC,
+                "\u394\u394 logFC" = logFC,
+                "\u394\u394 FC" = FC,
+                "\u394\u394 p" = P.Value,
+                "\u394\u394 FDR" = adj.P.Val
+            ),
+        table_block_3 %>%
+            relocate(logFC, .before = "FC") %>%
+            dplyr::rename(
+                "\u394 placebo FC" = pFC,
+                "\u394 felz FC" = fFC,
+                "\u394\u394 logFC" = logFC,
+                "\u394\u394 FC" = FC,
+                "\u394\u394 p" = P.Value,
+                "\u394\u394 FDR" = adj.P.Val
+            )
     )
 )
 
 
+limma_tables$table[[1]]
 tab_block_1 %>% as_tibble(rownames = "AffyID")
 
 
 
-# EXPORT THE DATA AS AN EXCEL SHEET ####
+# EXPORT THE DATA AS .RData FILE ####
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/"
 names(limma_tables$table) <- limma_tables$design
 save(limma_tables, file = paste(saveDir, "all probes limma 1208.RData", sep = ""))
+
+
+
+
+# EXPORT THE DATA AS AN EXCEL SHEET ####
+saveDir1 <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/output/"
+openxlsx::write.xlsx(limma_tables$table,
+    asTable = TRUE,
+    file = paste(saveDir1, "all_probes_limma_1208_23May24",
+        # Sys.Date(),
+        # format(Sys.time(), "_%I%M%p"),
+        ".xlsx",
+        sep = ""
+    )
+)
