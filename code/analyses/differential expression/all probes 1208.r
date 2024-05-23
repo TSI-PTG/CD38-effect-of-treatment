@@ -16,6 +16,17 @@ load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular e
 load("Z:/DATA/Datalocks/Other data/affymap219_21Oct2019_1306_JR.RData")
 
 
+
+# # IQR FILTER THE DATA ####
+# f1 <- function(x) (IQR(x) > 0.5)
+# ff <- filterfun(f1)
+# if (!exists("selected")) {
+#     selected <- genefilter(vienna_1208, ff)
+# }
+# set00 <- vienna_1208[selected, vienna_1208$STUDY_EVALUATION_ID %nin% c(15, 18)]
+
+
+
 # DEFINE SEED ####
 seed <- 42
 
@@ -217,19 +228,14 @@ limma_tables <- tibble(
             )
     )
 )
-
-
-limma_tables$table[[1]]
-tab_block_1 %>% as_tibble(rownames = "AffyID")
-
+# limma_tables$table[[1]]
+# tab_block_1 %>% as_tibble(rownames = "AffyID")
 
 
 # EXPORT THE DATA AS .RData FILE ####
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/"
 names(limma_tables$table) <- limma_tables$design
 save(limma_tables, file = paste(saveDir, "all probes limma 1208.RData", sep = ""))
-
-
 
 
 # EXPORT THE DATA AS AN EXCEL SHEET ####

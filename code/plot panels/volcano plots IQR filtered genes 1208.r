@@ -14,6 +14,10 @@ simplefile <- read_excel("Z:/MISC/Phil/AA All papers in progress/A GC papers/000
 
 
 
+
+
+
+
 # DEFINE PROBE CORRELATIONS WITH EABMR ####
 probes_eabmr <- simplefile %>%
     dplyr::select(Affy, "pvalRej7AA4-EABMR") %>%
@@ -79,63 +83,20 @@ data_plot <- limma_tables %>%
     arrange(order)
 
 
-# MAKE VOLCANO PLOT ####
-plot_volcano <- data_plot %>%
-    ggplot(aes(x = -log10(P.Value), y = logFC)) +
-    geom_hline(yintercept = 0, linetype = "dashed") +
-    geom_vline(xintercept = -log10(0.05), linetype = "dashed") +
-    geom_point(shape = 21, fill = data_plot$col, alpha = data_plot$alpha, stroke = 0.125) +
-    # geom_point(
-    #     # aes(col = direction),
-    #     data = data_plot %>% dplyr::filter(AffyID %in% selected),
-    #     col = "blue",
-    #     size = 2
-    # ) +
-    # geom_label_repel(
-    #     mapping = aes(label = Symb),
-    #     size = 2,
-    #     max.overlaps = Inf,
-    #     min.segment.length = 0.1,
-    #     data = data_plot %>% dplyr::filter(AffyID %in% selected),
-    # ) +
-    labs(
-        y = "Felzartamab effect (log2 fold change)",
-        x = "-log10 pvalue",
-        col = NULL
-    ) +
-    theme_bw() +
-    theme(
-        panel.grid = element_blank(),
-        legend.position = "none",
-        axis.title = element_text(size = 15),
-        axis.text = element_text(colour = "black")
-    ) +
-    facet_wrap(~design)
-
-
-# SAVE THE PLOT ####
-saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/output/"
-# ggsave(
-#     plot_volcano,
-#     file = paste(saveDir, "volcano plot all probes 1208.png", sep = ""),
-#     dpi = 300,
-#     width = 20,
-#     height = 12,
-#     units = "cm",
-#     bg = "white"
-# )
-
-
-
 # MAKE VOLCANO PLOT ###
 min_p <- data_plot %>%
-    slice_min(P.Value) %>%
-    pull(P.Value) %>%
+    slice_min(`<U+0394><U+0394> p`) %>%
+    pull(`<U+0394><U+0394> p`) %>%
     log10() * -1.2
 
 data_plot2 <- data_plot %>%
     mutate(
-        p = ifelse(design == "Week24_vs_Week52", -log10(P.Value) + min_p, -log10(P.Value))
+        p = ifelse(
+            design == "Week24_vs_Week52",
+            -log10(`<U+0394><U+0394> p`) + min_p,
+            -log10(`<U+0394><U+0394> p`)
+        ),
+        logFC = `<U+0394><U+0394> logFC`
     )
 
 
@@ -180,6 +141,7 @@ plot_volcano2 <- data_plot2 %>%
     geom_point(
         data = data_plot2 %>% dplyr::filter(AffyID %nin% c(probes_supressed, probes_increased)),
         col = col_null,
+        size = 1.25,
         alpha = 0.25
     ) +
     geom_line(
@@ -201,7 +163,7 @@ plot_volcano2 <- data_plot2 %>%
         y = Inf,
         vjust = -0.25,
         hjust = 0,
-        label = "\u394\u394 Baseline - Week24",
+        label = "Baseline - Week24",
         fontface = "bold.italic"
     ) +
     geom_text(
@@ -209,18 +171,36 @@ plot_volcano2 <- data_plot2 %>%
         y = Inf,
         vjust = -0.25,
         hjust = 0,
-        label = "\u394\u394 Week24 - Week52",
+        label = "Week24 - Week52",
         fontface = "bold.italic"
+    ) +
+    geom_text(
+        x = 1.75,
+        y = -Inf,
+        vjust = 1.75,
+        hjust = 0.5,
+        label = "Effect of treatment\n(\u394\u394 p-value)",
+        fontface = "plain"
+    ) +
+    geom_text(
+        x = mean(c(min_p, 1 + min_p, 2 + min_p, 3 + min_p)),
+        y = -Inf,
+        vjust = 1.75,
+        hjust = 0.5,
+        label = "Refractory response post-treatment\n(\u394\u394 p-value)"
     ) +
     scale_x_continuous(
         breaks = c(0, 1, 2, 3, min_p, 1 + min_p, 2 + min_p, 3 + min_p),
         labels = 10^-c(0, 1, 2, 3, 0, 1, 2, 3)
     ) +
-    scale_y_continuous(expand = c(0, 0.05)) +
+    scale_y_continuous(
+        sec.axis = sec_axis(~., name = "Refractory response post-treatment\n(\u394\u394 log2FC)"),
+        expand = c(0, 0.05)
+    ) +
     coord_cartesian(clip = "off") +
     labs(
-        y = "Treatment effect (log2 fold change)",
-        x = "Treatment effect p-value",
+        y = "Effect of treatment\n(\u394\u394 log2FC)",
+        x = NULL,
         col = NULL
     ) +
     theme_bw() +
@@ -230,20 +210,29 @@ plot_volcano2 <- data_plot2 %>%
         axis.line.y = element_line(linewidth = 0.2),
         panel.grid = element_blank(),
         legend.position = "none",
-        axis.title = element_text(size = 12),
+        axis.title = element_text(size = 12, face = "plain"),
         axis.text = element_text(colour = "black"),
-        plot.margin = unit(c(0.5, 0.1, 0.1, 0.1), "cm")
+        plot.margin = unit(c(0.5, 0.1, 1.25, 0.1), "cm"), 
+        plot.background = element_rect(fill = "grey95", colour = " white")
     )
+
+plot_volcano <- ggarrange(plot_volcano2) %>%
+    ggpubr::annotate_figure(
+        top = text_grob(
+            "Genome-wide Effect of Felzartamab Treatment and Refractory Response Post-Treatment",
+            face = "bold.italic", size = 15, hjust = 0.51
+        )
+    ) %>% suppressWarnings()
 
 
 # SAVE THE PLOT ####
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/output/"
 ggsave(
-    plot_volcano2,
+    plot_volcano,
     file = paste(saveDir, "volcano2 plot all probes 1208.png", sep = ""),
     dpi = 300,
-    width = 18,
-    height = 12,
+    width = 23,
+    height = 14,
     units = "cm",
     bg = "white"
 ) %>% suppressWarnings()
