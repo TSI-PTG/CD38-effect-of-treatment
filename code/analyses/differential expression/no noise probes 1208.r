@@ -8,23 +8,14 @@ library(openxlsx) # install.packages("openxlsx")
 library(Biobase) # BiocManager::install("Biobase")
 library(limma) # BiocManager::install("limma")
 library(biobroom) # BiocManager::install("biobroom")
-library(genefilter) # BiocManager::install("genefilter")
 # Custom operators, functions, and datasets
 "%nin%" <- function(a, b) match(a, b, nomatch = 0) == 0
 # load reference set
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/data_expressionset_k1208.RData")
 # load affymap
 load("Z:/DATA/Datalocks/Other data/affymap219_21Oct2019_1306_JR.RData")
-
-
-
-# IQR FILTER THE DATA ####
-f1 <- function(x) (IQR(x) > 0.5)
-ff <- filterfun(f1)
-if (!exists("selected")) {
-    selected <- genefilter(data_expressionset_k1208, ff)
-}
-set00 <- data_expressionset_k1208[selected, data_expressionset_k1208$Patient %nin% c(15, 18)]
+# load noise genes
+load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/probes_noise_1208.RData")
 
 
 # DEFINE SEED ####
@@ -32,7 +23,12 @@ seed <- 42
 
 
 # DEFINE THE SET ####
-set <- set00
+set00 <- data_expressionset_k1208[, data_expressionset_k1208$Patient %nin% c(15, 18)]
+
+
+# FILTER THE PROBES ####
+set <- set00[featureNames(set00) %nin% probes_noise, ]
+
 
 
 # DEFINE FACTOR FOR CONTRASTS ####
@@ -232,17 +228,17 @@ limma_tables <- tibble(
 # EXPORT THE DATA AS .RData FILE ####
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/"
 names(limma_tables$table) <- limma_tables$design
-save(limma_tables, file = paste(saveDir, "IQR_filtered_probes_limma_1208.RData", sep = ""))
+save(limma_tables, file = paste(saveDir, "no_noise_probes_limma_1208.RData", sep = ""))
 
 
 # EXPORT THE DATA AS AN EXCEL SHEET ####
-saveDir1 <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/output/"
-openxlsx::write.xlsx(limma_tables$table,
-    asTable = TRUE,
-    file = paste(saveDir1, "IQR_filtered_probes_limma_1208_23May24",
-        # Sys.Date(),
-        # format(Sys.time(), "_%I%M%p"),
-        ".xlsx",
-        sep = ""
-    )
-)
+# saveDir1 <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/output/"
+# openxlsx::write.xlsx(limma_tables$table,
+#     asTable = TRUE,
+#     file = paste(saveDir1, "no_noise_probes_limma_1208_23May24",
+#         # Sys.Date(),
+#         # format(Sys.time(), "_%I%M%p"),
+#         ".xlsx",
+#         sep = ""
+#     )
+# )
