@@ -1,6 +1,8 @@
 # HOUSEKEEPING ####
 # CRAN packages
 library(tidyverse) # install.packages("tidyverse")
+library(quantreg) # install.packages("quantreg")
+library(broom) # install.packages("broom")
 # Custom operators, functions, and datasets
 "%nin%" <- function(a, b) match(a, b, nomatch = 0) == 0
 source("C:/R/CD38-effect-of-treatment/code/functions/get_slope_function.r")
@@ -45,10 +47,16 @@ vars <- c(vars_cfDNA, vars_abmr, vars_tcmr, vars_injury)
 # DEFINE THE DATA ####
 data <- data_scores_k1208 %>%
     dplyr::select(Center, Patient, Felzartamab, Group, Followup, Felzartamab_Group, Felzartamab_Followup, all_of(vars)) %>%
-    dplyr::filter(Group != "FU1b", Patient %nin% c(15, 18)) %>%
+    dplyr::filter(Group != "FU1b", Patient %nin% c(9,15, 18,19)) %>%
     left_join(., summarise(., sample_pairs = n(), .by = Felzartamab_Followup), by = "Felzartamab_Followup") %>%
     relocate(sample_pairs, .after = Felzartamab_Followup) %>%
     arrange(Felzartamab, Patient, Group)
+
+
+# DEFINE NUMBER OF PATIENTS ####
+n_patient <- data %>%
+    summarise(n = n_distinct(Patient)) %>%
+    flatten_dbl()
 
 
 # WRANGLE THE PHENOTYPE DATA ####
@@ -171,27 +179,63 @@ data_01 <- data_00 %>%
 
 
 # UNIVARIATE MEDIANS ####
+data_01$data[[13]] %>%
+    reframe(
+        value = combn(value, 2) %>% as.numeric(),
+        .by = c(Patient, Felzartamab)
+    ) %>%
+    mutate(
+        Followup_pairwise = rep(
+            c("Baseline - Week24", "Baseline - Week52", "Week24 - Week52"),
+            each = 2
+        ) %>%
+            rep(., n_patient) %>%
+            factor(levels = c("Baseline - Week24", "Baseline - Week52", "Week24 - Week52")),
+        .after = Felzartamab
+    ) %>%
+    mutate(
+        delta = lead(value) - value,
+        delta_foldchange = lead(value) / value,
+        # delta_foldchange_log2 = (lead(value) / value) %>% log2(),
+        .by = c("Patient", "Followup_pairwise")
+    ) %>%
+    arrange(Patient, Felzartamab, Followup_pairwise)
+
+
 data_02 <- data_01 %>%
     mutate(
-        delta = map(
-            data,
-            function(data) {
+        delta = map2(
+            category, data,
+            function(category, data) {
                 data %>%
+                    mutate(category = category) %>%
                     reframe(
-                        delta = combn(value, 2, diff) %>% as.numeric(),
-                        .by = c(Patient, Felzartamab)
+                        value = combn(value, 2) %>% as.numeric(),
+                        .by = c(category, Patient, Felzartamab)
                     ) %>%
                     mutate(
-                        Followup_pairwise = rep(c("Baseline - Week24", "Baseline - Week52", "Week24 - Week52"), 20) %>%
+                        Followup_pairwise = rep(
+                            c("Baseline - Week24", "Baseline - Week52", "Week24 - Week52"),
+                            each = 2
+                        ) %>%
+                            rep(., n_patient) %>%
                             factor(levels = c("Baseline - Week24", "Baseline - Week52", "Week24 - Week52")),
                         .after = Felzartamab
                     ) %>%
-                    arrange(Patient, Felzartamab)
+                    mutate(
+                        delta = lead(value) - value,
+                        delta_foldchange = ifelse(category == "cfDNA", lead(value) / value, NA),
+                        delta_foldchange_log2 = ifelse(category == "cfDNA", (lead(value) / value) %>% log2(), NA),
+                        .by = c("Patient", "Followup_pairwise")
+                    ) %>%
+                    dplyr::select(-value) %>%
+                    arrange(Patient, Felzartamab) %>%
+                    drop_na(delta)
             }
         )
     )
 data_02$data[[1]]
-data_02$delta[[1]]
+data_02$delta[[2]]
 
 
 
@@ -207,6 +251,9 @@ data_03 <- data_02 %>%
 
 
 # UNIVARIATE NONPARAMETRIC TESTS ####
+data_03
+
+
 data_04 <- data_03 %>%
     mutate(
         cor = pmap(
@@ -218,7 +265,7 @@ data_04 <- data_03 %>%
                         by = c("Patient", "Felzartamab", "Followup_pairwise"),
                         suffix = c("_score", "_cfdna")
                     ) %>%
-                    mutate(variable) %>% 
+                    mutate(variable) %>%
                     nest(.by = c("variable", "Felzartamab", "Followup_pairwise"))
                 df %>%
                     mutate(
@@ -236,11 +283,80 @@ data_04 <- data_03 %>%
                                 corPvalueStudent(cor, nSamples)
                             }
                         )
-                    ) 
+                    )
+            }
+        ),
+        cor_foldchange_log2 = pmap(
+            list(variable, delta, delta_cfdna),
+            function(variable, delta, delta_cfdna) {
+                df <- delta %>%
+                    left_join(
+                        delta_cfdna,
+                        by = c("Patient", "Felzartamab", "Followup_pairwise"),
+                        suffix = c("_score", "_cfdna")
+                    ) %>%
+                    mutate(variable) %>%
+                    nest(.by = c("variable", "Felzartamab", "Followup_pairwise"))
+                df %>%
+                    mutate(
+                        cor = pmap_dbl(
+                            list(data),
+                            function(data) {
+                                cor(x = data$delta_foldchange_log2_cfdna, y = data$delta_score, use = "p", method = "spearman")
+                            }
+                        ),
+                        p = pmap_dbl(
+                            list(data, cor),
+                            function(data, cor) {
+                                nSamples <- data %>%
+                                    nrow()
+                                corPvalueStudent(cor, nSamples)
+                            }
+                        )
+                    )
+            }
+        ),
+        quantile_regression = pmap(
+            list(variable, delta, delta_cfdna),
+            function(variable, delta, delta_cfdna) {
+                df <- delta %>%
+                    left_join(
+                        delta_cfdna,
+                        by = c("Patient", "Felzartamab", "Followup_pairwise"),
+                        suffix = c("_score", "_cfdna")
+                    ) %>%
+                    mutate(variable) %>%
+                    nest(.by = c("variable", "Felzartamab", "Followup_pairwise"))
+                df %>% mutate(
+                    rq = map(
+                        data,
+                        function(data) {
+                            quantreg::rq(delta_cfdna ~ delta_score, data = data, tau = 0.5, model = TRUE) %>%
+                                broom::tidy(se = "nid")
+                        }
+                    ),
+                    rq_slope = map_dbl(
+                        rq,
+                        function(rq) {
+                            rq %>%
+                                dplyr::filter(term != "(Intercept)") %>%
+                                pull(estimate)
+                        }
+                    ),
+                    rq_slope_p = map_dbl(
+                        rq,
+                        function(rq) {
+                            rq %>%
+                                dplyr::filter(term != "(Intercept)") %>%
+                                pull(p.value)
+                        }
+                    )
+                )
             }
         )
     )
-data_04$cor
+data_04$quantile_regression[[1]]
+data_04$quantile_regression[[1]]$rq[1]
 
 
 

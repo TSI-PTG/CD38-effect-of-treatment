@@ -20,7 +20,7 @@ panel_cfdna_correlation_1 <- felzartamab_cfdna_cor_plots %>%
         Followup_pairwise %in% c("Baseline - Week24"),
         category %in% c("ABMR")
     ) %>%
-    pull(plot_scatter) %>%
+    pull(plot_scatter_foldchange) %>%
     wrap_plots(nrow = 1, ncol = 5) +
     plot_annotation(
         title = "Baseline - Week24",
@@ -38,7 +38,7 @@ panel_cfdna_correlation_2 <- felzartamab_cfdna_cor_plots %>%
         Followup_pairwise %in% c("Baseline - Week52"),
         category %in% c("ABMR")
     ) %>%
-    pull(plot_scatter) %>%
+    pull(plot_scatter_foldchange) %>%
     wrap_plots(nrow = 1, ncol = 5) +
     plot_annotation(
         title = "Baseline - Week52",
@@ -56,7 +56,7 @@ panel_cfdna_correlation_3 <- felzartamab_cfdna_cor_plots %>%
         Followup_pairwise %in% c("Week24 - Week52"),
         category %in% c("ABMR")
     ) %>%
-    pull(plot_scatter) %>%
+    pull(plot_scatter_foldchange) %>%
     wrap_plots(nrow = 1, ncol = 5) +
     plot_annotation(
         title = "Week24 - Week52",
@@ -81,7 +81,7 @@ panels <- ggarrange(
 # SAVE THE PLOTS ####
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/output/"
 ggsave(
-    filename = paste(saveDir, "Felzartamab cfdna correlation plots cfDNA.png"),
+    filename = paste(saveDir, "Felzartamab cfdna foldchange correlation plots cfDNA.png"),
     plot = panels,
     dpi = 300,
     width = 60,
