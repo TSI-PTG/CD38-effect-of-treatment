@@ -81,13 +81,15 @@ gg_violin_interaction <- function(data, variable, score, medians_delta, art_con_
         ) %>%
         dplyr::mutate(
             Followup = Followup %>% factor(levels = c("Baseline", "Week24", "Week52")),
-            shape = ifelse(Patient == 9, 17, 19)
+            shape = ifelse(Patient == 9, 24, 21),
+            stroke = ifelse(Patient == 9, 0.5, 0)
         )
     bw <- dplyr::case_when(
         data$variable[[1]] %>% stringr::str_detect("ABMRpm|ggt0|ptcgt0|TCMRt|tgt1|igt1") ~ 0.05,
-         data$variable[[1]] %>% stringr::str_detect("PC") ~ 0.2,
-         TRUE ~ 0.1
+        data$variable[[1]] %>% stringr::str_detect("PC") ~ 0.2,
+        TRUE ~ 0.1
     )
+    size_point <- 2.5
     midpoint <- 0
     if (variable %in% c("KT1", "KT2", "InjPC2_5086Set")) {
         gradient_labels <- c("worsened", "improved")
@@ -149,11 +151,13 @@ gg_violin_interaction <- function(data, variable, score, medians_delta, art_con_
             mapping = ggplot2::aes(
                 x = Followup,
                 y = value,
-                col = delta
+                fill = delta,
+                stroke = stroke
             ),
+            col = "black",
             shape = data %>% dplyr::filter(Followup %in% c("Baseline")) %>% dplyr::pull(shape),
             position = ggplot2::position_nudge(x = 0.1),
-            size = 2,
+            size = size_point,
             alpha = 0.75
         ) +
         ggplot2::geom_point(
@@ -162,10 +166,12 @@ gg_violin_interaction <- function(data, variable, score, medians_delta, art_con_
             mapping = ggplot2::aes(
                 x = Followup,
                 y = value,
-                col = delta
+                fill = delta,
+                stroke = stroke
             ),
+            col = "black",
             shape = data %>% dplyr::filter(Followup %in% c("Week24")) %>% dplyr::pull(shape),
-            size = 2,
+            size = size_point,
             alpha = 0.75
         ) +
         ggplot2::geom_point(
@@ -174,11 +180,13 @@ gg_violin_interaction <- function(data, variable, score, medians_delta, art_con_
             mapping = ggplot2::aes(
                 x = Followup,
                 y = value,
-                col = delta2
+                fill = delta2,
+                stroke = stroke
             ),
+            col = "black",
             shape = data %>% dplyr::filter(Followup %in% c("Week52")) %>% dplyr::pull(shape),
             position = ggplot2::position_nudge(x = -0.1),
-            size = 2,
+            size = size_point,
             alpha = 0.75
         ) +
         ggplot2::geom_line(
@@ -245,10 +253,10 @@ gg_violin_interaction <- function(data, variable, score, medians_delta, art_con_
             ),
             x = NULL,
             y = score %>% stringr::str_replace("\\(", "\n("),
-            col = "Individual patient response     ",
+            fill = "Individual patient response     ",
             parse = TRUE
         ) +
-        ggplot2::scale_color_gradient2(
+        ggplot2::scale_fill_gradient2(
             low = col_low,
             mid = "grey60",
             high = col_high,
@@ -265,6 +273,16 @@ gg_violin_interaction <- function(data, variable, score, medians_delta, art_con_
                 label.vjust = 7.75,
                 reverse = TRUE
             )
+        ) +
+        ggplot2::scale_color_gradient2(
+            low = col_low,
+            mid = "grey60",
+            high = col_high,
+            midpoint = midpoint,
+            breaks = c(min(data$delta), max(data$delta)),
+            labels = gradient_labels,
+            # labels = c("fuck", "you"),
+            guide = "none"
         ) +
         ggplot2::scale_x_discrete(labels = xlabels) +
         ggplot2::coord_cartesian(
