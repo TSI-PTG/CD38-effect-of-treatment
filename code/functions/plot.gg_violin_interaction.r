@@ -89,7 +89,7 @@ gg_violin_interaction <- function(data, variable, score, medians_delta, art_con_
         data$variable[[1]] %>% stringr::str_detect("PC") ~ 0.2,
         TRUE ~ 0.1
     )
-    size_point <- 2.5
+    size_point <- ifelse(variable == "cfDNA", 4, 2.5)
     midpoint <- 0
     if (variable %in% c("KT1", "KT2", "InjPC2_5086Set")) {
         gradient_labels <- c("worsened", "improved")

@@ -60,7 +60,9 @@ panel_violin <- plot_cfdna + inset_element(
     theme(
         # legend.position = "none",
         axis.text = element_text(size = 12, colour = "black"),
-        plot.tag = element_text(size = 20, face = "bold.italic", vjust = 1)
+        plot.tag = element_text(size = 20, face = "bold.italic", vjust = 1),
+        strip.text = element_text(size = 20)
+
     )
 
 
@@ -143,8 +145,8 @@ panels_quantile_regression <- ggarrange(
 ) %>%
     ggpubr::annotate_figure(
         top = text_grob(
-            "Relationship of dd-cfDNA to ABMR Activity Scores",
-            face = "bold.italic", size = 25, hjust = 1.4
+            "Relationship of \u394 dd-cfDNA to \u394 ABMR Activity Scores",
+            face = "bold.italic", size = 25, hjust = 1.3085
         )
     )
 

@@ -24,17 +24,28 @@ panel_violin <- felzartamab_plots %>%
     dplyr::filter(category %in% c("ABMR", "TCMR")) %>%
     pull(plot_violin) %>%
     wrap_plots(nrow = 2, ncol = 5) +
-    plot_annotation(tag_levels = list(c(LETTERS[1:15]))) &
+    plot_annotation(tag_levels = list(c("B", rep("", 4), "C", rep("", 4)))) &
     theme(
         legend.position = "none",
-        axis.text = element_text(size = 10, colour = "black"), plot.tag = element_text(size = 20, face = "bold", vjust = 1)
+        axis.text = element_text(size = 10, colour = "black"), 
+        plot.tag = element_text(size = 20, face = "bold", vjust = 1)
     )
 
-panels_violin_legend <- (panel_legend / panel_violin) +
-    plot_layout(
-        nrow = 2,
-        heights = c(0.25, 1.5)
-    )
+panels_violin_legend <- ggpubr::ggarrange(
+    panel_legend,
+    panel_violin,
+    nrow = 2,
+    heights = c(0.1, 1.5)
+)
+
+
+
+
+# (panel_legend / panel_violin) +
+#     plot_layout(
+#         nrow = 2,
+#         heights = c(0.25, 1.5)
+#     )
 
 
 # MAKE PANEL OF PATIENT PAIR PLOTS ####
@@ -45,7 +56,8 @@ panel_patient <- felzartamab_plots %>%
     plot_annotation(tag_levels = list(c(LETTERS[1:15]))) &
     theme(
         legend.position = "none",
-        axis.text = element_text(size = 10, colour = "black"), plot.tag = element_text(size = 20, face = "bold", vjust = 1)
+        axis.text = element_text(size = 10, colour = "black"), 
+        plot.tag = element_text(size = 20, face = "bold", vjust = 1)
     )
 
 
@@ -60,25 +72,25 @@ ggsave(
     units = "cm",
     bg = "white"
 )
-ggsave(
-    filename = paste(saveDir, "Felzartamab patient plots ABMR and TCMR scores.png"),
-    plot = panel_patient,
-    dpi = 300,
-    width = 60,
-    height = 22,
-    units = "cm",
-    bg = "white"
-)
+# ggsave(
+#     filename = paste(saveDir, "Felzartamab patient plots ABMR and TCMR scores.png"),
+#     plot = panel_patient,
+#     dpi = 300,
+#     width = 60,
+#     height = 22,
+#     units = "cm",
+#     bg = "white"
+# )
 
-ggsave(
-    filename = paste(saveDir, "Felzartamab violin legend.png"),
-    plot = panel_legend,
-    dpi = 300,
-    width = 22,
-    height = 5,
-    units = "cm",
-    bg = "white"
-)
+# ggsave(
+#     filename = paste(saveDir, "Felzartamab violin legend.png"),
+#     plot = panel_legend,
+#     dpi = 300,
+#     width = 22,
+#     height = 5,
+#     units = "cm",
+#     bg = "white"
+# )
 
 
 
