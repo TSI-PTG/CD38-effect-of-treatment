@@ -103,7 +103,7 @@ gg_violin_interaction <- function(data, variable, score, medians_delta, art_con_
         gradient_labels_hjust <- c(-0.075, 1.85)
     }
     plot <- data %>%
-        ggplot2::ggplot(aes(x = Followup, y = value)) +
+        ggplot2::ggplot(ggplot2::aes(x = Followup, y = value)) +
         gghalves::geom_half_violin(
             inherit.aes = FALSE,
             data = data %>% dplyr::filter(Followup %in% c("Baseline")),
