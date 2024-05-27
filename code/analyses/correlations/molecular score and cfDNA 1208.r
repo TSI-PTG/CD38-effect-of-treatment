@@ -363,7 +363,7 @@ data_04$quantile_regression[[1]]$rq[1]
 # SAVE DATA NEST ####
 felzartamab_cfdna_cor_k1208 <- data_04
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/"
-save(felzartamab_cfdna_cor_k1208, file = paste(saveDir, "felzartamab_cfdna_cor_k1208", sep = ""))
+save(felzartamab_cfdna_cor_k1208, file = paste(saveDir, "felzartamab_cfdna_cor_k1208.RData", sep = ""))
 
 felzartamab_cfdna_cor_k1208$delta[[1]]
 

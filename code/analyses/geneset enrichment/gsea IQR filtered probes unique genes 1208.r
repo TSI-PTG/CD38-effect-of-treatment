@@ -50,14 +50,13 @@ gsea_go <- data %>%
             genes_gsea,
             function(genes_gsea) {
                 clusterProfiler::gseGO(
-                    gene = genes_gsea, ont = "ALL", OrgDb = org.Hs.eg.db,
+                    gene = genes_gsea, ont = "BP", OrgDb = org.Hs.eg.db,
                     minGSSize = 10, maxGSSize = 100,
                     pvalueCutoff = 0.05, pAdjustMethod = "fdr", seed = TRUE
                 ) %>% clusterProfiler::setReadable(OrgDb = org.Hs.eg.db, keyType = "ENTREZID")
             }
         )
     )
-
 
 
 # FORMAT TABLES FOR GENESET ENRICHMENT ANALYSES (GSEA) ####
@@ -106,26 +105,26 @@ gsea_go_tables <- gsea_go %>%
 gsea_go_tables$gsea_go_flextables[[3]]
 
 
-# MAKE SOME CLEAN FLEXTABLES ####
-GSEA_GO_flextable <- df_GSEA_GO %>%
-    slice_min(pvalue, n = 20) %>%
-    mutate(
-        NES = NES %>% round(2),
-        pvalue = case_when(
-            pvalue < 0.0001 ~ pvalue %>% formatC(digits = 0, format = "e"),
-            TRUE ~ pvalue %>% formatC(digits = 4, format = "f")
-        ),
-        FDR = case_when(
-            p.adjust < 0.0001 ~ p.adjust %>% formatC(digits = 0, format = "e"),
-            TRUE ~ p.adjust %>% formatC(digits = 4, format = "f")
-        ),
-    ) %>%
-    dplyr::select(Description, setSize, NES, pvalue, FDR, core_enrichment) %>%
-    flextable::flextable() %>%
-    flextable::border_remove() %>%
-    flextable::border(border = fp_border(), part = "all") %>%
-    flextable::align(align = "center", part = "all") %>%
-    flextable::align(j = "core_enrichment", align = "left", part = "body") %>%
-    flextable::bg(bg = "white", part = "all") %>%
-    # flextable::bg(i = ~ NES < 0, bg = "grey80", part = "body") %>%
-    flextable::autofit()
+# SAVE THE GSEA RESULTS ####
+felzartamab_gsea_k1208 <- gsea_go_tables
+names(felzartamab_gsea_k1208$gsea_go_flextables) <- felzartamab_gsea_k1208$design
+saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/"
+save(felzartamab_gsea_k1208, file = paste(saveDir, "felzartamab_gsea_k1208.RData", sep = ""))
+
+
+
+# EXPORT THE GSEA RESULTS TO EXCEL FILE ####
+names(felzartamab_gsea_k1208$gsea_go_tables) <- felzartamab_gsea_k1208$design
+saveDir1 <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/output/"
+save(felzartamab_gsea_k1208, file = paste(saveDir1, "felzartamab_gsea_k1208.RData", sep = ""))
+openxlsx::write.xlsx(felzartamab_gsea_k1208$gsea_go_tables,
+    asTable = TRUE,
+    file = paste(saveDir1, "Pathways_IQR_filtered_probes_unique_genes_limma_1208_27May24",
+        # Sys.Date(),
+        # format(Sys.time(), "_%I%M%p"),
+        ".xlsx",
+        sep = ""
+    )
+)
+
+
