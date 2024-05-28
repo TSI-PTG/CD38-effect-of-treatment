@@ -6,7 +6,7 @@ library(ggpubr) # install.packages("ggpubr")
 library(patchwork) # install.packages("patchwork")
 # Custom operators, functions, and datasets
 "%nin%" <- function(a, b) match(a, b, nomatch = 0) == 0
-# load reference data
+# load enrichment results
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/felzartamab_gsea_k1208.RData")
 
 
@@ -30,12 +30,20 @@ metabolic_response <- paste(c("metabolism", "metabolic", "catabolic"), collapse 
 # WRANGLE DATA FOR PLOTTING ####
 df_plot_00 <- felzartamab_gsea_k1208 %>%
     dplyr::select(design, genes_gsea, gsea_go_tables) %>%
+    expand_grid(direction = c("increased", "decreased")) %>%
     mutate(
-        data_plot = map(
-            gsea_go_tables,
-            function(gsea_go_tables) {
-                gsea_go_tables %>%
-                    slice_min(pvalue, n = 20) %>%
+        data_plot = map2(
+            gsea_go_tables,direction,
+            function(gsea_go_tables,direction) {
+                if (direction == "increased") {
+                    dat <- gsea_go_tables %>%
+                        dplyr::filter(NES > 0)
+                } else if (direction == "decreased") {
+                    dat <- gsea_go_tables %>%
+                        dplyr::filter(NES < 0)
+                }
+                dat %>%
+                    # slice_min(pvalue, n = 20) %>%
                     mutate(
                         ID = ID %>% str_remove(":"),
                         Description = Description %>% as.character(),
@@ -78,7 +86,8 @@ df_plot_01 <- df_plot_00 %>%
                     pull()
             }
         )
-    )
+    ) %>%
+    dplyr::filter(length(pathways) > 0)
 
 
 # DEFINE GROUPS FOR PATHWAYS ####
@@ -138,30 +147,22 @@ df_plot_02 <- df_plot_01 %>%
                     distinct(Description, .keep_all = TRUE) %>%
                     dplyr::pull(group, Description)
             }
+        ),
+        start_degree = case_when(
+            design == "Baseline_vs_Week24" ~ -100,
+            design == "Week24_vs_Week52" ~ 50,
+            design == "Baseline_vs_Week52" ~ -50,
+            TRUE ~ 0
         )
     )
-df_plot_02$link_group[[1]][df_plot_02$link_group[[1]] %>% is.na()]
-df_plot_02$data_plot[[1]]
-
-
 
 
 # SAVE CHORD PLOTS ####
 with(
     df_plot_02,
     pmap(
-        list(design, data_plot, genes_gsea, link_group),
+        list(design, direction, data_plot, genes_gsea, link_group, start_degree),
         enrichment_chord,
         saveDir = "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/output/"
     )
-)
-
-
-
-enrichment_chord(
-    data = df_plot_02$data_plot[[1]],
-    genes = df_plot_02$genes_gsea[[1]],
-    link_group = df_plot_02$link_group[[1]],
-    # fileName = "",
-    saveDir = "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/output/"
 )

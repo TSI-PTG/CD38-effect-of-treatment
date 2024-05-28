@@ -1,9 +1,9 @@
 enrichment_chord <- function(
-    design, data, genes, link_group, seed = 42,
+    design, direction, data, genes, link_group, start_degree = 0,
+    seed = 42,
     track_width = 3, track_nudge = -1.2, sector_title_text_size = 0.75,
-    start_degree = 0, 
     title = "differentially expressed genes",
-    filename = paste(design, "tmp.png", sep = ""), saveDir = NULL) {
+    filename = paste(design, direction, ".png", sep = ""), saveDir = NULL) {
     require(clusterProfiler) # pak::pak("YuLab-SMU/clusterProfiler")
     require(circlize) # install.packages("circlize") pak::pak("jokergoo/circlize")
 
@@ -141,7 +141,8 @@ enrichment_chord <- function(
     png(
         paste(saveDir, filename),
         units = "cm", width = 15, height = 15, res = 600,
-        bg = "transparent"
+        # bg = "transparent",
+        bg = "white"
     )
     circlize::circos.clear()
     circlize::circos.par(
