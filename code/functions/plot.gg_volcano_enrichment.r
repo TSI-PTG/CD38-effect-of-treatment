@@ -31,10 +31,6 @@ gg_volcano_enrichment <- function(
         dplyr::filter(AffyID %in% c(probes_sig_up, probes_sig_dn))
     data_labels <- data %>%
         dplyr::filter(AffyID %in% labels_probes)
-    min_p <- data %>%
-        dplyr::slice_min(`<U+0394><U+0394> p`) %>%
-        dplyr::pull(`<U+0394><U+0394> p`) %>%
-        log10() * -1
     data %>%
         ggplot2::ggplot(mapping = ggplot2::aes(x = p, y = logFC)) +
         ggplot2::geom_hline(yintercept = 0, linetype = "dashed") +
@@ -78,7 +74,7 @@ gg_volcano_enrichment <- function(
             y = Inf,
             vjust = -0.25,
             hjust = 0,
-            label = design  %>% str_replace("_vs_", " - "),
+            label = design  %>% stringr::str_replace("_vs_", " - "),
             fontface = "bold.italic"
         ) +
         ggplot2::geom_text(

@@ -18,7 +18,6 @@ load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular e
 simplefile <- read_excel("Z:/MISC/Phil/AA All papers in progress/A GC papers/0000 simple XL files/Kidney 5086/MASTER COPY K5086 SimpleCorrAAInjRej 5AAInjNR 7AARej.xlsx")
 
 
-
 # DEFINE PROBE CORRELATIONS WITH EABMR ####
 genes_abmr <- simplefile %>%
     dplyr::select(Affy, SYMB, "corrRej7AA4-EABMR", "pvalRej7AA4-EABMR") %>%
@@ -38,7 +37,6 @@ probes_abmr <- simplefile %>%
     pull(Affy)
 
 
-
 # PATHWAY KEYS ####
 immune_response <- paste(c("immune", "immunity", "cytokine", "leukocyte", "cell activation", "response to", "interaction", "virus", "symbiont", "defense response"), collapse = "|")
 cell_cycle <- paste(c("cycle", "division"), collapse = "|")
@@ -53,7 +51,6 @@ cellular_development <- paste(c(
 cellular_communication <- paste(c("communication", "signal", "signalling"), collapse = "|")
 infection_response <- paste(c("virus", "symbiont", "defense response"), collapse = "|")
 metabolic_response <- paste(c("metabolism", "metabolic", "catabolic"), collapse = "|")
-
 
 
 # JOIN THE DE AND ENRICHMENT DATA ####
@@ -126,13 +123,38 @@ data_joined_01 <- data_joined_00 %>%
     ) %>%
     dplyr::select(design, data_DE, data_enrichment, data_joined)
 
-
-
 data_joined_01$data_DE[[1]]
 data_joined_01$data_enrichment[[1]]
 data_joined_01$data_joined[[1]] %>%
-    arrange(count  %>% desc)  %>% 
+    arrange(count %>% desc()) %>%
     print(n = "all")
+
+labels_tmp <- data_joined_01$data_joined[[1]] %>%
+    arrange(count %>% desc()) %>%
+    distinct(Symb, group, .keep_all = TRUE) %>%
+    mutate(
+        p2 = 4, 
+        logFC2 = ifelse(group  %>% str_detect("immune"), -0.75, -0.25)
+    )
+
+
+data_joined_01$data_DE[[1]] %>%
+    ggplot2::ggplot(mapping = ggplot2::aes(x = p, y = logFC)) +
+    ggplot2::geom_hline(yintercept = 0, linetype = "dashed") +
+    ggplot2::geom_vline(xintercept = -log10(0.05), linetype = "dashed") +
+    ggplot2::geom_point() +
+    geom_curve(
+        data = labels_tmp,
+        mapping = ggplot2::aes(
+            x = p,
+            y = logFC,
+            xend = p2,
+            yend = logFC2,
+            col = p, 
+            group = group
+        ),
+        curvature = 0.25
+    )
 
 
 
@@ -154,5 +176,3 @@ plot_volcano <- data_plot %>%
 
 
 plot_volcano$plot_volcano[[3]]
-
-
