@@ -1,6 +1,7 @@
 enrichment_chord <- function(
     design, data, genes, link_group, seed = 42,
     track_width = 3, track_nudge = -1.2, sector_title_text_size = 0.75,
+    start_degree = 0, 
     title = "differentially expressed genes",
     filename = paste(design, "tmp.png", sep = ""), saveDir = NULL) {
     require(clusterProfiler) # pak::pak("YuLab-SMU/clusterProfiler")
@@ -145,7 +146,7 @@ enrichment_chord <- function(
     circlize::circos.clear()
     circlize::circos.par(
         circle.margin = c(0.01, 0.225),
-        start.degree = -11,
+        start.degree = start_degree,
         track.height = 1
     )
     # MAKE CHORD PLOT ####
