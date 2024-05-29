@@ -4,6 +4,7 @@ library(tidyverse) # install.packages("tidyverse")
 library(ggrepel) # install.packages("ggrepel")
 library(ggpubr) # install.packages("ggpubr")
 library(patchwork) # install.packages("patchwork")
+library(ggforce) # install.packages("ggforce")
 library(readxl) # install.packages("readxl")
 library(clusterProfiler) # pak::pak("YuLab-SMU/clusterProfiler")
 # Custom operators, functions, and datasets
@@ -54,6 +55,7 @@ metabolic_response <- paste(c("metabolism", "metabolic", "catabolic"), collapse 
 
 
 # JOIN THE DE AND ENRICHMENT DATA ####
+felzartamab_gsea_k1208$gsea_go_tables
 data_joined_00 <- limma_tables %>%
     left_join(felzartamab_gsea_k1208 %>% dplyr::select(-toptable, -table, -gsea_go_flextables), by = "design") %>%
     dplyr::select(design, table, genes_gsea, gsea_go_tables)
@@ -86,7 +88,7 @@ data_joined_01 <- data_joined_00 %>%
                         col = "grey"
                     ) %>%
                     mutate(Symb = core_enrichment %>% strsplit("/"), .by = ID) %>%
-                    dplyr::select(GO, Symb) %>%
+                    dplyr::select(GO, Symb, NES) %>%
                     unnest(Symb) %>%
                     relocate(Symb) %>%
                     arrange(Symb) %>%
@@ -129,50 +131,106 @@ data_joined_01$data_joined[[1]] %>%
     arrange(count %>% desc()) %>%
     print(n = "all")
 
-labels_tmp <- data_joined_01$data_joined[[1]] %>%
+
+
+# DEFINE LABELS ####
+labels_tmp <- data_joined_01$data_joined[[2]] %>%
     arrange(count %>% desc()) %>%
     distinct(Symb, group, .keep_all = TRUE) %>%
     mutate(
-        p2 = 4, 
-        logFC2 = ifelse(group  %>% str_detect("immune"), -0.75, -0.25)
+        p2 = 4,
+        logFC2 = dplyr::case_when(
+            logFC < 0 & group %>% str_detect("immune") ~ -0.75,
+            logFC < 0 ~ -0.25,
+            logFC > 0 & group %>% str_detect("immune") ~ 0.75,
+            logFC > 0 ~ 0.25
+        ),
+        curvature = dplyr::case_when(
+            logFC < 0.5 ~ -0.25,
+            logFC < 0 ~ 0.25,
+            logFC > 0.5 ~ 0.25,
+            logFC > 0 ~ -0.25
+        )
     )
+labels_tmp %>% print(n = "all")
 
 
-data_joined_01$data_DE[[1]] %>%
+
+# MAKE PLOTS ####
+# data_joined_01$data_DE[[2]] %>%
+#     ggplot2::ggplot(mapping = ggplot2::aes(x = p, y = logFC)) +
+#     ggplot2::geom_hline(yintercept = 0, linetype = "dashed") +
+#     ggplot2::geom_vline(xintercept = -log10(0.05), linetype = "dashed") +
+#     # ggplot2::geom_point() +
+#     ggforce::geom_arc2(
+#         data = labels_tmp %>% dplyr::filter(group %>% str_detect("meta")),
+#         mapping = ggplot2::aes(
+#             x0 = 1.3,
+#             y0 = 0,
+#             # start = p,
+#             end = c(p, p2),
+#             # col = "red",
+#             group = Symb,
+#             r = 0.5
+#         ),
+#     )
+
+
+
+
+data_joined_01$data_DE[[2]] %>%
     ggplot2::ggplot(mapping = ggplot2::aes(x = p, y = logFC)) +
     ggplot2::geom_hline(yintercept = 0, linetype = "dashed") +
     ggplot2::geom_vline(xintercept = -log10(0.05), linetype = "dashed") +
-    ggplot2::geom_point() +
-    geom_curve(
-        data = labels_tmp,
-        mapping = ggplot2::aes(
-            x = p,
-            y = logFC,
-            xend = p2,
-            yend = logFC2,
-            col = p, 
-            group = group
-        ),
-        curvature = 0.25
-    )
-
-
-
-
-# MAKE SINGLE VOLCANO PLOTS ####
-plot_volcano <- data_plot %>%
-    mutate(
-        plot_volcano_enrichment = map2(
-            data_plot, design,
-            gg_volcano,
-            x_break = 1.75,
-            labels_probes = probes_abmr,
-            point_size_null = 1.25,
-            point_size = 2.5,
-            labels_probes_size = 3,
+    Map(function(i) {
+        geom_curve(
+            data = labels_tmp,
+            mapping = ggplot2::aes(
+                x = p,
+                y = logFC,
+                xend = p2,
+                yend = logFC2,
+                # col = p,
+                group = group,
+            ),
+            curvature = i,
+            angle = 50
         )
-    )
+    }, i = labels_tmp$curvature) +
+    ggplot2::geom_segment(
+        inherit.aes = FALSE,
+        data = tibble(
+            x0 = 
+                 seq(-log10(0.05), 5, length.out = 1000),
+            xend = x0, 
+            y0 = -Inf,
+            yend = Inf,
+            col = x0
+ 
+        ),
+        mapping = ggplot2::aes(x = x0, xend = xend, y = y0, yend = yend, col = x0)
+    ) +
+    ggplot2::geom_point() +
+    scale_colour_gradient(low = "#ffffffab", high = "#ffffff00")
 
 
 
-plot_volcano$plot_volcano[[3]]
+
+
+# # MAKE SINGLE VOLCANO PLOTS ####
+# plot_volcano <- data_plot %>%
+#     mutate(
+#         plot_volcano_enrichment = map2(
+#             data_plot, design,
+#             gg_volcano,
+#             x_break = 1.75,
+#             labels_probes = probes_abmr,
+#             point_size_null = 1.25,
+#             point_size = 2.5,
+#             labels_probes_size = 3,
+#         )
+#     )
+
+
+
+# plot_volcano$plot_volcano[[3]]
