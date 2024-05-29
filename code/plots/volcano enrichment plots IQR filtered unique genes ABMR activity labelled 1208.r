@@ -134,7 +134,7 @@ data_joined_01$data_joined[[1]] %>%
 
 
 # DEFINE LABELS ####
-labels_tmp <- data_joined_01$data_joined[[2]] %>%
+labels_tmp <- data_joined_01$data_joined[[1]] %>%
     arrange(count %>% desc()) %>%
     distinct(Symb, group, .keep_all = TRUE) %>%
     mutate(
@@ -157,31 +157,8 @@ labels_tmp %>% print(n = "all")
 
 
 # MAKE PLOTS ####
-# data_joined_01$data_DE[[2]] %>%
-#     ggplot2::ggplot(mapping = ggplot2::aes(x = p, y = logFC)) +
-#     ggplot2::geom_hline(yintercept = 0, linetype = "dashed") +
-#     ggplot2::geom_vline(xintercept = -log10(0.05), linetype = "dashed") +
-#     # ggplot2::geom_point() +
-#     ggforce::geom_arc2(
-#         data = labels_tmp %>% dplyr::filter(group %>% str_detect("meta")),
-#         mapping = ggplot2::aes(
-#             x0 = 1.3,
-#             y0 = 0,
-#             # start = p,
-#             end = c(p, p2),
-#             # col = "red",
-#             group = Symb,
-#             r = 0.5
-#         ),
-#     )
-
-
-
-
-data_joined_01$data_DE[[2]] %>%
+data_joined_01$data_DE[[1]] %>%
     ggplot2::ggplot(mapping = ggplot2::aes(x = p, y = logFC)) +
-    ggplot2::geom_hline(yintercept = 0, linetype = "dashed") +
-    ggplot2::geom_vline(xintercept = -log10(0.05), linetype = "dashed") +
     Map(function(i) {
         geom_curve(
             data = labels_tmp,
@@ -190,28 +167,33 @@ data_joined_01$data_DE[[2]] %>%
                 y = logFC,
                 xend = p2,
                 yend = logFC2,
-                # col = p,
+                col = group,
                 group = group,
             ),
             curvature = i,
             angle = 50
         )
     }, i = labels_tmp$curvature) +
+    ggnewscale::new_scale_colour() +
     ggplot2::geom_segment(
         inherit.aes = FALSE,
         data = tibble(
-            x0 = 
-                 seq(-log10(0.05), 5, length.out = 1000),
-            xend = x0, 
+            x0 =
+                seq(-log10(0.05), labels_tmp$p2 %>% max(), length.out = 1000),
+            xend = x0,
             y0 = -Inf,
             yend = Inf,
             col = x0
- 
         ),
         mapping = ggplot2::aes(x = x0, xend = xend, y = y0, yend = yend, col = x0)
     ) +
+        ggplot2::geom_hline(yintercept = 0, linetype = "dashed") +
+    ggplot2::geom_vline(xintercept = -log10(0.05), linetype = "dashed") +
+
     ggplot2::geom_point() +
-    scale_colour_gradient(low = "#ffffffab", high = "#ffffff00")
+    scale_colour_gradient(low = "#ffffffab", high = "#ffffff00") +
+    theme_bw() +
+    theme(panel.grid = element_blank())
 
 
 
