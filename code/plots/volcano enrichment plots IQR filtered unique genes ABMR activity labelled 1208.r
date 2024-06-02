@@ -40,13 +40,13 @@ probes_abmr <- simplefile %>%
 
 # PATHWAY KEYS ####
 immune_response <- paste(c("immune", "immunity", "cytokine", "leukocyte", "cell activation", "response to", "interaction", "virus", "symbiont", "defense response"), collapse = "|")
-cell_cycle <- paste(c("cycle", "division"), collapse = "|")
+cell_cycle <- paste(c("cycle"), collapse = "|")
 inflammation <- paste(c("inflam"), collapse = "|")
 injury <- paste(c("injury"), collapse = "|")
 external_stimulus <- paste(c("response to", "interaction"), collapse = "|")
 reg_cellular_processes <- paste(c("regulation of"), collapse = "|")
 cellular_development <- paste(c(
-    "chromosome", "organelle fission", "organization", "segregation",
+    "chromosome", "organelle fission", "organization", "segregation", "division",
     "development", "neurogenesis", "generation", "morphogenesis", "differentiation", "component"
 ), collapse = "|")
 cellular_communication <- paste(c("communication", "signal", "signalling"), collapse = "|")
@@ -104,9 +104,23 @@ data_joined_01 <- data_joined_00 %>%
                             GO %>% str_detect(reg_cellular_processes) ~ "regulation of cellular processes",
                             GO %>% str_detect(cellular_development) ~ "cellular development",
                             GO %>% str_detect(cellular_communication) ~ "cellular communication",
-                        )
+                        ) %>% factor()
                     ) %>%
-                    mutate(count = n(), .by = Symb, .after = "Symb")
+                    mutate(
+                        count = n(),
+                        .by = Symb,
+                        .after = "Symb"
+                    ) %>%
+                    mutate(
+                        prop = count / max(count),
+                        .by = group,
+                        .after = "count"
+                    ) %>%
+                    mutate(
+                        n_group = group %>% unique() %>% length(),
+                        groupID = group %>% as.numeric(),
+                        group_mult = groupID / n_group
+                    )
             }
         ),
         data_joined = map2(
@@ -125,75 +139,120 @@ data_joined_01 <- data_joined_00 %>%
     ) %>%
     dplyr::select(design, data_DE, data_enrichment, data_joined)
 
-data_joined_01$data_DE[[1]]
-data_joined_01$data_enrichment[[1]]
-data_joined_01$data_joined[[1]] %>%
+# data_joined_01$data_DE[[1]]
+# data_joined_01$data_enrichment[[1]]
+# data_joined_01$data_joined[[1]] %>%
+#     arrange(count %>% desc()) %>%
+#     print(n = "all")
+
+
+
+# DEFINE LINES ####
+df_lines <- data_joined_01$data_joined[[1]] %>%
     arrange(count %>% desc()) %>%
+    distinct(Symb, group, .keep_all = TRUE) %>%
+    mutate(,
+        y_min = min(logFC),
+        y_max = max(logFC),
+        p2 = max(p) * 1.1,
+        # logFC2 = dplyr::case_when(
+        # logFC < 0 & group %>% str_detect("immune") ~ -0.75,
+        # logFC < 0 ~ -0.25,
+        # logFC > 0 & group %>% str_detect("immune") ~ 0.75,
+        # logFC > 0 ~ 0.25
+        # ),
+        logFC2 = ifelse(logFC < 0, y_min * group_mult, y_max * group_mult),
+        curvature = dplyr::case_when(
+            groupID == 1 ~ -0.25,
+            groupID == 2 ~ 0.25,
+            groupID == 3 ~ -0.25,
+            groupID == 4 ~ 0.25,
+            TRUE ~ 0.25
+        )
+    )
+df_lines %>%
+    arrange(group, Symb) %>%
+    dplyr::select(Symb, group, p, p2, logFC, logFC2, group, groupID, group_mult, curvature) %>%
     print(n = "all")
 
 
-
-# DEFINE LABELS ####
-labels_tmp <- data_joined_01$data_joined[[1]] %>%
-    arrange(count %>% desc()) %>%
+df_labels <- data_joined_01$data_enrichment[[1]] %>%
     distinct(Symb, group, .keep_all = TRUE) %>%
-    mutate(
-        p2 = 4,
-        logFC2 = dplyr::case_when(
-            logFC < 0 & group %>% str_detect("immune") ~ -0.75,
-            logFC < 0 ~ -0.25,
-            logFC > 0 & group %>% str_detect("immune") ~ 0.75,
-            logFC > 0 ~ 0.25
-        ),
-        curvature = dplyr::case_when(
-            logFC < 0.5 ~ -0.25,
-            logFC < 0 ~ 0.25,
-            logFC > 0.5 ~ 0.25,
-            logFC > 0 ~ -0.25
-        )
-    )
-labels_tmp %>% print(n = "all")
+    slice_max(prop, n = 5, by = c("group")) %>%
+    arrange(group, prop %>% desc()) %>%
+    left_join(df_lines %>% distinct(Symb, group, .keep_all = TRUE))
 
 
 
 # MAKE PLOTS ####
 data_joined_01$data_DE[[1]] %>%
     ggplot2::ggplot(mapping = ggplot2::aes(x = p, y = logFC)) +
-    Map(function(i) {
-        geom_curve(
-            data = labels_tmp,
-            mapping = ggplot2::aes(
-                x = p,
-                y = logFC,
-                xend = p2,
-                yend = logFC2,
-                col = group,
-                group = group,
-            ),
-            curvature = i,
-            angle = 50
-        )
-    }, i = labels_tmp$curvature) +
+    Map(
+        function(i) {
+            geom_curve(
+                data = df_lines,
+                mapping = ggplot2::aes(
+                    x = p,
+                    y = logFC,
+                    xend = p2,
+                    yend = logFC2,
+                    col = group,
+                    group = group,
+                ),
+                curvature = i,
+                angle = 30
+            )
+        },
+        i = df_lines$curvature
+    ) +
     ggnewscale::new_scale_colour() +
     ggplot2::geom_segment(
         inherit.aes = FALSE,
         data = tibble(
-            x0 =
-                seq(-log10(0.05), labels_tmp$p2 %>% max(), length.out = 1000),
+            x0 = seq(
+                -log10(0.05),
+                df_lines$p2 %>% max(),
+                length.out = 1000
+            ),
             xend = x0,
             y0 = -Inf,
             yend = Inf,
             col = x0
         ),
-        mapping = ggplot2::aes(x = x0, xend = xend, y = y0, yend = yend, col = x0)
+        mapping = ggplot2::aes(
+            x = x0,
+            xend = xend,
+            y = y0,
+            yend = yend,
+            col = x0
+        ),
+        show.legend = FALSE
     ) +
-        ggplot2::geom_hline(yintercept = 0, linetype = "dashed") +
+    ggplot2::geom_hline(yintercept = 0, linetype = "dashed") +
     ggplot2::geom_vline(xintercept = -log10(0.05), linetype = "dashed") +
-
     ggplot2::geom_point() +
-    scale_colour_gradient(low = "#ffffffab", high = "#ffffff00") +
+    ggplot2::geom_point(
+        data = df_labels %>% distinct(group, .keep_all = TRUE),
+        aes(x = p2, y = logFC2, fill = group), shape = 21, size = 4, col = "black"
+    ) +
+    ggrepel::geom_label_repel(
+        data = df_labels,
+        aes(x = p2, y = logFC2, fill = group, label = Symb),
+        size = 1, 
+        nudge_x = 0.05, 
+        direction = "y", 
+        min.segment.length = 10, 
+        seed = 42, 
+        label.padding = 0.1
+    ) +
+    scale_colour_gradient(low = "#ffffff95", high = "#ffffff00") +
+    coord_cartesian(xlim = c(-log10(0.05), NA)) +
     theme_bw() +
     theme(panel.grid = element_blank())
+
+
+
+
 
 
 
