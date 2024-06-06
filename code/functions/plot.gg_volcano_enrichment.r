@@ -1,9 +1,10 @@
 gg_volcano_enrichment <- function(
-    data, design = NULL, x_break = 1.5, 
+    data, design = NULL, x_break = 1.5,
     point_size = 2.5, point_size_null = 1.25,
     alpha = 0.8, alpha_null = 0.5, alpha_lines = 0.25,
     col_dn = "#005EFF", col_up = "#ff0040", col_null = "grey30",
-    labels_probes = NULL, labels_probes_n = 10, labels_probes_size = 2) {
+    labels_probes = NULL, labels_probes_n = 10, labels_probes_size = 2,
+    curvature = NULL, angle = 30, ties = FALSE) {
     require(tidyverse)
     probes_sig_up <- data %>%
         dplyr::filter(
@@ -31,6 +32,28 @@ gg_volcano_enrichment <- function(
         dplyr::filter(AffyID %in% c(probes_sig_up, probes_sig_dn))
     data_labels <- data %>%
         dplyr::filter(AffyID %in% labels_probes)
+    lines <- data %>%
+        dplyr::arrange(count %>% dplyr::desc()) %>%
+        dplyr::distinct(Symb, group, .keep_all = TRUE) %>%
+        dplyr::mutate(
+            y_min = min(logFC),
+            y_max = max(logFC),
+            p2 = max(p) * 1.1,
+            logFC2 = ifelse(logFC < 0, y_min * group_mult, y_max * group_mult),
+            curvature = dplyr::case_when(
+                groupID == 1 ~ -0.25,
+                groupID == 2 ~ 0.25,
+                groupID == 3 ~ -0.25,
+                groupID == 4 ~ 0.25,
+                TRUE ~ 0.25
+            )
+        )
+    labels <- data %>%
+        dplyr::distinct(Symb, group, .keep_all = TRUE) %>%
+        dplyr::slice_max(prop, n = 5, by = c("group")) %>%
+        dplyr::arrange(group, prop %>% dplyr::desc()) %>%
+        dplyr::left_join(df_lines %>% dplyr::distinct(Symb, group, .keep_all = TRUE))
+
     data %>%
         ggplot2::ggplot(mapping = ggplot2::aes(x = p, y = logFC)) +
         ggplot2::geom_hline(yintercept = 0, linetype = "dashed") +
@@ -74,7 +97,7 @@ gg_volcano_enrichment <- function(
             y = Inf,
             vjust = -0.25,
             hjust = 0,
-            label = design  %>% stringr::str_replace("_vs_", " - "),
+            label = design %>% stringr::str_replace("_vs_", " - "),
             fontface = "bold.italic"
         ) +
         ggplot2::geom_text(

@@ -148,19 +148,13 @@ data_joined_01 <- data_joined_00 %>%
 
 
 # DEFINE LINES ####
-df_lines <- data_joined_01$data_joined[[1]] %>%
+df_lines <- data_joined_01$data_joined[[3]] %>%
     arrange(count %>% desc()) %>%
     distinct(Symb, group, .keep_all = TRUE) %>%
     mutate(,
         y_min = min(logFC),
         y_max = max(logFC),
         p2 = max(p) * 1.1,
-        # logFC2 = dplyr::case_when(
-        # logFC < 0 & group %>% str_detect("immune") ~ -0.75,
-        # logFC < 0 ~ -0.25,
-        # logFC > 0 & group %>% str_detect("immune") ~ 0.75,
-        # logFC > 0 ~ 0.25
-        # ),
         logFC2 = ifelse(logFC < 0, y_min * group_mult, y_max * group_mult),
         curvature = dplyr::case_when(
             groupID == 1 ~ -0.25,
@@ -170,22 +164,22 @@ df_lines <- data_joined_01$data_joined[[1]] %>%
             TRUE ~ 0.25
         )
     )
-df_lines %>%
-    arrange(group, Symb) %>%
-    dplyr::select(Symb, group, p, p2, logFC, logFC2, group, groupID, group_mult, curvature) %>%
-    print(n = "all")
 
-
-df_labels <- data_joined_01$data_enrichment[[1]] %>%
+df_labels <- data_joined_01$data_joined[[3]] %>%
     distinct(Symb, group, .keep_all = TRUE) %>%
-    slice_max(prop, n = 5, by = c("group")) %>%
+    slice_max(prop, n = 5, by = c("group"), with_ties = FALSE) %>%
     arrange(group, prop %>% desc()) %>%
     left_join(df_lines %>% distinct(Symb, group, .keep_all = TRUE))
 
 
 
+# PLOTTING GLOBALS ####
+ylim <- data_joined_01$data_DE[[3]]$logFC  %>% range * 1.25
+xlim <- c(0, data_joined_01$data_DE[[3]]$p  %>% max *1.25)
+
+
 # MAKE PLOTS ####
-data_joined_01$data_DE[[1]] %>%
+data_joined_01$data_DE[[3]] %>%
     ggplot2::ggplot(mapping = ggplot2::aes(x = p, y = logFC)) +
     Map(
         function(i) {
@@ -200,7 +194,8 @@ data_joined_01$data_DE[[1]] %>%
                     group = group,
                 ),
                 curvature = i,
-                angle = 30
+                angle = 30,
+                line_size = 0.125
             )
         },
         i = df_lines$curvature
@@ -232,23 +227,33 @@ data_joined_01$data_DE[[1]] %>%
     ggplot2::geom_vline(xintercept = -log10(0.05), linetype = "dashed") +
     ggplot2::geom_point() +
     ggplot2::geom_point(
+        show.legend = FALSE,
         data = df_labels %>% distinct(group, .keep_all = TRUE),
         aes(x = p2, y = logFC2, fill = group), shape = 21, size = 4, col = "black"
     ) +
     ggrepel::geom_label_repel(
         data = df_labels,
         aes(x = p2, y = logFC2, fill = group, label = Symb),
-        size = 1, 
-        nudge_x = 0.05, 
-        direction = "y", 
-        min.segment.length = 10, 
-        seed = 42, 
-        label.padding = 0.1
+        size = 0.5,
+        nudge_x = 0.05,
+        hjust = "left",
+        direction = "y",
+        min.segment.length = 10,
+        seed = 42,
+        label.padding = 0.1,
+        max.overlaps = Inf,
+        show.legend = FALSE
     ) +
     scale_colour_gradient(low = "#ffffff95", high = "#ffffff00") +
-    coord_cartesian(xlim = c(-log10(0.05), NA)) +
+    coord_cartesian(
+        xlim = xlim,
+        ylim = ylim
+    ) +
     theme_bw() +
-    theme(panel.grid = element_blank())
+    theme(
+        legend.position = "none",
+        panel.grid = element_blank()
+    )
 
 
 
@@ -275,3 +280,5 @@ data_joined_01$data_DE[[1]] %>%
 
 
 # plot_volcano$plot_volcano[[3]]
+
+
