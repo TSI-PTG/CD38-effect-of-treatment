@@ -466,25 +466,25 @@ panels_all_injury <- ggarrange(
 
 # SAVE THE PLOTS ####
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/output/"
-ggsave(
-  filename = paste(saveDir, "Felzartamab injury regression.png"),
-  plot = plot_panels_regression_legend,
-  dpi = 300,
-  width = 40,
-  height = 15,
-  units = "cm",
-  bg = "white"
-)
+# ggsave(
+#   filename = paste(saveDir, "Felzartamab injury regression.png"),
+#   plot = plot_panels_regression_legend,
+#   dpi = 300,
+#   width = 40,
+#   height = 15,
+#   units = "cm",
+#   bg = "white"
+# )
 
-ggsave(
-  filename = paste(saveDir, "Felzartamab injury ART.png"),
-  plot = panels_violin_legend,
-  dpi = 300,
-  width = 36,
-  height = 11,
-  units = "cm",
-  bg = "white"
-)
+# ggsave(
+#   filename = paste(saveDir, "Felzartamab injury ART.png"),
+#   plot = panels_violin_legend,
+#   dpi = 300,
+#   width = 36,
+#   height = 11,
+#   units = "cm",
+#   bg = "white"
+# )
 
 ggsave(
   filename = paste(saveDir, "Felzartamab injury ART and regression.png"),

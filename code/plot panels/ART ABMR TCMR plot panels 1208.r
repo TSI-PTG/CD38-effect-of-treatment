@@ -79,7 +79,7 @@ ggsave(
 #     width = 60,
 #     height = 22,
 #     units = "cm",
-#     bg = "white"
+#     bg = "white" 
 # )
 
 # ggsave(

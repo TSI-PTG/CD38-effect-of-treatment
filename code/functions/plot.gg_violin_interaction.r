@@ -1,7 +1,8 @@
-gg_violin_interaction <- function(data, variable, score, medians_delta, art_con_interaction_default_tidy) {
+gg_violin_interaction <- function(data, variable, score, medians_delta, art_con_interaction_default_tidy, patient_label) {
     require(tidyverse)
     require(gghalves)
     require(ggprism)
+    require(ggrepel)
     log10zero <- scales::trans_new(
         name = "log10zero",
         transform = function(x) log10(x + 0.15),
@@ -81,9 +82,12 @@ gg_violin_interaction <- function(data, variable, score, medians_delta, art_con_
         ) %>%
         dplyr::mutate(
             Followup = Followup %>% factor(levels = c("Baseline", "Week24", "Week52")),
-            shape = ifelse(Patient == 9, 24, 21),
-            stroke = ifelse(Patient == 9, 0.5, 0)
+            shape = 21,
+            # stroke = 0,
+            # shape = ifelse(Patient == 9, 24, 21),
+            stroke = ifelse(Patient %in% patient_label, 0.5, 0)
         )
+    data_patient_labels <- data %>% dplyr::filter(Patient %in% patient_label)
     bw <- dplyr::case_when(
         data$variable[[1]] %>% stringr::str_detect("ABMRpm|ggt0|ptcgt0|TCMRt|tgt1|igt1") ~ 0.05,
         data$variable[[1]] %>% stringr::str_detect("PC") ~ 0.2,
@@ -228,6 +232,33 @@ gg_violin_interaction <- function(data, variable, score, medians_delta, art_con_
             geom = "line",
             linewidth = 1,
             linetype = "dashed"
+        ) +
+        ggrepel::geom_text_repel(
+            seed = 42,
+            data = data_patient_labels,
+            mapping = ggplot2::aes(label = Patient),
+            position = ggplot2::position_nudge(
+                x = dplyr::case_when(
+                    data_patient_labels$Followup == "Baseline" ~ 0.1,
+                    data_patient_labels$Followup == "Week24" ~ 0,
+                    data_patient_labels$Followup == "Week52" ~ -0.1
+                )
+            ),
+            size = 4,
+            col = "#000000",
+            segment.color = "black",
+            min.segment.length = 0.01,
+            segment.size = 0.25,
+            # direction = "y",
+            max.overlaps = Inf,
+            box.padding = 0.5,
+            point.padding = 0.25,
+            # nudge_x = dplyr::case_when(
+            #     data_patient_labels$Followup == "Baseline" ~ 0.1,
+            #     data_patient_labels$Followup == "Week24" ~ 0,
+            #     data_patient_labels$Followup == "Week52" ~ -0.1
+            # ),
+            show.legend = FALSE
         ) +
         ggplot2::labs(
             title = paste(

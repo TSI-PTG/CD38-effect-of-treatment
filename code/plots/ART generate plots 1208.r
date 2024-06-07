@@ -30,7 +30,7 @@ felzartamab_plots <- felzartamab_ARTanova %>%
     mutate(
         plot_violin = pmap(
             list(data, variable, score, medians_delta, art_con_interaction_default_tidy),
-            gg_violin_interaction
+            gg_violin_interaction, patient_label = c(9, 13)
         ),
         plot_patient_pairs = pmap(
             list(data, variable, score),
@@ -39,7 +39,7 @@ felzartamab_plots <- felzartamab_ARTanova %>%
     )
 
 felzartamab_plots$plot_violin[[12]] # reference legend1
-felzartamab_plots$plot_violin[[17]] # reference legend2
+felzartamab_plots$plot_violin[[1]] # reference legend2
 
 # felzartamab_plots$plot_patient_pairs[[3]]
 
