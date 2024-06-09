@@ -136,7 +136,7 @@ felzartamab_cfdna_qr_plots <- data_plot %>%
                     ) +
                     ggplot2::labs(
                         x = paste("\u394", score %>% stringr::str_replace("\\(", "\n("), sep = " "),
-                        y = "\u394 Donor-derived cell-free DNA\n(dd-cfDNA, cp/mL)",
+                        y = "\u394 Donor-derived cell-free DNA\n(dd-cfDNA, %)",
                         parse = TRUE
                     ) +
                     ggplot2::coord_cartesian(clip = "off") +
@@ -157,4 +157,4 @@ felzartamab_cfdna_qr_plots$plot_scatter[[1]]
 
 # SAVE THE PLOT DATA ####
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/"
-save(felzartamab_cfdna_qr_plots, file = paste(saveDir, "Felzartamab_cfdna_quantile_regression_plots_1208_wholepopulation.RData", sep = ""))
+save(felzartamab_cfdna_qr_plots, file = paste(saveDir, "Felzartamab_cfdna_percent_quantile_regression_plots_1208_wholepopulation.RData", sep = ""))

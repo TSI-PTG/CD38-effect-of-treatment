@@ -8,7 +8,7 @@ library(ggprism) # install.packages("ggprism")
 "%nin%" <- function(a, b) match(a, b, nomatch = 0) == 0
 # load reference data
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/Felzartamab_plots.RData")
-load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/Felzartamab_cfdna_quantile_regression_plots_1208_wholepopulation.RData")
+load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/Felzartamab_cfdna_percent_quantile_regression_plots_1208_wholepopulation.RData")
 
 
 
@@ -166,7 +166,7 @@ panels <- ggarrange(
 # SAVE THE PLOTS ####
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/output/"
 ggsave(
-    filename = paste(saveDir, "Felzartamab all cfDNA panel whole population.png"),
+    filename = paste(saveDir, "Felzartamab all cfDNA percent panel whole population.png"),
     plot = panels,
     dpi = 600,
     width = 55,
