@@ -8,7 +8,7 @@ source("C:/R/CD38-effect-of-treatment/code/functions/complex_pivot.R")
 # load data
 data <- read_spss("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vienna/G_Rstuff/data/Generalfile_Felzartamab SPSS.sav")
 # load the processed cfDNA data
-# load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/data_cfdna.RData")
+# load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/data_cfdna_cpml.RData")
 
 
 
@@ -86,12 +86,12 @@ data_scores <- data %>% complex_pivot(
 )
 
 data_scores %>% print(n = "all")
-data %>% dplyr::select(contains("mvi"))
+data %>% dplyr::select(contains("cfdna"))
 
 
 
-# WRANGLE THE cfDNA FROM SPSS DATA ####
-data_cfdna <- data %>%
+# WRANGLE THE CP/ML cfDNA FROM SPSS DATA ####
+data_cfdna_cpml <- data %>%
     dplyr::select(
         Trial_Center,
         STUDY_EVALUATION_ID,
@@ -102,7 +102,7 @@ data_cfdna <- data %>%
     pivot_longer(
         cols = contains("cfDNA"),
         names_to = "Group",
-        values_to = "cfDNA"
+        values_to = "cfDNA_cpml"
     ) %>%
     mutate(
         Group = Group %>%
@@ -112,6 +112,32 @@ data_cfdna <- data %>%
             str_replace("Week24", "FU1") %>%
             str_replace("Week52", "FU2")
     )
+
+
+# WRANGLE THE PERCENT cfDNA FROM SPSS DATA ####
+data_cfdna_percent <- data %>%
+    dplyr::select(
+        Trial_Center,
+        STUDY_EVALUATION_ID,
+        Felzartamab,
+        contains("Percent_GcfDNA")
+    ) %>%
+    mutate_at(vars(contains("cfDNA")), ~ as.numeric(.) %>% suppressWarnings()) %>%
+    pivot_longer(
+        cols = contains("cfDNA"),
+        names_to = "Group",
+        values_to = "cfDNA_percent"
+    ) %>%
+    mutate(
+        Group = Group %>%
+            str_remove("Percent_GcfDNA_") %>%
+            str_replace("Day0", "Index") %>%
+            str_replace("Week12", "FU1b") %>%
+            str_replace("Week24", "FU1") %>%
+            str_replace("Week52", "FU2")
+    )
+
+
 
 
 # WRANGLE THE PATIENT DATA ####
@@ -166,7 +192,8 @@ data_k1208 <- data_scores %>%
     left_join(data_patient, by = c("Trial_Center", "STUDY_EVALUATION_ID", "Felzartamab")) %>%
     left_join(data_CEL, by = c("Trial_Center", "STUDY_EVALUATION_ID", "Felzartamab", "Group")) %>%
     left_join(data_dateBx, by = c("Trial_Center", "STUDY_EVALUATION_ID", "Felzartamab", "Group")) %>%
-    left_join(data_cfdna, by = c("Trial_Center", "STUDY_EVALUATION_ID", "Felzartamab", "Group")) %>%
+    left_join(data_cfdna_cpml, by = c("Trial_Center", "STUDY_EVALUATION_ID", "Felzartamab", "Group")) %>%
+    left_join(data_cfdna_percent, by = c("Trial_Center", "STUDY_EVALUATION_ID", "Felzartamab", "Group")) %>%
     dplyr::rename(Center = Trial_Center, Patient = STUDY_EVALUATION_ID) %>%
     mutate(
         Patient = Patient %>% factor(),
@@ -196,14 +223,15 @@ data_k1208 <- data_scores %>%
         .before = 1
     ) %>%
     arrange(Felzartamab, Patient, Group) %>%
-    relocate(cfDNA, .before = "ABMRpm")
+    relocate(cfDNA_percent, cfDNA_cpml, .before = "ABMRpm")
 
 
 # RENAME THE MOLECULAR DATA ####
 data_scores_k1208 <- data_k1208
+data_scores_k1208  %>% colnames
+
 
 
 # SAVE THE DATA ####
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/"
 save(data_scores_k1208, file = paste(saveDir, "data_scores_k1208.RData", sep = ""))
-

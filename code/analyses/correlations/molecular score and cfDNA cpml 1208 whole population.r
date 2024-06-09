@@ -29,7 +29,7 @@ seed <- 314159
 
 # DEFINE CATEGORIES FOR FEATURES ####
 # Rejectionrelated <- c("GRIT3", "Rej-RAT", "RejAA_NR")
-vars_cfDNA <- c("cfDNA")
+vars_cfDNA <- c("cfDNA_cpml")
 vars_abmr <- c("ABMRpm", "ggt0", "ptcgt0", "DSAST", "NKB") # "cggt0", "RejAA_EABMR", "RejAA_FABMR", "RejAA_LABMR")
 vars_tcmr <- c("TCMRt", "tgt1", "igt1", "QCAT", "TCB") # , "TCMR-RAT", )
 vars_injury <- c("IRRAT30", "IRITD3", "IRITD5")
@@ -49,7 +49,7 @@ vars <- c(vars_cfDNA, vars_abmr, vars_tcmr, vars_injury)
 data <- data_scores_k1208 %>%
     dplyr::select(Center, Patient, Felzartamab, Group, Followup, Felzartamab_Group, Felzartamab_Followup, all_of(vars)) %>%
     # dplyr::filter(Group != "FU1b", Patient %nin% c(9, 15, 18, 19)) %>%
-    dplyr::filter(Group != "FU1b", Patient %nin% c(9, 15, 18, 19)) %>%
+    dplyr::filter(Group != "FU1b", Patient %nin% c(15, 18)) %>%
     left_join(., summarise(., sample_pairs = n(), .by = Felzartamab_Followup), by = "Felzartamab_Followup") %>%
     relocate(sample_pairs, .after = Felzartamab_Followup) %>%
     arrange(Felzartamab, Patient, Group)
@@ -127,7 +127,8 @@ data_01 <- data_00 %>%
                                 )
                             ),
                         score = case_when(
-                            variable == "cfDNA" ~ "Donor-derived cell-free DNA (dd-cfDNA, cp/mL)",
+                            variable == "cfDNA_cpml" ~ "Donor-derived cell-free DNA (dd-cfDNA, %)",
+                            variable == "cfDNA_cpml" ~ "Donor-derived cell-free DNA (dd-cfDNA, cp/mL)",
                             variable == "TCMRt" ~ "TCMR classifier (TCMRProb)",
                             variable == "TCMRt" ~ "TCMR classifier (TCMRProb)",
                             variable == "TCB" ~ "T-cell burden (TCB)",
@@ -181,29 +182,6 @@ data_01 <- data_00 %>%
 
 
 # UNIVARIATE MEDIANS ####
-data_01$data[[13]] %>%
-    reframe(
-        value = combn(value, 2) %>% as.numeric(),
-        .by = c(Patient, Felzartamab)
-    ) %>%
-    mutate(
-        Followup_pairwise = rep(
-            c("Baseline - Week24", "Baseline - Week52", "Week24 - Week52"),
-            each = 2
-        ) %>%
-            rep(., n_patient) %>%
-            factor(levels = c("Baseline - Week24", "Baseline - Week52", "Week24 - Week52")),
-        .after = Felzartamab
-    ) %>%
-    mutate(
-        delta = lead(value) - value,
-        delta_foldchange = lead(value) / value,
-        # delta_foldchange_log2 = (lead(value) / value) %>% log2(),
-        .by = c("Patient", "Followup_pairwise")
-    ) %>%
-    arrange(Patient, Felzartamab, Followup_pairwise)
-
-
 data_02 <- data_01 %>%
     mutate(
         delta = map2(
@@ -244,7 +222,7 @@ data_02 <- data_01 %>%
 # REFRAME TO ADD DELTA CFDNA TO INDIVIDUAL COLUMN ####
 data_03 <- data_02 %>%
     mutate(
-        delta_cfdna = data_02 %>%
+        delta_cfdna_cpml = data_02 %>%
             dplyr::filter(category == "cfDNA") %>%
             pull(delta)
     ) %>%
@@ -253,21 +231,16 @@ data_03 <- data_02 %>%
 
 
 # UNIVARIATE NONPARAMETRIC TESTS ####
-data_03$delta[[1]]
-
-
-
-
 data_04 <- data_03 %>%
     mutate(
         cor = pmap(
-            list(variable, delta, delta_cfdna),
-            function(variable, delta, delta_cfdna) {
+            list(variable, delta, delta_cfdna_cpml),
+            function(variable, delta, delta_cfdna_cpml) {
                 df <- delta %>%
                     left_join(
-                        delta_cfdna,
+                        delta_cfdna_cpml,
                         by = c("Patient", "Felzartamab", "Followup_pairwise"),
-                        suffix = c("_score", "_cfdna")
+                        suffix = c("_score", "_cfdna_cpml")
                     ) %>%
                     mutate(variable) %>%
                     nest(.by = c("variable", "Followup_pairwise"))
@@ -276,7 +249,7 @@ data_04 <- data_03 %>%
                         cor = pmap_dbl(
                             list(data),
                             function(data) {
-                                cor(x = data$delta_cfdna, y = data$delta_score, use = "p", method = "spearman")
+                                cor(x = data$delta_cfdna_cpml, y = data$delta_score, use = "p", method = "spearman")
                             }
                         ),
                         p = pmap_dbl(
@@ -291,13 +264,13 @@ data_04 <- data_03 %>%
             }
         ),
         xicor = pmap(
-            list(variable, delta, delta_cfdna),
-            function(variable, delta, delta_cfdna) {
+            list(variable, delta, delta_cfdna_cpml),
+            function(variable, delta, delta_cfdna_cpml) {
                 df <- delta %>%
                     left_join(
-                        delta_cfdna,
+                        delta_cfdna_cpml,
                         by = c("Patient", "Felzartamab", "Followup_pairwise"),
-                        suffix = c("_score", "_cfdna")
+                        suffix = c("_score", "_cfdna_cpml")
                     ) %>%
                     mutate(variable) %>%
                     nest(.by = c("variable", "Followup_pairwise"))
@@ -306,56 +279,56 @@ data_04 <- data_03 %>%
                         cor = pmap_dbl(
                             list(data),
                             function(data) {
-                                XICOR::xicor(x = data$delta_cfdna, y = data$delta_score, pvalue = FALSE)
+                                XICOR::xicor(x = data$delta_cfdna_cpml, y = data$delta_score, pvalue = FALSE)
                             }
                         ),
                         p = pmap_dbl(
                             list(data),
                             function(data) {
-                                XICOR::xicor(x = data$delta_cfdna, y = data$delta_score, pvalue = TRUE)$pval
+                                XICOR::xicor(x = data$delta_cfdna_cpml, y = data$delta_score, pvalue = TRUE)$pval
                             }
                         )
                     )
             }
         ),
-        # cor_foldchange_log2 = pmap(
-        #     list(variable, delta, delta_cfdna),
-        #     function(variable, delta, delta_cfdna) {
-        #         df <- delta %>%
-        #             left_join(
-        #                 delta_cfdna,
-        #                 by = c("Patient", "Felzartamab", "Followup_pairwise"),
-        #                 suffix = c("_score", "_cfdna")
-        #             ) %>%
-        #             mutate(variable) %>%
-        #             nest(.by = c("variable", "Followup_pairwise"))
-        #         df %>%
-        #             mutate(
-        #                 cor = pmap_dbl(
-        #                     list(data),
-        #                     function(data) {
-        #                         cor(x = data$delta_foldchange_log2_cfdna, y = data$delta_score, use = "p", method = "spearman")
-        #                     }
-        #                 ),
-        #                 p = pmap_dbl(
-        #                     list(data, cor),
-        #                     function(data, cor) {
-        #                         nSamples <- data %>%
-        #                             nrow()
-        #                         corPvalueStudent(cor, nSamples)
-        #                     }
-        #                 )
-        #             )
-        #     }
-        # ),
+        # # cor_foldchange_log2 = pmap(
+        # #     list(variable, delta, delta_cfdna_cpml),
+        # #     function(variable, delta, delta_cfdna_cpml) {
+        # #         df <- delta %>%
+        # #             left_join(
+        # #                 delta_cfdna_cpml,
+        # #                 by = c("Patient", "Felzartamab", "Followup_pairwise"),
+        # #                 suffix = c("_score", "_cfdna")
+        # #             ) %>%
+        # #             mutate(variable) %>%
+        # #             nest(.by = c("variable", "Followup_pairwise"))
+        # #         df %>%
+        # #             mutate(
+        # #                 cor = pmap_dbl(
+        # #                     list(data),
+        # #                     function(data) {
+        # #                         cor(x = data$delta_foldchange_log2_cfdna, y = data$delta_score, use = "p", method = "spearman")
+        # #                     }
+        # #                 ),
+        # #                 p = pmap_dbl(
+        # #                     list(data, cor),
+        # #                     function(data, cor) {
+        # #                         nSamples <- data %>%
+        # #                             nrow()
+        # #                         corPvalueStudent(cor, nSamples)
+        # #                     }
+        # #                 )
+        # #             )
+        # #     }
+        # # ),
         quantile_regression = pmap(
-            list(variable, delta, delta_cfdna),
-            function(variable, delta, delta_cfdna) {
+            list(variable, delta, delta_cfdna_cpml),
+            function(variable, delta, delta_cfdna_cpml) {
                 df <- delta %>%
                     left_join(
-                        delta_cfdna,
+                        delta_cfdna_cpml,
                         by = c("Patient", "Felzartamab", "Followup_pairwise"),
-                        suffix = c("_score", "_cfdna")
+                        suffix = c("_score", "_cfdna_cpml")
                     ) %>%
                     mutate(variable) %>%
                     nest(.by = c("variable", "Followup_pairwise"))
@@ -363,7 +336,7 @@ data_04 <- data_03 %>%
                     rq = map(
                         data,
                         function(data) {
-                            quantreg::rq(delta_cfdna ~ delta_score, data = data, tau = 0.5, model = TRUE) %>%
+                            quantreg::rq(delta_cfdna_cpml ~ delta_score, data = data, tau = 0.5, model = TRUE) %>%
                                 broom::tidy(se = "nid")
                         }
                     ),
@@ -396,7 +369,7 @@ data_04$xicor[[1]]
 # SAVE DATA NEST ####
 felzartamab_cfdna_cor_k1208 <- data_04
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/"
-save(felzartamab_cfdna_cor_k1208, file = paste(saveDir, "felzartamab_cfdna_cor_k1208_wholepopulation.RData", sep = ""))
+save(felzartamab_cfdna_cor_k1208, file = paste(saveDir, "felzartamab_cfdna_cpml_cor_k1208_wholepopulation.RData", sep = ""))
 felzartamab_cfdna_cor_k1208$delta[[1]]
 
 
