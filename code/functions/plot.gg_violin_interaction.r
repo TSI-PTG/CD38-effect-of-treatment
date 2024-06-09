@@ -18,7 +18,7 @@ gg_violin_interaction <- function(data, variable, score, medians_delta, art_con_
         ylims <- c(NA, NA)
         point_size <- 2
     }
-    if (variable == "cfDNA") logy <- TRUE else logy <- FALSE
+    if (variable == "cfDNA_cpml") logy <- TRUE else logy <- FALSE
     log10_ticks <- c(
         seq(0, 1, length.out = 11),
         seq(1, 10, length.out = 10),
@@ -87,7 +87,11 @@ gg_violin_interaction <- function(data, variable, score, medians_delta, art_con_
             # shape = ifelse(Patient == 9, 24, 21),
             stroke = ifelse(Patient %in% patient_label, 0.5, 0)
         )
-    data_patient_labels <- data %>% dplyr::filter(Patient %in% patient_label)
+    if (variable %>% stringr::str_detect("cfDNA")) {
+        data_patient_labels <- data %>% dplyr::filter(Patient %in% c(patient_label, 9, 19))
+    } else {
+        data_patient_labels <- data %>% dplyr::filter(Patient %in% patient_label)
+    }
     bw <- dplyr::case_when(
         data$variable[[1]] %>% stringr::str_detect("ABMRpm|ggt0|ptcgt0|TCMRt|tgt1|igt1") ~ 0.05,
         data$variable[[1]] %>% stringr::str_detect("PC") ~ 0.2,

@@ -32,7 +32,7 @@ seed <- 42
 
 # DEFINE CATEGORIES FOR FEATURES ####
 # Rejectionrelated <- c("GRIT3", "Rej-RAT", "RejAA_NR")
-vars_cfDNA <- c("cfDNA")
+vars_cfDNA <- c("cfDNA_cpml", "cfDNA_percent")
 vars_abmr <- c("ABMRpm", "ggt0", "ptcgt0", "DSAST", "NKB") # "cggt0", "RejAA_EABMR", "RejAA_FABMR", "RejAA_LABMR")
 vars_tcmr <- c("TCMRt", "tgt1", "igt1", "QCAT", "TCB") # , "TCMR-RAT", )
 vars_injury <- c("IRRAT30", "IRITD3", "IRITD5")
@@ -151,7 +151,8 @@ data_01 <- data_00 %>%
                                 )
                             ),
                         score = case_when(
-                            variable == "cfDNA" ~ "Donor-derived cell-free DNA (dd-cfDNA, cp/mL)",
+                            variable == "cfDNA_percent" ~ "Donor-derived cell-free DNA (dd-cfDNA, %)",
+                            variable == "cfDNA_cpml" ~ "Donor-derived cell-free DNA (dd-cfDNA, cp/mL)",
                             variable == "TCMRt" ~ "TCMR classifier (TCMRProb)",
                             variable == "TCMRt" ~ "TCMR classifier (TCMRProb)",
                             variable == "TCB" ~ "T-cell burden (TCB)",
@@ -214,7 +215,6 @@ data_01 <- data_00 %>%
 
 # UNIVARIATE MEANS AND MEDIANS ####
 data_01$data[[1]]
-
 
 data_02 <- data_01 %>%
     mutate(

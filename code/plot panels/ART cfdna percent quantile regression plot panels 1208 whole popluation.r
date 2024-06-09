@@ -38,7 +38,7 @@ panel_legend <- legend %>%
 
 # MAKE PANEL OF VIOLIN PLOTS ####
 plot_cfdna <- felzartamab_plots %>%
-    dplyr::filter(category %in% c("cfDNA")) %>%
+    dplyr::filter(variable == c("cfDNA_percent")) %>%
     pull(plot_violin) %>%
     pluck(1) +
     facet_wrap(~Felzartamab, nrow = 2, ncol = 1, scales = "free_x") +
@@ -51,7 +51,7 @@ plot_cfdna <- felzartamab_plots %>%
 panel_violin <- plot_cfdna + inset_element(
     panel_legend, 
     ignore_tag = TRUE,
-    left = 0.085, top = 0.25, right = 1, bottom = 1
+    left = 0.085, top = 0.88, right = 1, bottom = 1
     ) +
     plot_layout(ncol = 1) +
     plot_annotation(
