@@ -15,6 +15,8 @@ library(genefilter) # BiocManager::install("genefilter")
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/data_expressionset_k1208.RData")
 # load affymap
 load("Z:/DATA/Datalocks/Other data/affymap219_21Oct2019_1306_JR.RData")
+# load mean expression in K1208
+load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/mean_expression_K1208_MMDx.RData")
 
 
 # DEFINE THE SET ####
@@ -142,7 +144,7 @@ table_block_1 <- tab_block_1 %>%
     arrange(P.Value) %>%
     mutate_at(c("P.Value", "adj.P.Val"), as.numeric) %>%
     tibble() %>%
-    left_join(., means_baseline_week24, by = "AffyID") %>%
+    left_join(means_baseline_week24, by = "AffyID") %>%
     dplyr::select(
         AffyID, Symb, Gene, PBT,
         all_of(colnames(means_baseline_week24)[-1]),
@@ -153,7 +155,8 @@ table_block_1 <- tab_block_1 %>%
         fFC = 2^(log2(Week24_Felzartamab) - log2(Baseline_Felzartamab)) %>% round(2),
         FC = 2^logFC,
         .after = logFC
-    )
+    ) %>%
+    left_join(means_K1208 %>% dplyr::select(-Symb, -Gene, -PBT), by = "AffyID")
 
 table_block_2 <- tab_block_2 %>%
     as_tibble(rownames = "AffyID") %>%
@@ -172,7 +175,8 @@ table_block_2 <- tab_block_2 %>%
         fFC = 2^(log2(Week52_Felzartamab) - log2(Week24_Felzartamab)) %>% round(2),
         FC = 2^logFC,
         .after = logFC
-    )
+    ) %>%
+    left_join(means_K1208 %>% dplyr::select(-Symb, -Gene, -PBT), by = "AffyID")
 
 table_block_3 <- tab_block_3 %>%
     as_tibble(rownames = "AffyID") %>%
@@ -191,7 +195,8 @@ table_block_3 <- tab_block_3 %>%
         fFC = 2^(log2(Week52_Felzartamab) - log2(Baseline_Felzartamab)) %>% round(2),
         FC = 2^logFC,
         .after = logFC
-    )
+    ) %>%
+    left_join(means_K1208 %>% dplyr::select(-Symb, -Gene, -PBT), by = "AffyID")
 
 limma_tables <- tibble(
     design = c(
@@ -254,7 +259,7 @@ save(limma_tables, file = paste(saveDir, "IQR_filtered_probes_unique_genes_limma
 saveDir1 <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/output/"
 openxlsx::write.xlsx(limma_tables$table,
     asTable = TRUE,
-    file = paste(saveDir1, "IQR_filtered_probes_unique_genes_limma_1208_23May24",
+    file = paste(saveDir1, "IQR_filtered_probes_unique_genes_limma_1208_9Jun24",
         # Sys.Date(),
         # format(Sys.time(), "_%I%M%p"),
         ".xlsx",
