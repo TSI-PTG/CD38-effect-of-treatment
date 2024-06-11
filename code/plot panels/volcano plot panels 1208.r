@@ -39,9 +39,18 @@ probes_abmr <- simplefile %>%
     pull(Affy)
 
 
+genes_NK
+
+genes_ABMR_endothelial
 
 
-
+labels_probes <- list(
+    genes_NK %>%
+        mutate(label = "NK genes") %>% dplyr::select(AffyID, label),
+    genes_ABMR_endothelial %>%
+        mutate(label = "Endothelial genes")
+        %>% dplyr::select(AffyID, label)
+)
 
 
 
@@ -72,13 +81,15 @@ plot_volcano <- data_plot %>%
             xlim = c(0, 3),
             ylim = c(-1, 1.15),
             x_break = 1.75,
-            labels_probes = probes_abmr,
+            labels_probes = labels_probes,
+            labels_probes_names = c("NK genes", "Endothelial genes"),
+            col_labels = c("green", "#00eaff"),
             point_size_null = 1.25,
             point_size = 2.5,
             labels_probes_size = 3,
         )
     )
-plot_volcano$plot_volcano[[1]]
+# plot_volcano$plot_volcano[[1]]
 
 
 plot_volcano_panel <- wrap_plots(
@@ -86,9 +97,13 @@ plot_volcano_panel <- wrap_plots(
     nrow = 1, ncol = 3
 ) +
     plot_layout(
+        guides = "collect",
         axes = "collect", axis_titles = "collect"
     ) &
-    theme(plot.background = element_rect(fill = "White"))
+    theme(
+        legend.position = "top",
+        plot.background = element_rect(fill = "White")
+    )
 
 
 # SAVE THE PLOT ####

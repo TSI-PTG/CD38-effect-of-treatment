@@ -1,9 +1,11 @@
 gg_volcano <- function(
-    data, design = NULL, xlim = c(NA,NA), ylim = c(NA,NA), x_break = 1.5, 
+    data, design = NULL, xlim = c(NA, NA), ylim = c(NA, NA), x_break = 1.5,
     point_size = 2.5, point_size_null = 1.25,
     alpha = 0.8, alpha_null = 0.5, alpha_lines = 0.25,
     col_dn = "#005EFF", col_up = "#ff0040", col_null = "grey30",
-    labels_probes = NULL, labels_probes_n = 10, labels_probes_size = 2) {
+    col_labels = c("green", "yellow"),
+    labels_probes = NULL, labels_probes_names = NULL,
+    labels_probes_n = 10, labels_probes_size = 2) {
     require(tidyverse)
     probes_sig_up <- data %>%
         dplyr::filter(
@@ -29,8 +31,13 @@ gg_volcano <- function(
         dplyr::arrange(order)
     data_sig <- data %>%
         dplyr::filter(AffyID %in% c(probes_sig_up, probes_sig_dn))
-    data_labels <- data %>%
-        dplyr::filter(AffyID %in% labels_probes)
+    labels_probes <- labels_probes %>% bind_rows()
+    # data_labels <- data %>%
+    #     dplyr::filter(AffyID %in% labels_probes)
+
+    data_labels <- labels_probes %>%
+        dplyr::left_join(data, by = "AffyID")
+
     min_p <- data %>%
         dplyr::slice_min(`<U+0394><U+0394> p`) %>%
         dplyr::pull(`<U+0394><U+0394> p`) %>%
@@ -55,14 +62,15 @@ gg_volcano <- function(
         ) +
         ggrepel::geom_label_repel(
             data = data_labels,
-            mapping = ggplot2::aes(label = Symb),
+            mapping = ggplot2::aes(label = Symb, fill = label),
+            max.overlaps = Inf,
             size = labels_probes_size,
             fontface = "bold",
             min.segment.length = 0,
             segment.color = "grey20",
             segment.size = 0.25,
             col = "white",
-            fill = data_labels %>% dplyr::pull(col),
+            # fill = data_labels %>% dplyr::pull(col),
             label.padding = 0.1,
             box.padding = 0.1,
             point.padding = 0.5,
@@ -70,7 +78,7 @@ gg_volcano <- function(
             direction = "y",
             # nudge_x = 0.01,
             nudge_y = ifelse(data_labels$logFC > 0, 0.25, -0.25),
-            show.legend = FALSE,
+            # show.legend = FALSE,
             seed = 42
         ) +
         ggplot2::geom_text(
@@ -78,10 +86,11 @@ gg_volcano <- function(
             y = Inf,
             vjust = -0.25,
             hjust = 0,
-            label = design  %>% str_replace("_vs_", " - "),
+            label = design %>% str_replace("_vs_", " - "),
             fontface = "bold.italic"
         ) +
         ggplot2::scale_colour_manual(values = c(col_dn, col_up)) +
+        ggplot2::scale_fill_manual(values = col_labels) +
         ggplot2::scale_x_continuous(
             breaks = c(0, 1, 2, 3, 4, 5),
             labels = 10^-c(0, 1, 2, 3, 4, 5)
@@ -98,7 +107,7 @@ gg_volcano <- function(
             # panel.border = ggplot2::element_blank(),
             axis.line = ggplot2::element_line(linewidth = 0.2),
             panel.grid = ggplot2::element_blank(),
-            legend.position = "none",
+            # legend.position = "none",
             axis.title = ggplot2::element_text(size = 12, face = "plain"),
             axis.text = ggplot2::element_text(colour = "black"),
             plot.margin = ggplot2::unit(c(0.5, 0.1, 1.25, 0.1), "cm"),
