@@ -18,8 +18,7 @@ load("Z:/DATA/Datalocks/Other data/affymap219_21Oct2019_1306_JR.RData")
 # load mean expression in K1208
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/mean_expression_K1208_MMDx.RData")
 # load gene IDs data
-load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/NK cell selective genes.RData")
-load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/NK cell selective genes atagc cell panel.RData")
+load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/LM22 NK cell selective genes.RData")
 
 
 
@@ -36,8 +35,6 @@ set00 <- data_expressionset_k1208[, data_expressionset_k1208$Patient %nin% c(15,
 # set01 <- set00[selected, ]
 set01 <- set00
 
-
-
 # KEEP UNIQUE GENES (keep probe with highest mean expression) ####
 mean_exprs_by_probe <- set01 %>%
     exprs() %>%
@@ -53,17 +50,10 @@ genes <- mean_exprs_by_probe %>%
     dplyr::slice_max(mean_exprs) %>%
     dplyr::filter(Symb != "") %>%
     distinct(Symb, .keep_all = TRUE) %>%
-    dplyr::select(AffyID, Symb)
-
-nk_genes <- nk_genes_atagc %>%
-    dplyr::select(-AffyID) %>%
-    left_join(genes, by = "Symb")
+    pull(AffyID)
 
 nk_probes <- nk_genes %>%
-    dplyr::filter(AffyID %in% genes$AffyID)
-
-
-
+    dplyr::filter(AffyID %in% genes)
 
 # set <- set01[featureNames(set01) %in% genes, ]
 set <- set01
@@ -99,6 +89,8 @@ contrast_block_03 <- makeContrasts(
     "x =  (Felzartamab_FollowupWeek52_Felzartamab-Felzartamab_FollowupBaseline_Felzartamab)/2 - (Felzartamab_FollowupWeek52_Placebo-Felzartamab_FollowupBaseline_Placebo)/2",
     levels = design_block03
 )
+
+
 
 
 # FIT BLOCK week24 - baseline LIMMA MODEL ####
@@ -173,12 +165,8 @@ table_block_1 <- tab_block_1 %>%
         FC = 2^logFC,
         .after = logFC
     ) %>%
-    # dplyr::filter(AffyID %in% nk_genes$AffyID) %>%
-    # left_join(nk_probes %>% dplyr::select(-Symb), by = c("AffyID")) %>%
-    # relocate(GEP_panel) %>%
-    # distinct(Symb, .keep_all = TRUE) %>%
-    left_join(means_K1208 %>% dplyr::select(-Symb, -Gene, -PBT), by = "AffyID")
-
+    left_join(means_K1208 %>% dplyr::select(-Symb, -Gene, -PBT), by = "AffyID") %>%
+    dplyr::filter(AffyID %in% nk_genes$AffyID)
 
 table_block_2 <- tab_block_2 %>%
     as_tibble(rownames = "AffyID") %>%
@@ -198,11 +186,8 @@ table_block_2 <- tab_block_2 %>%
         FC = 2^logFC,
         .after = logFC
     ) %>%
-    # dplyr::filter(AffyID %in% nk_genes$AffyID) %>%
-    # left_join(nk_probes %>% dplyr::select(-Symb), by = c("AffyID")) %>%
-    # relocate(GEP_panel) %>%
-    # distinct(Symb, .keep_all = TRUE) %>%
-    left_join(means_K1208 %>% dplyr::select(-Symb, -Gene, -PBT), by = "AffyID")
+    left_join(means_K1208 %>% dplyr::select(-Symb, -Gene, -PBT), by = "AffyID") %>%
+    dplyr::filter(AffyID %in% nk_genes$AffyID)
 
 table_block_3 <- tab_block_3 %>%
     as_tibble(rownames = "AffyID") %>%
@@ -222,11 +207,8 @@ table_block_3 <- tab_block_3 %>%
         FC = 2^logFC,
         .after = logFC
     ) %>%
-    # dplyr::filter(AffyID %in% nk_genes$AffyID) %>%
-    # left_join(nk_probes %>% dplyr::select(-Symb), by = c("AffyID")) %>%
-    # relocate(GEP_panel) %>%
-    # distinct(Symb, .keep_all = TRUE) %>%
-    left_join(means_K1208 %>% dplyr::select(-Symb, -Gene, -PBT), by = "AffyID")
+    left_join(means_K1208 %>% dplyr::select(-Symb, -Gene, -PBT), by = "AffyID") %>%
+    dplyr::filter(AffyID %in% nk_genes$AffyID)
 
 limma_tables <- tibble(
     design = c(
@@ -282,14 +264,14 @@ limma_tables <- tibble(
 # EXPORT THE DATA AS .RData FILE ####
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/"
 names(limma_tables$table) <- limma_tables$design
-save(limma_tables, file = paste(saveDir, "all_probes_limma_1208.RData", sep = ""))
+save(limma_tables, file = paste(saveDir, "IQR_filtered_probes_nk_genes_limma_1208.RData", sep = ""))
 
 
 # EXPORT THE DATA AS AN EXCEL SHEET ####
 saveDir1 <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/output/"
 openxlsx::write.xlsx(limma_tables$table,
     asTable = TRUE,
-    file = paste(saveDir1, "all_probes_limma_1208_11Jun24",
+    file = paste(saveDir1, "LM22_NK_genes_limma_1208_9Jun24",
         # Sys.Date(),
         # format(Sys.time(), "_%I%M%p"),
         ".xlsx",

@@ -173,7 +173,7 @@ table_block_1 <- tab_block_1 %>%
         FC = 2^logFC,
         .after = logFC
     ) %>%
-    # dplyr::filter(AffyID %in% nk_genes$AffyID) %>%
+    dplyr::filter(AffyID %in% nk_genes$AffyID) %>%
     # left_join(nk_probes %>% dplyr::select(-Symb), by = c("AffyID")) %>%
     # relocate(GEP_panel) %>%
     # distinct(Symb, .keep_all = TRUE) %>%
@@ -198,7 +198,7 @@ table_block_2 <- tab_block_2 %>%
         FC = 2^logFC,
         .after = logFC
     ) %>%
-    # dplyr::filter(AffyID %in% nk_genes$AffyID) %>%
+    dplyr::filter(AffyID %in% nk_genes$AffyID) %>%
     # left_join(nk_probes %>% dplyr::select(-Symb), by = c("AffyID")) %>%
     # relocate(GEP_panel) %>%
     # distinct(Symb, .keep_all = TRUE) %>%
@@ -222,7 +222,7 @@ table_block_3 <- tab_block_3 %>%
         FC = 2^logFC,
         .after = logFC
     ) %>%
-    # dplyr::filter(AffyID %in% nk_genes$AffyID) %>%
+    dplyr::filter(AffyID %in% nk_genes$AffyID) %>%
     # left_join(nk_probes %>% dplyr::select(-Symb), by = c("AffyID")) %>%
     # relocate(GEP_panel) %>%
     # distinct(Symb, .keep_all = TRUE) %>%
