@@ -1,4 +1,4 @@
-gg_volcano <- function(
+gg_volcano_facet <- function(
     data, design = NULL, xlim = c(NA,NA), ylim = c(NA,NA), x_break = 1.5, 
     point_size = 2.5, point_size_null = 1.25,
     alpha = 0.8, alpha_null = 0.5, alpha_lines = 0.25,
@@ -19,6 +19,7 @@ gg_volcano <- function(
         dplyr::pull(AffyID)
     data <- data %>%
         dplyr::mutate(
+            design = design,
             col = dplyr::case_when(
                 AffyID %in% probes_sig_dn ~ col_dn,
                 AffyID %in% probes_sig_up ~ col_up,
@@ -69,7 +70,7 @@ gg_volcano <- function(
             label.size = 0.1,
             direction = "y",
             # nudge_x = 0.01,
-            nudge_y = ifelse(data_labels$logFC > 0, 0.25, -0.25),
+            # nudge_y = ifelse(data_labels$logFC > 0, 0.25, -0.25),
             show.legend = FALSE,
             seed = 42
         ) +
@@ -78,8 +79,16 @@ gg_volcano <- function(
             y = Inf,
             vjust = -0.25,
             hjust = 0,
-            label = design  %>% str_replace("_vs_", " - "),
+            label = design %>% str_replace("_vs_", " - "),
             fontface = "bold.italic"
+        ) +
+        ggplot2::geom_text(
+            x = x_break,
+            y = -Inf,
+            vjust = 1.75,
+            hjust = 0.5,
+            label = "Effect of treatment\n(\u394\u394 p-value)",
+            fontface = "plain"
         ) +
         ggplot2::scale_colour_manual(values = c(col_dn, col_up)) +
         ggplot2::scale_x_continuous(
@@ -89,7 +98,7 @@ gg_volcano <- function(
         ggplot2::coord_cartesian(xlim = xlim, ylim = ylim, clip = "off") +
         ggplot2::labs(
             y = "Effect of treatment\n(\u394\u394 log2FC)",
-            x = "Effect of treatment\n(\u394\u394 p-value)",
+            # x = "Effect of treatment\n(\u394\u394 p-value)",
             x = NULL,
             col = NULL
         ) +
@@ -103,5 +112,6 @@ gg_volcano <- function(
             axis.text = ggplot2::element_text(colour = "black"),
             plot.margin = ggplot2::unit(c(0.5, 0.1, 1.25, 0.1), "cm"),
             plot.background = ggplot2::element_rect(fill = "grey95", colour = " white")
-        )
+        ) +
+        ggplot2::facet_wrap(~design)
 }

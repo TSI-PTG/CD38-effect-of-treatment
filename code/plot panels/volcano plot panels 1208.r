@@ -13,6 +13,10 @@ source("C:/R/CD38-effect-of-treatment/code/functions/plot.gg_volcano_timeseries.
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/IQR_filtered_probes_unique_genes_limma_1208.RData")
 # load SCC data
 simplefile <- read_excel("Z:/MISC/Phil/AA All papers in progress/A GC papers/0000 simple XL files/Kidney 5086/MASTER COPY K5086 SimpleCorrAAInjRej 5AAInjNR 7AARej.xlsx")
+# load gene lists
+# load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/NK cell selective genes.RData")
+load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/NK_genes_L765.RData")
+load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/ABMR_endothelial_genes.RData")
 
 
 
@@ -33,6 +37,12 @@ genes_abmr <- simplefile %>%
 probes_abmr <- simplefile %>%
     dplyr::filter(SYMB %in% genes_abmr) %>%
     pull(Affy)
+
+
+
+
+
+
 
 
 # WRANGLE THE DATA FOR PLOTTING Baseline - Week52 ####
@@ -59,6 +69,8 @@ plot_volcano <- data_plot %>%
         plot_volcano = map2(
             data_plot, design,
             gg_volcano,
+            xlim = c(0, 3),
+            ylim = c(-1, 1.15),
             x_break = 1.75,
             labels_probes = probes_abmr,
             point_size_null = 1.25,
@@ -69,30 +81,12 @@ plot_volcano <- data_plot %>%
 plot_volcano$plot_volcano[[1]]
 
 
-
-
-
-plot_volcano_titled <- ggarrange(
-    plot_volcano$plot_volcano[[3]] +
-        plot_annotation(tag_levels = list("B")) &
-        theme(plot.tag = element_text(size = 15, face = "bold", vjust = 4))
-) %>%
-    ggpubr::annotate_figure(
-        top = text_grob(
-            "Persistent Effect of Felzartamab",
-            face = "bold.italic", size = 15, hjust = 0.71
-        )
-    ) %>%
-    suppressWarnings()
-
-
-
 plot_volcano_panel <- wrap_plots(
     plot_volcano$plot_volcano,
     nrow = 1, ncol = 3
 ) +
     plot_layout(
-        axes = "collect"
+        axes = "collect", axis_titles = "collect"
     ) &
     theme(plot.background = element_rect(fill = "White"))
 
