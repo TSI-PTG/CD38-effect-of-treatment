@@ -7,7 +7,7 @@ load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular e
 
 
 # WRANGLE DATA FOR PLOTTING ####
-df_plot00 <- gene_tables %>%
+DEG_plots00 <- gene_tables %>%
     mutate(
         design = design %>%
             factor(
@@ -33,7 +33,7 @@ df_plot00 <- gene_tables %>%
 
 
 # MAKE DOT PLOTS ####
-df_plot <- df_plot00 %>%
+DEG_plots <- DEG_plots00 %>%
     mutate(
         plot_long = pmap(
             list(geneset, data),
@@ -116,44 +116,12 @@ df_plot <- df_plot00 %>%
             }
         )
     )
-df_plot$plot_long[[3]]
+DEG_plots$plot_long[[3]]
 
 
-# MAKE PLOTS PANELS ####
-plot_panels_wide <- df_plot %>%
-    dplyr::filter(geneset != "ABMR_activity") %>%
-    pull(plot_wide) %>%
-    wrap_plots() +
-    plot_layout(axes = "collect") +
-
-    plot_annotation(tag_levels = "A")
+# SAVE THE PLOT DATA ####
+saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/"
+save(DEG_plots, file = paste(saveDir, "gene_DEG_plots.RData", sep = ""))
 
 
-plot_panels_long <- df_plot %>%
-    dplyr::filter(geneset != "ABMR_activity") %>%
-    pull(plot_long) %>%
-    wrap_plots() +
-    # plot_layout(axes = "collect") +
-    plot_annotation(tag_levels = "A")
 
-
-# SAVE THE PLOTS ####
-saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/output/"
-ggsave(
-    filename = paste(saveDir, "Selective DEG panel wide.png"),
-    plot = plot_panels_wide,
-    dpi = 600,
-    width = 60,
-    height = 8,
-    units = "cm",
-    bg = "white"
-)
-ggsave(
-    filename = paste(saveDir, "Selective DEG panel long.png"),
-    plot = plot_panels_long,
-    dpi = 600,
-    width = 40,
-    height = 8,
-    units = "cm",
-    bg = "white"
-)
