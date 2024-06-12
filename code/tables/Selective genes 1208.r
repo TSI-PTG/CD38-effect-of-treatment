@@ -4,12 +4,8 @@ library(tidyverse) # install.packages("tidyverse")
 library(flextable) # install.packages("flextable")
 library(officer) # install.packages("officer")
 library(openxlsx) # install.packages("openxlsx")
-# Bioconductor libraries
-library(Biobase) # BiocManager::install("Biobase")
 # Custom operators, functions, and datasets
 "%nin%" <- function(a, b) match(a, b, nomatch = 0) == 0
-# load reference set
-# load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/data_expressionset_k1208.RData")
 # load affymap
 load("Z:/DATA/Datalocks/Other data/affymap219_21Oct2019_1306_JR.RData")
 # load limma results
@@ -19,17 +15,20 @@ load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular e
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/NK_genes_L765.RData")
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/ABMR_endothelial_genes.RData")
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/ABMR_activity_genes.RData")
+load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/IFNG_genes.RData")
+
 
 
 # FILTER THE GENE TABLES ####
 gene_tables <- limma_tables %>%
     dplyr::select(design, table) %>%
-    expand_grid(geneset = c("ABMR_activity", "NK", "Endothelial")) %>%
+    expand_grid(geneset = c("ABMR_activity", "NK", "Endothelial", "IFNG")) %>%
     mutate(
         genes = case_when(
             geneset == "ABMR_activity" ~ genes_ABMR_activity$AffyID %>% list(),
             geneset == "NK" ~ genes_NK$AffyID %>% list(),
-            geneset == "Endothelial" ~ genes_ABMR_endothelial$AffyID %>% list()
+            geneset == "Endothelial" ~ genes_ABMR_endothelial$AffyID %>% list(),
+            geneset == "IFNG" ~ genes_IFNG$AffyID %>% list()
         )
     ) %>%
     relocate(geneset, genes, .after = design) %>%
@@ -156,7 +155,7 @@ gene_flextables <- gene_flextables00 %>%
                     flextable::border(i = 1, part = "footer", border.bottom = fp_border()) %>%
                     flextable::align(align = "center") %>%
                     flextable::align(align = "center", part = "header") %>%
-                    flextable::valign(i = 3, j = c(-1,-2, -7, -12, -17), valign = "bottom", part = "header") %>%
+                    flextable::valign(i = 3, j = c(-1, -2, -7, -12, -17), valign = "bottom", part = "header") %>%
                     flextable::font(fontname = "Arial", part = "all") %>%
                     flextable::fontsize(size = 8, part = "all") %>%
                     flextable::fontsize(size = 8, part = "footer") %>%
@@ -191,6 +190,7 @@ save(gene_tables, file = paste(saveDir, "gene_tables_limma_1208.RData", sep = ""
 gene_tables_ABMR_activity <- gene_tables %>% dplyr::filter(geneset == "ABMR_activity")
 gene_tables_NK <- gene_tables %>% dplyr::filter(geneset == "NK")
 gene_tables_Endothelial <- gene_tables %>% dplyr::filter(geneset == "Endothelial")
+gene_tables_IFNG <- gene_tables %>% dplyr::filter(geneset == "IFNG")
 
 
 # EXPORT THE DATA AS AN EXCEL SHEET ####
@@ -216,6 +216,15 @@ openxlsx::write.xlsx(gene_tables_NK$gene_tables,
 openxlsx::write.xlsx(gene_tables_Endothelial$gene_tables,
     asTable = TRUE,
     file = paste(saveDir1, "Endothelial_genes_limma_1208_12Jun24",
+        # Sys.Date(),
+        # format(Sys.time(), "_%I%M%p"),
+        ".xlsx",
+        sep = ""
+    )
+)
+openxlsx::write.xlsx(gene_tables_IFNG$gene_tables,
+    asTable = TRUE,
+    file = paste(saveDir1, "IFNG_genes_limma_1208_12Jun24",
         # Sys.Date(),
         # format(Sys.time(), "_%I%M%p"),
         ".xlsx",

@@ -14,47 +14,35 @@ load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vi
 
 
 # DEFINE THE ABMR ACTIVITY GENES ####
-genes_NK <- Hmisc::.q(
-    KLRF1,
-    PRF1,
-    TBX21,
-    GNLY,
-    CD247,
-    KLRD1,
-    NKG7,
-    GZMB,
-    CX3CR1,
-    SH2D1B,
-    IL2RB,
-    FCRL6,
-    S1PR5,
-    TRDC,
-    FGFBP2,
-    SAMD3,
-    GZMA,
-    NCR1,
-    CD160,
-    PYHIN1,
-    MYBL1
+genes_IFNG <- Hmisc::.q(
+    CXCL11,
+    PLA1A,
+    CXCL10,
+    CXCL9,
+    WARS,
+    GBP1,
+    GBP4,
+    IDO1,
+    RARRES3
 )
 
 
 # DEFINE THE ABMR ACTIVITY GENES BY MEAN EXPRESSION ####
-genes_NK <- vienna_1208 %>%
+genes_IFNG <- vienna_1208 %>%
     exprs() %>%
     as.data.frame() %>%
     mutate(means = rowMeans(.), .before = 1) %>%
     as_tibble(rownames = "AffyID") %>%
     right_join(affymap219 %>% dplyr::select(AffyID, Symb) %>% tibble(), ., by = "AffyID") %>%
-    dplyr::filter(Symb %in% genes_NK) %>%
+    dplyr::filter(Symb %in% genes_IFNG) %>%
     arrange(Symb, means) %>%
     dplyr::select(AffyID, Symb, means)
 
 
 # SAVE THE DATA ####
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/"
-save(genes_NK, file = paste(saveDir, "NK_genes_L765.RData", sep = ""))
+save(genes_IFNG, file = paste(saveDir, "IFNG_genes.RData", sep = ""))
 
 
 # EXPLORE THE DATA ####
-genes_NK %>% slice_max(means, by = "Symb")
+genes_IFNG %>% slice_max(means, by = "Symb")
