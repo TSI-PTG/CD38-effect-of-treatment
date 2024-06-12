@@ -1,7 +1,7 @@
 # HOUSEKEEPING ####
 # CRAN libraries
 library(tidyverse) # install.packages("tidyverse")
-library(flextable) # install.packages("flextable") #for table outputs
+library(flextable) # install.packages("flextable")
 library(officer) # install.packages("officer")
 library(openxlsx) # install.packages("openxlsx")
 # Bioconductor libraries
@@ -44,8 +44,142 @@ gene_tables <- limma_tables %>%
         )
     )
 
-names(gene_tables$gene_tables) <-gene_tables$design
+names(gene_tables$gene_tables) <- gene_tables$design
 gene_tables$gene_tables
+
+
+
+# FORMAT TABLES FOR MAKING FLEXTABLES ####
+gene_flextables00 <- gene_tables %>%
+    mutate(
+        gene_tables = map(gene_tables, function(gene_tables) {
+            gene_tables %>%
+                mutate(
+                    Gene = Gene %>% stringr::str_remove("///.*"),
+                    `<U+0394><U+0394> FC` = `<U+0394><U+0394> FC` %>% round(2),
+                    `<U+0394><U+0394> logFC` = `<U+0394><U+0394> logFC` %>% round(2),
+                    `<U+0394><U+0394> p` = case_when(
+                        `<U+0394><U+0394> p` < 0.0001 ~ `<U+0394><U+0394> p` %>% formatC(digits = 0, format = "e"),
+                        TRUE ~ `<U+0394><U+0394> p` %>% formatC(digits = 4, format = "f")
+                    ),
+                    `<U+0394><U+0394> FDR` = case_when(
+                        `<U+0394><U+0394> FDR` < 0.001 ~ `<U+0394><U+0394> FDR` %>% formatC(digits = 0, format = "e"),
+                        TRUE ~ `<U+0394><U+0394> FDR` %>% formatC(digits = 3, format = "f")
+                    )
+                )
+        })
+    ) %>%
+    dplyr::select(design, geneset, gene_tables) %>%
+    nest(.by = geneset) %>%
+    mutate(
+        data = map(
+            data,
+            function(data) {
+                data %>%
+                    pivot_wider(names_from = design, values_from = gene_tables) %>%
+                    unnest(everything(), names_repair = tidyr_legacy) %>%
+                    dplyr::select(
+                        -Symb1, -Symb2,
+                        -Gene1, -Gene2,
+                        -contains("FDR"),
+                        -contains("AffyID"),
+                        # -contains("Gene"),
+                        -contains("PBT"),
+                        -contains("MMDx"),
+                        -contains("Baseline_"),
+                        -contains("Week24_"),
+                        -contains("Week52_"),
+                    )
+            }
+        )
+    )
+
+# gene_flextables$data[[1]] %>%
+#     pivot_wider(names_from = design, values_from = gene_tables) %>%
+#     unnest(everything(), names_repair = tidyr_legacy) %>%
+#     dplyr::select(
+#         -Symb1, -Symb2,
+#         -contains("AffyID"),
+#         -contains("Gene"),
+#         -contains("PBT"),
+#         -contains("MMDx"),
+#         -contains("Baseline_"),
+#         -contains("Week24_"),
+#         -contains("Week52_"),
+#     )
+
+
+# UNIVERSAL VARIABLES FOR FLEXTABLE ####
+header2 <- c(
+    "Gene\nsymbol", "Gene",
+    rep("Week24 - Baseline", 5),
+    rep("Week52 - Week24", 5),
+    rep("Week52 - Baseline", 5)
+)
+
+header3 <- c(
+    "Gene\nsymbol", "Gene",
+    rep(c(
+        "\u394 FC\nPlacebo\n(N=10)", "\u394 FC\nFelzartamab\n(N=10)",
+        "\u394\u394 logFC\n(N=10)", "\u394\u394 FC\n(N=10)",
+        "\u394\u394 p"
+        # , "\u394\u394 FDR"
+    ), 3)
+)
+
+cellWidths <- c(4, 16, rep(c(4, 4, 3, 3, 3), 3))
+
+
+
+# MAKE FORMATTED FLEXTABLES ####
+gene_flextables <- gene_flextables00 %>%
+    mutate(
+        gene_flextables = pmap(
+            list(geneset, data),
+            function(geneset, data) {
+                colnames(data) <- LETTERS[1:ncol(data)]
+                title <- paste("Table i. Fold change expression in", geneset, "genes in biopsies from Felzartamab vs placebo patients")
+                data %>%
+                    flextable::flextable() %>%
+                    flextable::delete_part("header") %>%
+                    flextable::add_header_row(top = TRUE, values = header3) %>%
+                    flextable::add_header_row(top = TRUE, values = header2) %>%
+                    flextable::add_header_row(top = TRUE, values = rep(title, ncol_keys(.))) %>%
+                    # # flextable::add_footer_row(values = footnoteText[[1]], colwidths = ncol_keys(.)) %>%
+                    # flextable::merge_v(j = 1:2) %>%
+                    flextable::merge_v(part = "header") %>%
+                    flextable::merge_h(part = "header") %>%
+                    flextable::border_remove() %>%
+                    flextable::border(part = "header", border = fp_border()) %>%
+                    flextable::border(part = "body", border = fp_border()) %>%
+                    flextable::border(part = "footer", border.left = fp_border(), border.right = fp_border()) %>%
+                    flextable::border(i = 1, part = "footer", border.bottom = fp_border()) %>%
+                    flextable::align(align = "center") %>%
+                    flextable::align(align = "center", part = "header") %>%
+                    flextable::valign(i = 3, j = c(-1,-2, -7, -12, -17), valign = "bottom", part = "header") %>%
+                    flextable::font(fontname = "Arial", part = "all") %>%
+                    flextable::fontsize(size = 8, part = "all") %>%
+                    flextable::fontsize(size = 8, part = "footer") %>%
+                    flextable::fontsize(i = 1, size = 12, part = "header") %>%
+                    flextable::bold(part = "header") %>%
+                    # flextable::bold(j = 1, part = "body") %>%
+                    flextable::bg(bg = "white", part = "all") %>%
+                    # flextable::bg(i = ~ as.numeric(`<U+0394><U+0394> p`) < 0.05, j = 2:ncol_keys(.), bg = "grey90", part = "body") %>%
+                    flextable::padding(padding = 0, part = "all") %>%
+                    flextable::width(width = cellWidths, unit = "cm") %>%
+                    flextable::width(., width = dim(.)$widths * 33 / (flextable_dim(.)$widths), unit = "cm")
+            }
+        )
+    )
+
+gene_flextables$gene_flextables[[1]]
+
+
+
+# PRINT THE DATA TO POWERPOINT ####
+gene_flextables$gene_flextables %>% print(preview = "pptx")
+
+
 
 
 # EXPORT THE DATA AS .RData FILE ####
@@ -57,7 +191,6 @@ save(gene_tables, file = paste(saveDir, "gene_tables_limma_1208.RData", sep = ""
 gene_tables_ABMR_activity <- gene_tables %>% dplyr::filter(geneset == "ABMR_activity")
 gene_tables_NK <- gene_tables %>% dplyr::filter(geneset == "NK")
 gene_tables_Endothelial <- gene_tables %>% dplyr::filter(geneset == "Endothelial")
-
 
 
 # EXPORT THE DATA AS AN EXCEL SHEET ####
@@ -89,7 +222,3 @@ openxlsx::write.xlsx(gene_tables_Endothelial$gene_tables,
         sep = ""
     )
 )
-
-
-
-
