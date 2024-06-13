@@ -87,7 +87,7 @@ tcell_quantile_atagc <- 0.05
 
 
 # ISOLATE NK SELECTIVE GENES ####
-nk_genes_atagc <- gep_atagc %>%
+genes_NK_GEP_atagc <- gep_atagc %>%
     dplyr::filter(
         NKcell > quantile(NKcell, nk_quantile_atagc, na.rm = TRUE)
     ) %>%
@@ -110,7 +110,7 @@ nk_genes_atagc <- gep_atagc %>%
         Tcell_exclusion = paste("CD4 and CD8 < ", tcell_quantile_atagc * 100, "th percentile", sep = ""),
     )
 
-nk_genes_KTB18 <- gep_KTB18 %>%
+genes_NK_GEP_KTB18 <- gep_KTB18 %>%
     dplyr::filter(
         NKFCGR3Alow > quantile(NKFCGR3Alow, nk_quantile_KTB18) |
             NKFCGR3Ahigh > quantile(NKFCGR3Ahigh, nk_quantile_KTB18)
@@ -139,7 +139,7 @@ nk_genes_KTB18 <- gep_KTB18 %>%
     )
 
 
-nk_genes_LM22 <- gep_LM22 %>%
+genes_NK_GEP_LM22 <- gep_LM22 %>%
     dplyr::filter(
         NK.cells.activated > quantile(NK.cells.activated, nk_quantile_LM22) |
             NK.cells.resting > quantile(NK.cells.resting, nk_quantile_LM22)
@@ -173,25 +173,25 @@ nk_genes_LM22 <- gep_LM22 %>%
 
 
 # JOIN THE NK GENES FROM THE THREE PANELS ####
-nk_genes <- tibble(
+genes_NK_GEP <- tibble(
     panel = c("ATAGC_U133", "KTB18_RNAseq", "LM22_U133"),
-    data = list(nk_genes_atagc, nk_genes_KTB18, nk_genes_LM22),
+    data = list(genes_NK_GEP_atagc, genes_NK_GEP_KTB18, genes_NK_GEP_LM22),
     thresholds = list(
         tibble(nk_quantile_atagc, tcell_quantile_atagc),
         tibble(nk_quantile_KTB18, tcell_quantile_KTB18),
         tibble(nk_quantile_LM22, tcell_quantile_LM22)
     )
 )
-names(nk_genes$data) <- nk_genes$panel
+names(genes_NK_GEP$data) <- genes_NK_GEP$panel
 
 
-nk_genes %>% unnest(everything())
+genes_NK_GEP %>% unnest(everything())
 
 
 
 # DEFINE COLOR GRADIENT FOR HEATMAP ####
 # max <- gep %>%
-#     dplyr::filter(Symb %in% nk_genes) %>%
+#     dplyr::filter(Symb %in% genes_NK_GEP) %>%
 #     select_if(is.numeric) %>%
 #     max()
 
@@ -200,7 +200,7 @@ nk_genes %>% unnest(everything())
 
 # CREATE HEATMAP ####
 # gep %>%
-#     dplyr::filter(Symb %in% nk_genes) %>%
+#     dplyr::filter(Symb %in% genes_NK_GEP) %>%
 #     data.frame() %>%
 #     column_to_rownames("Symb") %>%
 #     dplyr::select(-AffyID, -Gene) %>%
@@ -217,17 +217,17 @@ nk_genes %>% unnest(everything())
 
 # EXPORT THE GENE SET ####
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/"
-save(nk_genes, file = paste(saveDir, "NK cell selective genes.RData", sep = ""))
+save(genes_NK_GEP, file = paste(saveDir, "genes_NK_GEP.RData", sep = ""))
 
 
 # EXPORT THE DATA AS AN EXCEL SHEET ####
 saveDir1 <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/output/"
-openxlsx::write.xlsx(nk_genes$data,
-    asTable = TRUE,
-    file = paste(saveDir1, "NK_genes_11Jun24",
-        # Sys.Date(),
-        # format(Sys.time(), "_%I%M%p"),
-        ".xlsx",
-        sep = ""
-    )
-)
+# openxlsx::write.xlsx(genes_NK_GEP$data,
+#     asTable = TRUE,
+#     file = paste(saveDir1, "genes_NK_GEP_11Jun24",
+#         # Sys.Date(),
+#         # format(Sys.time(), "_%I%M%p"),
+#         ".xlsx",
+#         sep = ""
+#     )
+# )

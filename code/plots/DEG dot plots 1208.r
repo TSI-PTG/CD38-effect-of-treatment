@@ -26,7 +26,13 @@ DEG_plots00 <- gene_tables %>%
     dplyr::select(design, geneset, gene_tables) %>%
     nest(.by = "geneset") %>%
     mutate(
-        geneset = geneset %>% factor(levels = c("ABMR_activity", "IFNG", "NK", "Endothelial")),
+        geneset = geneset %>%
+            factor(levels = c(
+                "ABMR_activity",
+                "IFNG",
+                "NK_ATAGC_U133", "NK_KTB18_RNAseq", "NK_LM22_U133", "NK_L765",
+                "Endothelial"
+            )),
         data = map(data, unnest, everything())
     ) %>%
     arrange(geneset)
@@ -116,12 +122,9 @@ DEG_plots <- DEG_plots00 %>%
             }
         )
     )
-DEG_plots$plot_long[[3]]
+DEG_plots$plot_long[[4]]
 
 
 # SAVE THE PLOT DATA ####
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/"
 save(DEG_plots, file = paste(saveDir, "gene_DEG_plots.RData", sep = ""))
-
-
-
