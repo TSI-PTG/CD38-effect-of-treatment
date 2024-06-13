@@ -9,31 +9,16 @@ library(readxl) # install.packages("readxl")
 library(clusterProfiler) # pak::pak("YuLab-SMU/clusterProfiler")
 # Custom operators, functions, and datasets
 "%nin%" <- function(a, b) match(a, b, nomatch = 0) == 0
-source("C:/R/CD38-effect-of-treatment/code/functions/plot.gg_volcano.r")
-source("C:/R/CD38-effect-of-treatment/code/functions/plot.gg_volcano_timeseries.r")
+source("C:/R/CD38-effect-of-treatment/code/functions/plot.gg_volcano_enrichment.r")
 # load reference data
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/IQR_filtered_probes_unique_genes_limma_1208.RData")
 # load enrichment results
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/felzartamab_gsea_k1208.RData")
-# load SCC data
-simplefile <- read_excel("Z:/MISC/Phil/AA All papers in progress/A GC papers/0000 simple XL files/Kidney 5086/MASTER COPY K5086 SimpleCorrAAInjRej 5AAInjNR 7AARej.xlsx")
+# load simplified enrichment plots
+load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/simplified_enrichment_plots.RData")
+# load simplified GO annotations
+source("C:/R/CD38-effect-of-treatment/code/data management/functional enrichment annotation/simplified GO annotation.r")
 
-
-
-# PATHWAY KEYS ####
-immune_response <- paste(c("immune", "immunity", "cytokine", "leukocyte", "cell activation", "response to", "interaction", "virus", "symbiont", "defense response"), collapse = "|")
-cell_cycle <- paste(c("cycle"), collapse = "|")
-inflammation <- paste(c("inflam"), collapse = "|")
-injury <- paste(c("injury"), collapse = "|")
-external_stimulus <- paste(c("response to", "interaction"), collapse = "|")
-reg_cellular_processes <- paste(c("regulation of"), collapse = "|")
-cellular_development <- paste(c(
-    "chromosome", "organelle fission", "organization", "segregation", "division",
-    "development", "neurogenesis", "generation", "morphogenesis", "differentiation", "component"
-), collapse = "|")
-cellular_communication <- paste(c("communication", "signal", "signalling"), collapse = "|")
-infection_response <- paste(c("virus", "symbiont", "defense response"), collapse = "|")
-metabolic_response <- paste(c("metabolism", "metabolic", "catabolic"), collapse = "|")
 
 
 # JOIN THE DE AND ENRICHMENT DATA ####
@@ -48,7 +33,7 @@ data_joined_01 <- data_joined_00 %>%
     dplyr::select(design, table, genes_gsea, gsea_go_tables) %>%
     # expand_grid(direction = c("increased", "decreased")) %>%
     mutate(
-        data_DE = map(
+        data_plot = map(
             table,
             function(table) {
                 table %>%
@@ -105,10 +90,10 @@ data_joined_01 <- data_joined_00 %>%
                     )
             }
         ),
-        data_joined = map2(
-            data_DE, data_enrichment,
-            function(data_DE, data_enrichment) {
-                data_DE %>%
+        data_annotation = map2(
+            data_plot, data_enrichment,
+            function(data_plot, data_enrichment) {
+                data_plot %>%
                     mutate(
                         p = -log10(`<U+0394><U+0394> p`),
                         logFC = `<U+0394><U+0394> logFC`
@@ -119,25 +104,77 @@ data_joined_01 <- data_joined_00 %>%
             }
         )
     ) %>%
-    dplyr::select(design, data_DE, data_enrichment, data_joined)
+    dplyr::select(design, data_plot, data_enrichment, data_annotation)
 
-# data_joined_01$data_DE[[1]]
-# data_joined_01$data_enrichment[[1]]
-# data_joined_01$data_joined[[1]] %>%
-#     arrange(count %>% desc()) %>%
-#     print(n = "all")
 
+
+# MAKE PLOTS ####
+df_plot <- data_joined_01 %>%
+    mutate(
+        plot = pmap(
+            list(data_plot, data_annotation, design),
+            gg_volcano_enrichment
+        )
+    )
+
+
+df_plot$plot[[1]]
+
+
+
+data %>%
+    ggplot2::ggplot(mapping = ggplot2::aes(x = p, y = logFC)) +
+    Map(
+        function(i) {
+            geom_curve(
+                data = GO_lines,
+                mapping = ggplot2::aes(
+                    x = p,
+                    y = logFC,
+                    xend = p2,
+                    yend = logFC2,
+                    col = group,
+                    group = group,
+                ),
+                curvature = i,
+                angle = 30,
+                linewidth = 0.1
+            )
+        },
+        i = GO_lines$curvature
+    )
+
+
+data %>%
+    ggplot(aes(x = p, y = logFC)) +
+    purrr::map(GO_lines$curvature, function(i) {
+        geom_curve(
+            data = GO_lines,
+            mapping = aes(
+                x = p,
+                y = logFC,
+                xend = p2,
+                yend = logFC2,
+                col = group,
+                group = group
+            ),
+            curvature = i,
+            angle = 30,
+            linewidth = 0.1
+        )
+    })
 
 
 # DEFINE TEMPORARY DATA FOR DRAFTING PLOTS ####
-df_plot_joined <- data_joined_01$data_joined[[2]]
-df_plot <- data_joined_01$data_DE[[2]]
+data_annotation <- data_joined_01$data_annotation[[1]]
+data <- data_joined_01$data_plot[[1]]
 
 
+df_enrichement <- simplified_enrichment_plot$plot_enrichment[[1]]
 
 
 # DEFINE LINES ####
-df_lines <- df_plot_joined %>%
+GO_lines <- data_annotation %>%
     arrange(count %>% desc()) %>%
     distinct(Symb, group, .keep_all = TRUE) %>%
     mutate(
@@ -154,26 +191,28 @@ df_lines <- df_plot_joined %>%
         )
     )
 
-df_labels <- df_plot_joined %>%
+GO_labels <- data_annotation %>%
     distinct(Symb, group, .keep_all = TRUE) %>%
     slice_max(prop, n = 5, by = c("group"), with_ties = FALSE) %>%
     arrange(group, prop %>% desc()) %>%
-    left_join(df_lines %>% distinct(Symb, group, .keep_all = TRUE))
+    left_join(GO_lines %>% distinct(Symb, group, .keep_all = TRUE))
 
 
 
 # PLOTTING GLOBALS ####
-ylim <- df_plot$logFC %>% range() * 1.25
-xlim <- c(0, df_plot$p %>% max() * 1.25)
+ylim <- data$logFC %>% range() * 1.25
+xlim <- c(0, data$p %>% max() * 1.4)
 
 
-# MAKE PLOTS ####
-plot_temp <- df_plot %>%
+
+
+
+plot_temp <- data %>%
     ggplot2::ggplot(mapping = ggplot2::aes(x = p, y = logFC)) +
     Map(
         function(i) {
             geom_curve(
-                data = df_lines,
+                data = GO_lines,
                 mapping = ggplot2::aes(
                     x = p,
                     y = logFC,
@@ -187,7 +226,7 @@ plot_temp <- df_plot %>%
                 linewidth = 0.1
             )
         },
-        i = df_lines$curvature
+        i = GO_lines$curvature
     ) +
     ggnewscale::new_scale_colour() +
     ggplot2::geom_segment(
@@ -195,7 +234,7 @@ plot_temp <- df_plot %>%
         data = tibble(
             x0 = seq(
                 -log10(0.05),
-                df_lines$p2 %>% max(),
+                GO_lines$p2 %>% max(),
                 length.out = 750
             ),
             xend = x0,
@@ -214,26 +253,11 @@ plot_temp <- df_plot %>%
     ) +
     ggplot2::geom_hline(yintercept = 0, linetype = "dashed") +
     ggplot2::geom_vline(xintercept = -log10(0.05), linetype = "dashed") +
-    ggplot2::geom_point(col = ifelse(df_plot$p <  -log10(0.05), "grey70", "black")) +
+    ggplot2::geom_point(col = ifelse(data$p < -log10(0.05), "grey70", "black")) +
     ggplot2::geom_point(
         show.legend = FALSE,
-        data = df_labels %>% distinct(group, .keep_all = TRUE),
+        data = GO_labels %>% distinct(group, .keep_all = TRUE),
         aes(x = p2, y = logFC2, fill = group), shape = 21, size = 4, col = "black"
-    ) +
-    ggrepel::geom_label_repel(
-        data = df_labels,
-        aes(x = p2, y = logFC2, fill = group, label = Symb),
-        size = 3,
-        nudge_x = 0.1,
-        hjust = "left",
-        direction = "y",
-        segment.size = 0,
-        min.segment.length = 5,
-        seed = 42,
-        label.padding = 0.1,
-        box.padding = 0.05,
-        max.overlaps = Inf,
-        show.legend = FALSE
     ) +
     scale_colour_gradient(low = "#ffffff95", high = "#ffffff00") +
     coord_cartesian(
@@ -247,11 +271,30 @@ plot_temp <- df_plot %>%
     )
 
 
+
+plot_out <- plot_temp +
+    patchwork::inset_element(
+        df_enrichement$plot[[1]],
+        align_to = "plot",
+        left = 0.78, right = 1,
+        bottom = 0.325, top = 0.475
+    ) +
+    patchwork::inset_element(
+        df_enrichement$plot[[2]],
+        align_to = "plot",
+        left = 0.78, right = 1,
+        bottom = 0.125, top = 0.275
+    )
+
+
+
+
+
 # SAVE THE PLOTS ####
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/output/"
 ggsave(
     filename = paste(saveDir, "volcano enrichment draft.png"),
-    plot = plot_temp,
+    plot = plot_out,
     dpi = 300,
     width = 20,
     height = 20,

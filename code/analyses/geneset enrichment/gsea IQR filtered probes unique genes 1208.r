@@ -9,6 +9,7 @@ library(circlize) # install.packages("circlize") pak::pak("jokergoo/circlize")
 library(Biobase) # BiocManager::install("Biobase")
 library(biobroom) # BiocManager::install("biobroom")
 library(org.Hs.eg.db) # BiocManager::install("org.Hs.eg.db")
+library(pRoloc) # BiocManager::install("pRoloc")
 "%nin%" <- function(a, b) match(a, b, nomatch = 0) == 0
 # load affymap
 load("Z:/DATA/Datalocks/Other data/affymap219_21Oct2019_1306_JR.RData")
@@ -51,7 +52,7 @@ gsea_go <- data %>%
             function(genes_gsea) {
                 clusterProfiler::gseGO(
                     gene = genes_gsea, ont = "BP", OrgDb = org.Hs.eg.db,
-                    minGSSize = 10, maxGSSize = 100,
+                    minGSSize = 10, maxGSSize = 200,
                     pvalueCutoff = 0.05, pAdjustMethod = "fdr", seed = TRUE
                 ) %>% clusterProfiler::setReadable(OrgDb = org.Hs.eg.db, keyType = "ENTREZID")
             }
@@ -59,18 +60,34 @@ gsea_go <- data %>%
     )
 
 
+# SIMPLIFY GO TERMS ####
+set.seed(42)
+gsea_go_simplified <- gsea_go %>%
+    mutate(gsea_go_simplified = map(gsea_go, clusterProfiler::simplify))
+
+
+
 # FORMAT TABLES FOR GENESET ENRICHMENT ANALYSES (GSEA) ####
-gsea_go_tables <- gsea_go %>%
+gsea_go_tables <- gsea_go_simplified %>%
     mutate(
         gsea_go_tables = map(
-            gsea_go,
-            function(gsea_go) {
-                gsea_go %>%
-                    data.frame() %>%
-                    tibble() %>%
+            gsea_go_simplified,
+            function(gsea_go_simplified) {
+                gsea_go_simplified %>%
+                    as_tibble() %>%
                     arrange(pvalue) %>%
-                    mutate(sign = case_when(NES < 0 ~ "Down Regulated", NES > 0 ~ "Up Regulated")) %>%
-                    mutate(Description = factor(Description, levels = Description, ordered = TRUE))
+                    mutate(
+                        sign = case_when(NES < 0 ~ "Down Regulated", NES > 0 ~ "Up Regulated"),
+                        Description = factor(Description, levels = Description, ordered = TRUE)
+                    ) %>%
+                    mutate(
+                        ID_parent = GO.db::GOBPPARENTS[[ID]][[1]], .by = ID,
+                        .after = ID,
+                    ) %>%
+                    mutate(
+                        Description_parent = pRoloc::goIdToTerm(ID_parent),
+                        .after = Description,
+                    )
             }
         ),
         gsea_go_flextables = map(
@@ -101,8 +118,8 @@ gsea_go_tables <- gsea_go %>%
             }
         )
     )
-
-gsea_go_tables$gsea_go_flextables[[3]]
+# gsea_go_tables$gsea_go_tables[[1]] 
+# gsea_go_tables$gsea_go_flextables[[3]]
 
 
 # SAVE THE GSEA RESULTS ####
@@ -119,12 +136,10 @@ saveDir1 <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 mole
 save(felzartamab_gsea_k1208, file = paste(saveDir1, "felzartamab_gsea_k1208.RData", sep = ""))
 openxlsx::write.xlsx(felzartamab_gsea_k1208$gsea_go_tables,
     asTable = TRUE,
-    file = paste(saveDir1, "Pathways_IQR_filtered_probes_unique_genes_limma_1208_27May24",
+    file = paste(saveDir1, "Pathways_IQR_filtered_probes_unique_genes_limma_1208_13June24",
         # Sys.Date(),
         # format(Sys.time(), "_%I%M%p"),
         ".xlsx",
         sep = ""
     )
 )
-
-
