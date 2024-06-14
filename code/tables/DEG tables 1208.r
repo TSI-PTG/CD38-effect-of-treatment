@@ -42,6 +42,7 @@ limma_tables <- limma_tables %>%
                         .after = PBT
                     ) %>%
                     mutate(
+                        Gene = Gene %>% str_remove("///.*"),
                         logFC = logFC %>% round(2),
                         FC = FC %>% round(2),
                         p = case_when(
@@ -93,14 +94,14 @@ flextables <- limma_tables %>%
                         "Baseline\n(N=10)", "Week24\n(N=10)", "Baseline\n(N=10)", "Week24\n(N=10)"
                     )
                 } else if (design == "Week24_vs_Week52") {
-                    title <- paste("Table i. Top 20 differentially expressed genes between baseline and week24 in biopsies from placebo and Felzartamab treated patients (by P-value)", sep = "")
+                    title <- paste("Table i. Top 20 differentially expressed genes between week24 and week52 in biopsies from placebo and Felzartamab treated patients (by P-value)", sep = "")
 
                     header3 <- c(
                         "Gene\nsymbol", "Gene", "PBT", "\u394\u394 logFC", "\u394\u394 FC", "\u394\u394 P", "\u394\u394 FDR",
                         "Week24\n(N=10)", "Week52\n(N=10)", "Week24\n(N=10)", "Week52\n(N=10)"
                     )
                 } else if (design == "Baseline_vs_Week52") {
-                    title <- paste("Table i. Top 20 differentially expressed genes between baseline and week24 in biopsies from placebo and Felzartamab treated patients (by P-value)", sep = "")
+                    title <- paste("Table i. Top 20 differentially expressed genes between baseline and week52 in biopsies from placebo and Felzartamab treated patients (by P-value)", sep = "")
                     header3 <- c(
                         "Gene\nsymbol", "Gene", "PBT", "\u394\u394 logFC", "\u394\u394 FC", "\u394\u394 P", "\u394\u394 FDR",
                         "Baseline\n(N=10)", "Week52\n(N=10)", "Baseline\n(N=10)", "Week52\n(N=10)"
@@ -138,4 +139,4 @@ flextables$flextables[[1]]
 
 
 # PRINT THE DATA TO POWERPOINT ####
-gene_flextables$gene_flextables %>% print(preview = "pptx")
+flextables$flextables %>% print(preview = "pptx")
