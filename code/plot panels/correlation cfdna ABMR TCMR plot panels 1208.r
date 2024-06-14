@@ -8,14 +8,14 @@ library(patchwork) # install.packages("patchwork")
 # source plot function
 # source("C:/R/CD38-effect-of-treatment/code/functions/plot.gg_violin_interaction.r")
 # load reference data
-load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/Felzartamab_cfdna_cor_plots_plots_1208.RData")
+load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/Felzartamab_cfdna_percent_quantile_regression_plots_1208.RData")
 
 
 
 
 
 # MAKE PANEL OF CORRELATION PLOTS ####
-panel_cfdna_correlation_1 <- felzartamab_cfdna_cor_plots %>%
+panel_cfdna_correlation_1 <- felzartamab_cfdna_qr_plots %>%
     dplyr::filter(
         Followup_pairwise %in% c("Baseline - Week24"),
         category %in% c("ABMR")
@@ -33,7 +33,7 @@ panel_cfdna_correlation_1 <- felzartamab_cfdna_cor_plots %>%
         plot.tag = element_text(size = 20, face = "bold", vjust = 1)
     )
 
-panel_cfdna_correlation_2 <- felzartamab_cfdna_cor_plots %>%
+panel_cfdna_correlation_2 <- felzartamab_cfdna_qr_plots %>%
     dplyr::filter(
         Followup_pairwise %in% c("Baseline - Week52"),
         category %in% c("ABMR")
@@ -51,7 +51,7 @@ panel_cfdna_correlation_2 <- felzartamab_cfdna_cor_plots %>%
         plot.tag = element_text(size = 20, face = "bold", vjust = 1)
     )
 
-panel_cfdna_correlation_3 <- felzartamab_cfdna_cor_plots %>%
+panel_cfdna_correlation_3 <- felzartamab_cfdna_qr_plots %>%
     dplyr::filter(
         Followup_pairwise %in% c("Week24 - Week52"),
         category %in% c("ABMR")
@@ -81,7 +81,7 @@ panels <- ggarrange(
 # SAVE THE PLOTS ####
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/output/"
 ggsave(
-    filename = paste(saveDir, "Felzartamab cfdna correlation plots cfDNA.png"),
+    filename = paste(saveDir, "Felzartamab cfdna percent correlation plots cfDNA.png"),
     plot = panels,
     dpi = 300,
     width = 60,

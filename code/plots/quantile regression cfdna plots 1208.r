@@ -8,7 +8,7 @@ library(patchwork) # install.packages("patchwork")
 # source plot function
 # source("C:/slope/CD38-effect-of-treatment/code/functions/plot.gg_violin_interaction.r")
 # load reference data
-load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/felzartamab_cfdna_cor_k1208")
+load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/felzartamab_cfdna_percent_cor_k1208.RData")
 
 
 
@@ -48,10 +48,6 @@ data_plot <- felzartamab_cfdna_cor_k1208 %>%
 
 
 # MAKE INDIVIDUAL PLOTS ####
--100 / -0.5
-
-50 / 0.4
-
 felzartamab_cfdna_qr_plots <- data_plot %>%
     mutate(
         plot_scatter = pmap(
@@ -178,4 +174,4 @@ felzartamab_cfdna_qr_plots$plot_scatter[[1]]
 
 # SAVE THE PLOT DATA ####
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/"
-save(felzartamab_cfdna_qr_plots, file = paste(saveDir, "Felzartamab_cfdna_quantile_regression_plots_1208.RData", sep = ""))
+save(felzartamab_cfdna_qr_plots, file = paste(saveDir, "Felzartamab_cfdna_percent_quantile_regression_plots_1208.RData", sep = ""))

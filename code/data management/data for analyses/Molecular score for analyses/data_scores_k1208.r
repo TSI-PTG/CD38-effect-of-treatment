@@ -7,8 +7,12 @@ library(haven) # install.packages("haven")
 source("C:/R/CD38-effect-of-treatment/code/functions/complex_pivot.R")
 # load data
 data <- read_spss("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vienna/G_Rstuff/data/Generalfile_Felzartamab SPSS.sav")
+load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/vienna_1208_6Mar24.RData")
 # load the processed cfDNA data
 # load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/data_cfdna_cpml.RData")
+
+
+data  %>% dplyr::select(contains("cort"))
 
 
 
@@ -29,6 +33,7 @@ data %>% dplyr::select(contains("mvi"))
 vars <- c(
     # "GcfDNA_cp_ml",
     # "Bx_date",
+    "_Cortexprob_1208Set",
     "_RejPC1_1208Set",
     "_RejPC2_1208Set",
     "_RejPC3_1208Set",
@@ -86,8 +91,7 @@ data_scores <- data %>% complex_pivot(
 )
 
 data_scores %>% print(n = "all")
-data %>% dplyr::select(contains("cfdna"))
-
+data_scores %>% dplyr::select(contains("cort"))
 
 
 # WRANGLE THE CP/ML cfDNA FROM SPSS DATA ####
@@ -136,8 +140,6 @@ data_cfdna_percent <- data %>%
             str_replace("Week24", "FU1") %>%
             str_replace("Week52", "FU2")
     )
-
-
 
 
 # WRANGLE THE PATIENT DATA ####
