@@ -27,15 +27,25 @@ DEG_plots00 <- gene_tables %>%
     nest(.by = "geneset") %>%
     mutate(
         geneset = geneset %>%
-            factor(levels = c(
-                "ABMR_activity",
-                "IFNG",
-                "NK_ATAGC_U133", "NK_KTB18_RNAseq", "NK_LM22_U133", "NK_L765",
-                "Endothelial"
-            )),
+            factor(
+                levels = c(
+                    "ABMR_activity",
+                    "IFNG",
+                    "NK_ATAGC_U133", "NK_KTB18_RNAseq", "NK_LM22_U133", "NK_L765",
+                    "Endothelial"
+                ),
+                labels = c(
+                    "ABMR_activity genes",
+                    "IFNG-inducible ABMR activity genes",
+                    "NK_ATAGC_U133 genes", "NK_KTB18_RNAseq genes", "NK_LM22_U133 genes", "NK cell expressed ABMR activity genes",
+                    "ABMR-associated endothelial genes"
+                )
+            ),
         data = map(data, unnest, everything())
     ) %>%
     arrange(geneset)
+
+DEG_plots00$geneset[[1]]  %>% droplevels()  %>% levels
 
 
 # MAKE DOT PLOTS ####
@@ -69,8 +79,10 @@ DEG_plots <- DEG_plots00 %>%
                     ggplot2::labs(
                         x = "\u0394\u0394 logFC",
                         y = NULL,
-                        title = paste(geneset %>% str_replace("_", " "), "genes")
+                        # title = paste(geneset %>% str_replace("_", " "), "genes"),
+                        title = geneset
                     ) +
+                    ggplot2::coord_cartesian(xlim = c(-1, 1)) +
                     ggplot2::theme_bw() +
                     ggplot2::theme(
                         panel.grid.minor = element_blank(),
@@ -78,7 +90,7 @@ DEG_plots <- DEG_plots00 %>%
                         axis.text.x = element_text(colour = "black", size = 6),
                         axis.text.y = element_text(colour = "black", size = 7)
                     ) +
-                    ggplot2::facet_wrap(~design, scales = "free_x", nrow = 1)
+                    ggplot2::facet_wrap(~design, scales = "fixed", nrow = 1)
             }
         ),
         plot_wide = pmap(
@@ -109,7 +121,8 @@ DEG_plots <- DEG_plots00 %>%
                     ggplot2::labs(
                         y = "\u0394\u0394 logFC",
                         x = NULL,
-                        title = paste(geneset %>% str_replace("_", " "), "genes")
+                        # title = paste(geneset %>% str_replace("_", " "), "genes"),
+                        title = geneset
                     ) +
                     ggplot2::theme_bw() +
                     ggplot2::theme(
@@ -122,7 +135,7 @@ DEG_plots <- DEG_plots00 %>%
             }
         )
     )
-DEG_plots$plot_long[[4]]
+DEG_plots$plot_long[[2]]
 
 
 # SAVE THE PLOT DATA ####

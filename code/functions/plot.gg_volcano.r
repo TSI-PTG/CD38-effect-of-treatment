@@ -3,6 +3,7 @@ gg_volcano <- function(
     point_size = 2.5, point_size_null = 1.25,
     alpha = 0.8, alpha_null = 0.5, alpha_lines = 0.25,
     col_dn = "#005EFF", col_up = "#ff0040", col_null = "grey30",
+    show_labels = FALSE,
     col_labels = c("green", "yellow"),
     labels_probes = NULL, labels_probes_names = NULL,
     labels_probes_n = 10, labels_probes_size = 2) {
@@ -31,18 +32,11 @@ gg_volcano <- function(
         dplyr::arrange(order)
     data_sig <- data %>%
         dplyr::filter(AffyID %in% c(probes_sig_up, probes_sig_dn))
-    labels_probes <- labels_probes %>% bind_rows()
-    # data_labels <- data %>%
-    #     dplyr::filter(AffyID %in% labels_probes)
-
-    data_labels <- labels_probes %>%
-        dplyr::left_join(data, by = "AffyID")
-
     min_p <- data %>%
         dplyr::slice_min(`<U+0394><U+0394> p`) %>%
         dplyr::pull(`<U+0394><U+0394> p`) %>%
         log10() * -1
-    data %>%
+    plot <- data %>%
         ggplot2::ggplot(mapping = ggplot2::aes(x = p, y = logFC)) +
         ggplot2::geom_hline(yintercept = 0, linetype = "dashed") +
         ggplot2::geom_vline(xintercept = -log10(0.05), linetype = "dashed") +
@@ -60,7 +54,44 @@ gg_volcano <- function(
             stroke = 0.125,
             size = point_size
         ) +
-        ggrepel::geom_label_repel(
+        ggplot2::geom_text(
+            x = -Inf,
+            y = Inf,
+            vjust = -0.25,
+            hjust = 0,
+            label = design %>% stringr::str_replace("_vs_", " - "),
+            fontface = "bold.italic"
+        ) +
+        ggplot2::scale_colour_manual(values = c(col_dn, col_up)) +
+        ggplot2::scale_fill_manual(values = col_labels) +
+        ggplot2::scale_x_continuous(
+            breaks = c(0, 1, 2, 3, 4, 5),
+            labels = 10^-c(0, 1, 2, 3, 4, 5)
+        ) +
+        ggplot2::coord_cartesian(xlim = xlim, ylim = ylim, clip = "off") +
+        ggplot2::labs(
+            y = "Effect of treatment\n(\u394\u394 logFC)",
+            x = "Effect of treatment\n(\u394\u394 p-value)",
+            x = NULL,
+            col = NULL,
+            fill = NULL
+        ) +
+        ggplot2::theme_bw() +
+        ggplot2::theme(
+            # panel.border = ggplot2::element_blank(),
+            axis.line = ggplot2::element_line(linewidth = 0.2),
+            panel.grid = ggplot2::element_blank(),
+            # legend.position = "none",
+            axis.title = ggplot2::element_text(size = 12, face = "plain"),
+            axis.text = ggplot2::element_text(colour = "black"),
+            plot.margin = ggplot2::unit(c(0.5, 0.1, 0.1, 0.1), "cm"),
+            plot.background = ggplot2::element_rect(fill = "grey95", colour = " white")
+        )
+    if (show_labels) {
+        labels_probes <- labels_probes %>% dplyr::bind_rows()
+        data_labels <- labels_probes %>%
+            dplyr::left_join(data, by = "AffyID")
+        plot <- plot + ggrepel::geom_label_repel(
             data = data_labels,
             mapping = ggplot2::aes(label = Symb, fill = label),
             max.overlaps = Inf,
@@ -73,44 +104,14 @@ gg_volcano <- function(
             # fill = data_labels %>% dplyr::pull(col),
             label.padding = 0.1,
             box.padding = 0.1,
-            point.padding = 0.5,
+            point.padding = 0.3,
             label.size = 0.1,
             direction = "y",
             # nudge_x = 0.01,
             nudge_y = ifelse(data_labels$logFC > 0, 0.25, -0.25),
             # show.legend = FALSE,
             seed = 42
-        ) +
-        ggplot2::geom_text(
-            x = -Inf,
-            y = Inf,
-            vjust = -0.25,
-            hjust = 0,
-            label = design %>% str_replace("_vs_", " - "),
-            fontface = "bold.italic"
-        ) +
-        ggplot2::scale_colour_manual(values = c(col_dn, col_up)) +
-        ggplot2::scale_fill_manual(values = col_labels) +
-        ggplot2::scale_x_continuous(
-            breaks = c(0, 1, 2, 3, 4, 5),
-            labels = 10^-c(0, 1, 2, 3, 4, 5)
-        ) +
-        ggplot2::coord_cartesian(xlim = xlim, ylim = ylim, clip = "off") +
-        ggplot2::labs(
-            y = "Effect of treatment\n(\u394\u394 log2FC)",
-            x = "Effect of treatment\n(\u394\u394 p-value)",
-            x = NULL,
-            col = NULL
-        ) +
-        ggplot2::theme_bw() +
-        ggplot2::theme(
-            # panel.border = ggplot2::element_blank(),
-            axis.line = ggplot2::element_line(linewidth = 0.2),
-            panel.grid = ggplot2::element_blank(),
-            # legend.position = "none",
-            axis.title = ggplot2::element_text(size = 12, face = "plain"),
-            axis.text = ggplot2::element_text(colour = "black"),
-            plot.margin = ggplot2::unit(c(0.5, 0.1, 1.25, 0.1), "cm"),
-            plot.background = ggplot2::element_rect(fill = "grey95", colour = " white")
         )
+    }
+    plot
 }

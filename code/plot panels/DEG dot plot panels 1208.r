@@ -8,17 +8,26 @@ library(patchwork) # install.packages("patchwork")
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/gene_DEG_plots.RData")
 
 
+
+
 # MAKE PLOTS PANELS ####
 plot_panels_wide <- DEG_plots %>%
-    dplyr::filter(geneset != "ABMR_activity") %>%
+    dplyr::filter(geneset %in% c(
+        "IFNG-inducible ABMR activity genes",
+        "NK cell expressed ABMR activity genes",
+        "ABMR-associated endothelial genes"
+    )) %>%
     pull(plot_wide) %>%
     wrap_plots() +
     plot_layout(axes = "collect") +
-
     plot_annotation(tag_levels = "A")
 
 plot_panels_long <- DEG_plots %>%
-    dplyr::filter(geneset != "ABMR_activity") %>%
+    dplyr::filter(geneset %in% c(
+        "IFNG-inducible ABMR activity genes",
+        "NK cell expressed ABMR activity genes",
+        "ABMR-associated endothelial genes"
+    )) %>%
     pull(plot_long) %>%
     wrap_plots() +
     # plot_layout(axes = "collect") +

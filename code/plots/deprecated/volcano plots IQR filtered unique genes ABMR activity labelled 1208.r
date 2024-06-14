@@ -12,27 +12,27 @@ source("C:/R/CD38-effect-of-treatment/code/functions/plot.gg_volcano_timeseries.
 # load reference data
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/IQR_filtered_probes_unique_genes_limma_1208.RData")
 # load SCC data
-simplefile <- read_excel("Z:/MISC/Phil/AA All papers in progress/A GC papers/0000 simple XL files/Kidney 5086/MASTER COPY K5086 SimpleCorrAAInjRej 5AAInjNR 7AARej.xlsx")
+# simplefile <- read_excel("Z:/MISC/Phil/AA All papers in progress/A GC papers/0000 simple XL files/Kidney 5086/MASTER COPY K5086 SimpleCorrAAInjRej 5AAInjNR 7AARej.xlsx")
 
 
 
 # DEFINE PROBE CORRELATIONS WITH EABMR ####
-genes_abmr <- simplefile %>%
-    dplyr::select(Affy, SYMB, "corrRej7AA4-EABMR", "pvalRej7AA4-EABMR") %>%
-    rename(
-        AffyID = Affy,
-        EABMRcorrp = `pvalRej7AA4-EABMR`
-    ) %>%
-    mutate(ABMRrank = EABMRcorrp %>% rank()) %>%
-    dplyr::filter(`corrRej7AA4-EABMR` > 0) %>%
-    arrange(EABMRcorrp) %>%
-    distinct(SYMB, .keep_all = TRUE) %>%
-    slice(1:20) %>%
-    pull(SYMB)
+# genes_abmr <- simplefile %>%
+#     dplyr::select(Affy, SYMB, "corrRej7AA4-EABMR", "pvalRej7AA4-EABMR") %>%
+#     rename(
+#         AffyID = Affy,
+#         EABMRcorrp = `pvalRej7AA4-EABMR`
+#     ) %>%
+#     mutate(ABMRrank = EABMRcorrp %>% rank()) %>%
+#     dplyr::filter(`corrRej7AA4-EABMR` > 0) %>%
+#     arrange(EABMRcorrp) %>%
+#     distinct(SYMB, .keep_all = TRUE) %>%
+#     slice(1:20) %>%
+#     pull(SYMB)
 
-probes_abmr <- simplefile %>%
-    dplyr::filter(SYMB %in% genes_abmr) %>%
-    pull(Affy)
+# probes_abmr <- simplefile %>%
+#     dplyr::filter(SYMB %in% genes_abmr) %>%
+#     pull(Affy)
 
 
 
