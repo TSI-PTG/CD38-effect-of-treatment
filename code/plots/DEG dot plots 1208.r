@@ -49,6 +49,9 @@ DEG_plots00$geneset[[1]] %>%
     droplevels() %>%
     levels()
 
+col_dn <- "#005eff"
+col_up <- "#ff0040"
+
 
 # MAKE DOT PLOTS ####
 DEG_plots <- DEG_plots00 %>%
@@ -60,8 +63,8 @@ DEG_plots <- DEG_plots00 %>%
                     dplyr::rename(logFC = `<U+0394><U+0394> logFC`, p = `<U+0394><U+0394> p`) %>%
                     dplyr::mutate(
                         col = dplyr::case_when(
-                            p < 0.05 & logFC < 0 ~ "green",
-                            p < 0.05 & logFC > 0 ~ "red",
+                            p < 0.05 & logFC < 0 ~ col_dn,
+                            p < 0.05 & logFC > 0 ~ col_up,
                             TRUE ~ "grey20"
                         )
                     )
@@ -104,8 +107,8 @@ DEG_plots <- DEG_plots00 %>%
                     dplyr::rename(logFC = `<U+0394><U+0394> logFC`, p = `<U+0394><U+0394> p`) %>%
                     dplyr::mutate(
                         col = dplyr::case_when(
-                            p < 0.05 & logFC < 0 ~ "green",
-                            p < 0.05 & logFC > 0 ~ "red",
+                            p < 0.05 & logFC < 0 ~ col_dn,
+                            p < 0.05 & logFC > 0 ~ col_up,
                             TRUE ~ "grey20"
                         )
                     )

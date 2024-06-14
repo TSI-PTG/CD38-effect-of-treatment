@@ -12,32 +12,11 @@ library(clusterProfiler) # pak::pak("YuLab-SMU/clusterProfiler")
 source("C:/R/CD38-effect-of-treatment/code/functions/plot.gg_volcano.r")
 source("C:/R/CD38-effect-of-treatment/code/functions/plot.gg_volcano_timeseries.r")
 # load reference data
-load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/IQR_filtered_probes_unique_genes_limma_1208.RData")
+load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/IQR_filtered_probes_unique_genes_baseline_corrected_cortex_corrected_limma_1208.RData")
 # load enrichment results
-load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/felzartamab_gsea_k1208.RData")
-
-
-
-# PATHWAY KEYS ####
-immune_response <- paste(
-    c(
-        "immune", "immunity", "cytokine", "leukocyte", "cell activation",
-        "response to", "interaction", "virus", "symbiont", "defense response"
-    ),
-    collapse = "|"
-)
-cell_cycle <- paste(c("cycle"), collapse = "|")
-inflammation <- paste(c("inflam"), collapse = "|")
-injury <- paste(c("injury"), collapse = "|")
-external_stimulus <- paste(c("response to", "interaction"), collapse = "|")
-reg_cellular_processes <- paste(c("regulation of"), collapse = "|")
-cellular_development <- paste(c(
-    "chromosome", "organelle fission", "organization", "segregation", "division",
-    "development", "neurogenesis", "generation", "morphogenesis", "differentiation", "component"
-), collapse = "|")
-cellular_communication <- paste(c("communication", "signal", "signalling"), collapse = "|")
-infection_response <- paste(c("virus", "symbiont", "defense response"), collapse = "|")
-metabolic_response <- paste(c("metabolism", "metabolic", "catabolic"), collapse = "|")
+load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/felzartamab_gsea_baseline_corrected_cortex_corrected_k1208.RData")
+# load simplified GO annotations
+source("C:/R/CD38-effect-of-treatment/code/data management/functional enrichment annotation/simplified GO annotation.r")
 
 
 # JOIN THE DE AND ENRICHMENT DATA ####
@@ -115,13 +94,7 @@ data_enrichment_plot <- data_enrichment %>%
             }
         )
     )
-
-
-
-# DEFINE TEMPORARY DATA FOR DRAFTING PLOTS ####
-df_plot_enrichment <- data_enrichment_plot$data_plot[[1]]
-
-
+data_enrichment_plot$data_plot[[3]]  %>% print(n="all")
 
 
 # MAKE SIMPLIFIED ENRICHEMENT PLOTS ####
@@ -141,7 +114,7 @@ simplified_enrichment_plot <- data_enrichment_plot %>%
                                     ggplot2::ggplot(mapping = ggplot2::aes(x = 1, y = Symb, label = Symb)) +
                                     ggplot2::geom_label(
                                         hjust = "left",
-                                        size = 3
+                                        size = 1
                                     ) +
                                     labs(
                                         title = paste(group, "\n(", data$n_in_group, " GO term(s) enriched)", sep = "")
@@ -149,7 +122,7 @@ simplified_enrichment_plot <- data_enrichment_plot %>%
                                     ggplot2::theme_void() +
                                     ggplot2::coord_cartesian(xlim = c(1, 1.01), expand = 0.1) +
                                     ggplot2::theme(
-                                        plot.title = element_text(hjust = 0, size = 10),
+                                        plot.title = element_text(hjust = 0, size = 6),
                                         plot.margin = unit(c(0, 0, 0, 0), "cm")
                                     )
                             }
@@ -158,12 +131,9 @@ simplified_enrichment_plot <- data_enrichment_plot %>%
             }
         )
     )
-
+# simplified_enrichment_plot$plot_enrichment[[1]]$plot
 
 
 # SAVE THE PLOT DATA ####
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/"
 save(simplified_enrichment_plot, file = paste(saveDir, "simplified_enrichment_plots.RData", sep = ""))
-
-
-
