@@ -121,30 +121,6 @@ df_plot <- data_joined_01 %>%
 df_plot$plot[[1]]
 
 
-
-data %>%
-    ggplot2::ggplot(mapping = ggplot2::aes(x = p, y = logFC)) +
-    Map(
-        function(i) {
-            geom_curve(
-                data = GO_lines,
-                mapping = ggplot2::aes(
-                    x = p,
-                    y = logFC,
-                    xend = p2,
-                    yend = logFC2,
-                    col = group,
-                    group = group,
-                ),
-                curvature = i,
-                angle = 30,
-                linewidth = 0.1
-            )
-        },
-        i = GO_lines$curvature
-    )
-
-
 data %>%
     ggplot(aes(x = p, y = logFC)) +
     purrr::map(GO_lines$curvature, function(i) {

@@ -45,7 +45,9 @@ DEG_plots00 <- gene_tables %>%
     ) %>%
     arrange(geneset)
 
-DEG_plots00$geneset[[1]]  %>% droplevels()  %>% levels
+DEG_plots00$geneset[[1]] %>%
+    droplevels() %>%
+    levels()
 
 
 # MAKE DOT PLOTS ####
@@ -85,6 +87,8 @@ DEG_plots <- DEG_plots00 %>%
                     ggplot2::coord_cartesian(xlim = c(-1, 1)) +
                     ggplot2::theme_bw() +
                     ggplot2::theme(
+                        plot.title = element_text(size = 10),
+                        strip.text = element_text(size = 7),
                         panel.grid.minor = element_blank(),
                         panel.grid.major = element_line(size = 0.25),
                         axis.text.x = element_text(colour = "black", size = 6),
@@ -126,6 +130,8 @@ DEG_plots <- DEG_plots00 %>%
                     ) +
                     ggplot2::theme_bw() +
                     ggplot2::theme(
+                        plot.title = element_text(size = 10),
+                        strip.text = element_text(size = 7),
                         panel.grid.minor = element_blank(),
                         panel.grid.major = element_line(size = 0.25),
                         axis.text.y = element_text(colour = "black"),

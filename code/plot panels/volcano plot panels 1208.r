@@ -16,13 +16,15 @@ plot_volcano_panel <- wrap_plots(
     plot_volcano$plot_volcano,
     nrow = 1, ncol = 3
 ) +
+    plot_annotation(tag_levels = "A") +
     plot_layout(
         guides = "collect",
         axes = "collect", axis_titles = "collect"
     ) &
     theme(
         legend.position = "top",
-        plot.background = element_rect(fill = "white")
+        plot.background = element_rect(fill = "white"),
+        plot.tag = element_text(vjust = 5)
     )
 
 
@@ -33,7 +35,7 @@ ggsave(
     file = paste(saveDir, "Volcano IQR_filtered_probes_unique_genes_baseline_corrected_cortex_corrected 1208.png", sep = ""),
     dpi = 300,
     width = 30,
-    height = 14,
+    height = 12,
     units = "cm",
     bg = "white"
 ) %>% suppressWarnings()

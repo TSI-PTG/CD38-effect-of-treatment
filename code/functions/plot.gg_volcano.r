@@ -70,8 +70,10 @@ gg_volcano <- function(
         ) +
         ggplot2::coord_cartesian(xlim = xlim, ylim = ylim, clip = "off") +
         ggplot2::labs(
-            y = "Effect of treatment\n(\u394\u394 logFC)",
-            x = "Effect of treatment\n(\u394\u394 p-value)",
+            # y = "Effect of treatment\n(\u394\u394 logFC)",
+            # x = "Effect of treatment\n(\u394\u394 p-value)",
+            y = "\u394\u394 logFC",
+            x = "\u394\u394 p-value",
             x = NULL,
             col = NULL,
             fill = NULL
@@ -84,7 +86,7 @@ gg_volcano <- function(
             # legend.position = "none",
             axis.title = ggplot2::element_text(size = 12, face = "plain"),
             axis.text = ggplot2::element_text(colour = "black"),
-            plot.margin = ggplot2::unit(c(0.5, 0.1, 0.1, 0.1), "cm"),
+            plot.margin = ggplot2::unit(c(0.25, 0.1, 0.1, 0.1), "cm"),
             plot.background = ggplot2::element_rect(fill = "grey95", colour = " white")
         )
     if (show_labels) {

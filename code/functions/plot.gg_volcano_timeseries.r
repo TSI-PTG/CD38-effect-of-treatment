@@ -33,7 +33,7 @@ gg_volcano_timeseries <- function(
     data_sig <- data %>%
         dplyr::filter(AffyID %in% c(probes_sig_up, probes_sig_dn))
     data_labels <- data %>%
-        dplyr::filter(AffyID %in% labels_probes) 
+        dplyr::filter(AffyID %in% labels_probes)
     data %>%
         ggplot2::ggplot(mapping = ggplot2::aes(x = p, y = logFC)) +
         ggplot2::geom_vline(xintercept = xbreak1, linetype = "solid", linewidth = 0.2) +
@@ -77,9 +77,10 @@ gg_volcano_timeseries <- function(
             mapping = ggplot2::aes(x = p, y = logFC, group = AffyID, col = col),
             # col = data_sig$col,
             alpha = alpha_lines,
-            linewidth = 0.5
+            linewidth = 0.5, 
+            show.legend = FALSE
         ) +
-                ggplot2::geom_point(
+        ggplot2::geom_point(
             data = data_sig,
             shape = 21,
             fill = data_sig$col,
@@ -107,7 +108,6 @@ gg_volcano_timeseries <- function(
             show.legend = FALSE,
             seed = 42
         ) +
-
         ggplot2::geom_text(
             x = -Inf,
             y = Inf,
@@ -124,34 +124,34 @@ gg_volcano_timeseries <- function(
             label = "Week24 - Week52",
             fontface = "bold.italic"
         ) +
-        ggplot2::geom_text(
-            x = axis_label_position_x_1,
-            y = -Inf,
-            vjust = 1.75,
-            hjust = 0.5,
-            label = "Effect of treatment\n(\u394\u394 p-value)",
-            fontface = "plain"
-        ) +
-        ggplot2::geom_text(
-            x = mean(c(min_p, 1 + min_p, 2 + min_p, 3 + min_p)),
-            y = -Inf,
-            vjust = 1.75,
-            hjust = 0.5,
-            label = "Effect post-treatment\n(\u394\u394 p-value)"
-        ) +
+        # ggplot2::geom_text(
+        #     x = axis_label_position_x_1,
+        #     y = -Inf,
+        #     vjust = 1.75,
+        #     hjust = 0.5,
+        #     label = "\u394\u394 p-value",
+        #     fontface = "plain"
+        # ) +
+        # ggplot2::geom_text(
+        #     x = mean(c(min_p, 1 + min_p, 2 + min_p, 3 + min_p)),
+        #     y = -Inf,
+        #     vjust = 1.75,
+        #     hjust = 0.5,
+        #     label = "\u394\u394 p-value"
+        # ) +
         ggplot2::scale_colour_manual(values = c(col_dn, col_up)) +
         ggplot2::scale_x_continuous(
             breaks = c(0, 1, 2, 3, min_p, 1 + min_p, 2 + min_p, 3 + min_p),
             labels = 10^-c(0, 1, 2, 3, 0, 1, 2, 3)
         ) +
-        ggplot2::scale_y_continuous(
-            sec.axis = ggplot2::sec_axis(~., name = "Effect post-treatment\n(\u394\u394 log2FC)"),
-            expand = c(0, 0.05)
-        ) +
+        # ggplot2::scale_y_continuous(
+        #     # sec.axis = ggplot2::sec_axis(~., name = "Effect post-treatment\n(\u394\u394 logFC)"),
+        #     # expand = c(0, 0.05)
+        # ) +
         ggplot2::coord_cartesian(clip = "off") +
         ggplot2::labs(
-            y = "Effect of treatment\n(\u394\u394 log2FC)",
-            x = NULL,
+            y = "\u394\u394 logFC",
+            x = "\u394\u394 p-value",
             col = NULL
         ) +
         ggplot2::theme_bw() +
@@ -163,7 +163,7 @@ gg_volcano_timeseries <- function(
             legend.position = "none",
             axis.title = ggplot2::element_text(size = 12, face = "plain"),
             axis.text = ggplot2::element_text(colour = "black"),
-            plot.margin = ggplot2::unit(c(0.5, 0.1, 1.25, 0.1), "cm"),
+            plot.margin = ggplot2::unit(c(0.5, 0.1, 0.1, 0.1), "cm"),
             plot.background = ggplot2::element_rect(fill = "grey95", colour = " white")
         )
 }
