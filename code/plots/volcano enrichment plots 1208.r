@@ -68,10 +68,22 @@ data_joined_01 <- data_joined_00 %>%
                             GO %>% str_detect(injury) ~ "injury response",
                             GO %>% str_detect(metabolic_response) ~ "metabolic response",
                             GO %>% str_detect(external_stimulus) ~ "response to external stimilus",
-                            GO %>% str_detect(reg_cellular_processes) ~ "regulation of cellular processes",
+                            GO %>% str_detect(reg_cellular_processes) ~ "cellular regulation",
                             GO %>% str_detect(cellular_development) ~ "cellular development",
                             GO %>% str_detect(cellular_communication) ~ "cellular communication",
-                        ) %>% factor()
+                        ) %>% factor(),
+                        col_group = case_when(
+                            group == "immune response" ~ "#ff0000",
+                            group == "cell cycling" ~ "#00ff33",
+                            group == "response to infection" ~ "#ff0000",
+                            group == "inflammation" ~ "#ff9900",
+                            group == "injury response" ~ "#5d00ff",
+                            group == "metabolic response" ~ "#0099ff",
+                            group == "response to external stimilus" ~ "#00ff91",
+                            group == "cellular regulation" ~ "#ff00ea",
+                            group == "cellular development" ~ "#4dff00",
+                            group == "cellular communication" ~ "#00d0ff"
+                        )
                     ) %>%
                     mutate(
                         count = n(),
@@ -107,21 +119,76 @@ data_joined_01 <- data_joined_00 %>%
     dplyr::select(design, data_plot, data_enrichment, data_annotation)
 
 
+# DEFINE THE PATHWAY ENRICHMENT LINES ####
+data_joined_02 <- data_joined_01 %>%
+    mutate(
+        GO_lines = pmap(
+            list(data_plot, data_annotation),
+            function(data_plot, data_annotation) {
+                xlim <- c(0, data_plot$p %>% max() * 1.4)
+                y_min <- data_plot %>%
+                    dplyr::pull(logFC) %>%
+                    min()
+                y_max <- data_plot %>%
+                    dplyr::pull(logFC) %>%
+                    max()
+                y_diff <- c(y_min, y_max) %>% diff()
+                x_end <- data_plot %>%
+                    dplyr::pull(p) %>%
+                    max() * 1.1
+                n_group <- data_annotation %>%
+                    pull(n_group) %>%
+                    unique()
+                interval <- y_diff / (n_group + 1)
+                interval_prop <- 1 / (n_group + 1)
+                data_annotation %>%
+                    dplyr::arrange(count %>% dplyr::desc()) %>%
+                    dplyr::distinct(Symb, group, .keep_all = TRUE) %>%
+                    dplyr::mutate(
+                        y_min = y_min,
+                        y_max = y_max,
+                        y_diff = y_diff,
+                        interval = interval,
+                        interval_prop = interval_prop,
+                        x_end = x_end,
+                        y_end = y_min + (groupID * interval),
+                        y_end_prop = groupID * interval_prop,
+                        x_end_prop = x_end / xlim[2],
+                        curvature = dplyr::case_when(
+                            groupID == 1 ~ -0.25,
+                            groupID == 2 ~ 0.25,
+                            groupID == 3 ~ -0.25,
+                            groupID == 4 ~ 0.25,
+                            TRUE ~ 0.25
+                        ),
+                        conflict = dplyr::case_when(
+                            logFC < 0 & NES > 0 ~ FALSE,
+                            logFC > 0 & NES < 0 ~ FALSE,
+                            TRUE ~ TRUE
+                        )
+                    ) %>%
+                    dplyr::filter(conflict) %>%
+                    dplyr::select(-AffyID)
+            }
+        )
+    )
+data_joined_02$GO_lines[[3]]
+
 
 # MAKE PLOTS ####
-df_plot <- data_joined_01 %>%
+df_plot <- data_joined_02 %>%
     mutate(
         plot = pmap(
-            list(data_plot, data_annotation, design),
+            list(data_plot, data_annotation, GO_lines, design),
             gg_volcano_enrichment
         )
     )
 
+df_plot$plot[[1]]
 
 
 
-
-# ADD SIMPLIFIED PATHWAY ENRICHMENT PLOTS ####
+# ADD SIMPLIFIED ENRICHMENT ANNOTATION INDIVIDUALLY TO PLOTS ####
 plot_baseline_week24 <- df_plot %>%
     dplyr::filter(design == "Baseline_vs_Week24") %>%
     pull(plot) %>%
@@ -134,8 +201,28 @@ plot_baseline_week24 <- df_plot %>%
             pull(plot) %>%
             pluck(1),
         align_to = "plot",
-        left = 0.78, right = 1,
-        bottom = 0.275, top = 0.45
+        left = df_plot %>%
+            dplyr::filter(design == "Baseline_vs_Week24") %>%
+            pull(GO_lines) %>%
+            pluck(1) %>%
+            dplyr::filter(groupID == 1) %>%
+            pull(x_end_prop) %>%
+            unique(),
+        right = 0.995,
+        bottom = df_plot %>%
+            dplyr::filter(design == "Baseline_vs_Week24") %>%
+            pull(GO_lines) %>%
+            pluck(1) %>%
+            dplyr::filter(groupID == 1) %>%
+            pull(y_end_prop) %>%
+            unique() - 0.1,
+        top = df_plot %>%
+            dplyr::filter(design == "Baseline_vs_Week24") %>%
+            pull(GO_lines) %>%
+            pluck(1) %>%
+            dplyr::filter(groupID == 1) %>%
+            pull(y_end_prop) %>%
+            unique() + 0.1
     ) +
     patchwork::inset_element(
         simplified_enrichment_plot %>%
@@ -145,8 +232,28 @@ plot_baseline_week24 <- df_plot %>%
             pull(plot) %>%
             pluck(2),
         align_to = "plot",
-        left = 0.78, right = 1,
-        bottom = 0.075, top = 0.25
+        left = df_plot %>%
+            dplyr::filter(design == "Baseline_vs_Week24") %>%
+            pull(GO_lines) %>%
+            pluck(1) %>%
+            dplyr::filter(groupID == 2) %>%
+            pull(x_end_prop) %>%
+            unique(),
+        right = 0.995,
+        bottom = df_plot %>%
+            dplyr::filter(design == "Baseline_vs_Week24") %>%
+            pull(GO_lines) %>%
+            pluck(1) %>%
+            dplyr::filter(groupID == 2) %>%
+            pull(y_end_prop) %>%
+            unique() - 0.1,
+        top = df_plot %>%
+            dplyr::filter(design == "Baseline_vs_Week24") %>%
+            pull(GO_lines) %>%
+            pluck(1) %>%
+            dplyr::filter(groupID == 2) %>%
+            pull(y_end_prop) %>%
+            unique() + 0.1
     )
 
 plot_week24_week52 <- df_plot %>%
@@ -161,8 +268,28 @@ plot_week24_week52 <- df_plot %>%
             pull(plot) %>%
             pluck(1),
         align_to = "plot",
-        left = 0.78, right = 1,
-        bottom = 0.275, top = 0.45
+        left = df_plot %>%
+            dplyr::filter(design == "Week24_vs_Week52") %>%
+            pull(GO_lines) %>%
+            pluck(1) %>%
+            dplyr::filter(groupID == 1) %>%
+            pull(x_end_prop) %>%
+            unique(),
+        right = 0.995,
+        bottom = df_plot %>%
+            dplyr::filter(design == "Week24_vs_Week52") %>%
+            pull(GO_lines) %>%
+            pluck(1) %>%
+            dplyr::filter(groupID == 1) %>%
+            pull(y_end_prop) %>%
+            unique() - 0.1,
+        top = df_plot %>%
+            dplyr::filter(design == "Week24_vs_Week52") %>%
+            pull(GO_lines) %>%
+            pluck(1) %>%
+            dplyr::filter(groupID == 1) %>%
+            pull(y_end_prop) %>%
+            unique() + 0.1
     ) +
     patchwork::inset_element(
         simplified_enrichment_plot %>%
@@ -172,8 +299,28 @@ plot_week24_week52 <- df_plot %>%
             pull(plot) %>%
             pluck(2),
         align_to = "plot",
-        left = 0.78, right = 1,
-        bottom = 0.075, top = 0.25
+        left = df_plot %>%
+            dplyr::filter(design == "Week24_vs_Week52") %>%
+            pull(GO_lines) %>%
+            pluck(1) %>%
+            dplyr::filter(groupID == 2) %>%
+            pull(x_end_prop) %>%
+            unique(),
+        right = 0.995,
+        bottom = df_plot %>%
+            dplyr::filter(design == "Week24_vs_Week52") %>%
+            pull(GO_lines) %>%
+            pluck(1) %>%
+            dplyr::filter(groupID == 2) %>%
+            pull(y_end_prop) %>%
+            unique() - 0.1,
+        top = df_plot %>%
+            dplyr::filter(design == "Week24_vs_Week52") %>%
+            pull(GO_lines) %>%
+            pluck(1) %>%
+            dplyr::filter(groupID == 2) %>%
+            pull(y_end_prop) %>%
+            unique() + 0.1
     )
 
 plot_baseline_week52 <- df_plot %>%
@@ -188,8 +335,28 @@ plot_baseline_week52 <- df_plot %>%
             pull(plot) %>%
             pluck(1),
         align_to = "plot",
-        left = 0.68, right = 1,
-        bottom = 0.425, top = 0.6
+        left = df_plot %>%
+            dplyr::filter(design == "Baseline_vs_Week52") %>%
+            pull(GO_lines) %>%
+            pluck(1) %>%
+            dplyr::filter(groupID == 1) %>%
+            pull(x_end_prop) %>%
+            unique(),
+        right = 0.995,
+        bottom = df_plot %>%
+            dplyr::filter(design == "Baseline_vs_Week52") %>%
+            pull(GO_lines) %>%
+            pluck(1) %>%
+            dplyr::filter(groupID == 1) %>%
+            pull(y_end_prop) %>%
+            unique() - 0.1,
+        top = df_plot %>%
+            dplyr::filter(design == "Baseline_vs_Week52") %>%
+            pull(GO_lines) %>%
+            pluck(1) %>%
+            dplyr::filter(groupID == 1) %>%
+            pull(y_end_prop) %>%
+            unique() + 0.1
     ) +
     patchwork::inset_element(
         simplified_enrichment_plot %>%
@@ -199,9 +366,29 @@ plot_baseline_week52 <- df_plot %>%
             pull(plot) %>%
             pluck(2),
         align_to = "plot",
-        left = 0.78, right = 1,
-        bottom = 0.325, top = 0.5
-    )+
+        left = df_plot %>%
+            dplyr::filter(design == "Baseline_vs_Week52") %>%
+            pull(GO_lines) %>%
+            pluck(1) %>%
+            dplyr::filter(groupID == 2) %>%
+            pull(x_end_prop) %>%
+            unique(),
+        right = 0.995,
+        bottom = df_plot %>%
+            dplyr::filter(design == "Baseline_vs_Week52") %>%
+            pull(GO_lines) %>%
+            pluck(1) %>%
+            dplyr::filter(groupID == 2) %>%
+            pull(y_end_prop) %>%
+            unique() - 0.1,
+        top = df_plot %>%
+            dplyr::filter(design == "Baseline_vs_Week52") %>%
+            pull(GO_lines) %>%
+            pluck(1) %>%
+            dplyr::filter(groupID == 2) %>%
+            pull(y_end_prop) %>%
+            unique() + 0.1
+    ) +
     patchwork::inset_element(
         simplified_enrichment_plot %>%
             dplyr::filter(design == "Baseline_vs_Week52") %>%
@@ -210,8 +397,28 @@ plot_baseline_week52 <- df_plot %>%
             pull(plot) %>%
             pluck(3),
         align_to = "plot",
-        left = 0.80, right = 1,
-        bottom = 0.15, top = 0.325
+        left = df_plot %>%
+            dplyr::filter(design == "Baseline_vs_Week52") %>%
+            pull(GO_lines) %>%
+            pluck(1) %>%
+            dplyr::filter(groupID == 3) %>%
+            pull(x_end_prop) %>%
+            unique(),
+        right = 0.995,
+        bottom = df_plot %>%
+            dplyr::filter(design == "Baseline_vs_Week52") %>%
+            pull(GO_lines) %>%
+            pluck(1) %>%
+            dplyr::filter(groupID == 3) %>%
+            pull(y_end_prop) %>%
+            unique() - 0.1,
+        top = df_plot %>%
+            dplyr::filter(design == "Baseline_vs_Week52") %>%
+            pull(GO_lines) %>%
+            pluck(1) %>%
+            dplyr::filter(groupID == 3) %>%
+            pull(y_end_prop) %>%
+            unique() + 0.1
     ) +
     patchwork::inset_element(
         simplified_enrichment_plot %>%
@@ -221,8 +428,28 @@ plot_baseline_week52 <- df_plot %>%
             pull(plot) %>%
             pluck(4),
         align_to = "plot",
-        left = 0.55, right = 1,
-        bottom = 0.05, top = 0.225
+        left = df_plot %>%
+            dplyr::filter(design == "Baseline_vs_Week52") %>%
+            pull(GO_lines) %>%
+            pluck(1) %>%
+            dplyr::filter(groupID == 4) %>%
+            pull(x_end_prop) %>%
+            unique(),
+        right = 0.995,
+        bottom = df_plot %>%
+            dplyr::filter(design == "Baseline_vs_Week52") %>%
+            pull(GO_lines) %>%
+            pluck(1) %>%
+            dplyr::filter(groupID == 4) %>%
+            pull(y_end_prop) %>%
+            unique() - 0.1,
+        top = df_plot %>%
+            dplyr::filter(design == "Baseline_vs_Week52") %>%
+            pull(GO_lines) %>%
+            pluck(1) %>%
+            dplyr::filter(groupID == 4) %>%
+            pull(y_end_prop) %>%
+            unique() + 0.1
     )
 
 
@@ -232,9 +459,12 @@ plot_baseline_week52 <- df_plot %>%
 plot_volcano_enrichment <- df_plot %>%
     mutate(
         plot_volcano_enrichment = list(
-            plot_baseline_week24,
-            plot_week24_week52,
-            plot_baseline_week52
+            plot_baseline_week24 %>%
+                ggpubr::ggarrange(., NULL, ncol = 2, widths = c(1, 0)),
+            plot_week24_week52 %>%
+                ggpubr::ggarrange(., NULL, ncol = 2, widths = c(1, 0)),
+            plot_baseline_week52 %>%
+                ggpubr::ggarrange(., NULL, ncol = 2, widths = c(1, 0))
         )
     )
 
@@ -249,124 +479,10 @@ save(plot_volcano_enrichment, file = paste(saveDir, "Volcano enrichment plots IQ
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/output/"
 ggsave(
     filename = paste(saveDir, "volcano enrichment draft.png"),
-    plot = plot_baseline_week52,
+    plot = plot_volcano_enrichment$plot_volcano_enrichment[[1]],
     dpi = 300,
     width = 20,
     height = 20,
     units = "cm",
     bg = "white"
 )
-
-
-
-
-# # DEFINE TEMPORARY DATA FOR DRAFTING PLOTS ####
-# data_annotation <- data_joined_01$data_annotation[[2]]
-# data <- data_joined_01$data_plot[[2]]
-# df_enrichement <- simplified_enrichment_plot$plot_enrichment[[2]]
-
-
-# # DEFINE LINES ####
-# GO_lines <- data_annotation %>%
-#     arrange(count %>% desc()) %>%
-#     distinct(Symb, group, .keep_all = TRUE) %>%
-#     mutate(
-#         y_min = min(logFC),
-#         y_max = max(logFC),
-#         p2 = max(data$p) * 1.1,
-#         logFC2 = ifelse(logFC < 0, y_min * group_mult, y_max * group_mult),
-#         curvature = dplyr::case_when(
-#             groupID == 1 ~ -0.25,
-#             groupID == 2 ~ 0.25,
-#             groupID == 3 ~ -0.25,
-#             groupID == 4 ~ 0.25,
-#             TRUE ~ 0.25
-#         ),
-#         conflict = dplyr::case_when(
-#             logFC < 0 & NES > 0 ~ FALSE,
-#             logFC > 0 & NES < 0 ~ FALSE,
-#             TRUE ~ TRUE
-#         )
-#     ) %>%
-#     dplyr::filter(conflict)
-
-
-
-
-
-# GO_labels <- data_annotation %>%
-#     distinct(Symb, group, .keep_all = TRUE) %>%
-#     slice_max(prop, n = 5, by = c("group"), with_ties = FALSE) %>%
-#     arrange(group, prop %>% desc()) %>%
-#     left_join(GO_lines %>% distinct(Symb, group, .keep_all = TRUE))
-
-
-
-# # PLOTTING GLOBALS ####
-# ylim <- data$logFC %>% range() * 1.25
-# xlim <- c(0, data$p %>% max() * 1.4)
-
-
-
-# plot_temp <- data %>%
-#     ggplot2::ggplot(mapping = ggplot2::aes(x = p, y = logFC)) +
-#     Map(
-#         function(i) {
-#             geom_curve(
-#                 data = GO_lines,
-#                 mapping = ggplot2::aes(
-#                     x = p,
-#                     y = logFC,
-#                     xend = p2,
-#                     yend = logFC2,
-#                     col = group,
-#                     group = group,
-#                 ),
-#                 curvature = i,
-#                 angle = 30,
-#                 linewidth = 0.1
-#             )
-#         },
-#         i = GO_lines$curvature
-#     ) +
-#     ggnewscale::new_scale_colour() +
-#     ggplot2::geom_segment(
-#         inherit.aes = FALSE,
-#         data = tibble(
-#             x0 = seq(
-#                 -log10(0.05),
-#                 GO_lines$p2 %>% max(),
-#                 length.out = 750
-#             ),
-#             xend = x0,
-#             y0 = -Inf,
-#             yend = Inf,
-#             col = x0
-#         ),
-#         mapping = ggplot2::aes(
-#             x = x0,
-#             xend = xend,
-#             y = y0,
-#             yend = yend,
-#             col = x0
-#         ),
-#         show.legend = FALSE
-#     ) +
-#     ggplot2::geom_hline(yintercept = 0, linetype = "dashed") +
-#     ggplot2::geom_vline(xintercept = -log10(0.05), linetype = "dashed") +
-#     ggplot2::geom_point(col = ifelse(data$p < -log10(0.05), "grey70", "black")) +
-#     ggplot2::geom_point(
-#         show.legend = FALSE,
-#         data = GO_labels %>% distinct(group, .keep_all = TRUE),
-#         aes(x = p2, y = logFC2, fill = group), shape = 21, size = 4, col = "black"
-#     ) +
-#     scale_colour_gradient(low = "#ffffff95", high = "#ffffff00") +
-#     coord_cartesian(
-#         xlim = xlim,
-#         ylim = ylim
-#     ) +
-#     theme_bw() +
-#     theme(
-#         legend.position = "none",
-#         panel.grid = element_blank()
-#     )

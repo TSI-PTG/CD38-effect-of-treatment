@@ -1,13 +1,14 @@
 gg_volcano_enrichment <- function(
-    data_plot, data_annotation, design = NULL, x_break = 1.5,
+    data_plot, data_annotation, GO_lines, design = NULL, x_break = 1.5,
     point_size = 2.5, point_size_null = 1.25,
+    xlim = NULL, ylim = NULL,
     alpha = 0.8, alpha_null = 0.5, alpha_lines = 0.25,
     col_dn = "#005EFF", col_up = "#ff0040", col_null = "grey30",
     labels_probes = NULL, labels_probes_n = 10, labels_probes_size = 2,
     curvature = NULL, angle = 30, ties = FALSE) {
     require(tidyverse)
     "%nin%" <- function(a, b) match(a, b, nomatch = 0) == 0
-    ylim <- data_plot$logFC %>% range() * 1.25
+    ylim <- data_plot$logFC %>% range()
     xlim <- c(0, data_plot$p %>% max() * 1.4)
     probes_sig_up <- data_plot %>%
         dplyr::filter(
@@ -35,28 +36,40 @@ gg_volcano_enrichment <- function(
         dplyr::filter(AffyID %in% c(probes_sig_up, probes_sig_dn))
     data_insig <- data_plot %>%
         dplyr::filter(AffyID %nin% c(probes_sig_up, probes_sig_dn))
-    GO_lines <- data_annotation %>%
-        dplyr::arrange(count %>% dplyr::desc()) %>%
-        dplyr::distinct(Symb, group, .keep_all = TRUE) %>%
-        dplyr::mutate(
-            y_min = min(logFC),
-            y_max = max(logFC),
-            p2 = max(data_plot$p) * 1.1,
-            logFC2 = ifelse(logFC < 0, y_min * group_mult, y_max * group_mult),
-            curvature = dplyr::case_when(
-                groupID == 1 ~ -0.25,
-                groupID == 2 ~ 0.25,
-                groupID == 3 ~ -0.25,
-                groupID == 4 ~ 0.25,
-                TRUE ~ 0.25
-            ),
-            conflict = dplyr::case_when(
-                logFC < 0 & NES > 0 ~ FALSE,
-                logFC > 0 & NES < 0 ~ FALSE,
-                TRUE ~ TRUE
-            )
-        ) %>%
-        dplyr::filter(conflict)
+    # y_min <- data_plot %>%
+    #     dplyr::pull(logFC) %>%
+    #     min()
+    # y_max <- data_plot %>%
+    #     dplyr::pull(logFC) %>%
+    #     max()
+    # y_diff <- c(y_min, y_max) %>% diff()
+    # x_end <- data_plot %>%
+    #     dplyr::pull(p) %>%
+    #     max() * 1.1
+    # n_group <- data_annotation %>%
+    #     dplyr::pull(n_group) %>%
+    #     unique()
+    # interval <- (y_max - (y_min)) / (n_group + 1)
+    # GO_lines <- data_annotation %>%
+    #             dplyr::arrange(count %>% dplyr::desc()) %>%
+    #             dplyr::distinct(Symb, group, .keep_all = TRUE) %>%
+    #             dplyr::mutate(
+    #                 x_end = x_end,
+    #                 y_end = y_min + (groupID * interval),
+    #                 curvature = dplyr::case_when(
+    #                     groupID == 1 ~ -0.25,
+    #                     groupID == 2 ~ 0.25,
+    #                     groupID == 3 ~ -0.25,
+    #                     groupID == 4 ~ 0.25,
+    #                     TRUE ~ 0.25
+    #                 ),
+    #                 conflict = dplyr::case_when(
+    #                     logFC < 0 & NES > 0 ~ FALSE,
+    #                     logFC > 0 & NES < 0 ~ FALSE,
+    #                     TRUE ~ TRUE
+    #                 )
+    #             ) %>%
+                # dplyr::filter(conflict)
     GO_labels <- data_annotation %>%
         dplyr::distinct(Symb, group, .keep_all = TRUE) %>%
         dplyr::slice_max(prop, n = 5, by = c("group"), with_ties = FALSE) %>%
@@ -72,8 +85,8 @@ gg_volcano_enrichment <- function(
         #             mapping = ggplot2::aes(
         #                 x = p,
         #                 y = logFC,
-        #                 xend = p2,
-        #                 yend = logFC2,
+        #                 xend = x_end,
+        #                 yend = y_end,
         #                 col = group,
         #                 group = group,
         #             ),
@@ -83,28 +96,29 @@ gg_volcano_enrichment <- function(
         #         )
         #     }
         # ) +
-        # ggplot2::geom_curve(
-        #     data = GO_lines,
-        #     mapping = ggplot2::aes(
-        #         x = p,
-        #         y = logFC,
-        #         xend = p2,
-        #         yend = logFC2,
-        #         col = group,
-        #         group = group,
-        #     ),
-        #     # curvature = curvature,
-        #     angle = 30,
-        #     linewidth = 0.1
-        # ) +
+        ggplot2::geom_curve(
+            data = GO_lines,
+            mapping = ggplot2::aes(
+                x = p,
+                y = logFC,
+                xend = x_end,
+                yend = y_end,
+                # col = group,
+                group = group,
+            ),
+            col = GO_lines$col_group,
+            # curvature = curvature,
+            angle = 30,
+            linewidth = 0.1
+        ) +
         ggnewscale::new_scale_colour() +
         ggplot2::geom_segment(
             inherit.aes = FALSE,
-            data = tibble(
+            data = dplyr::tibble(
                 x0 = seq(
                     -log10(0.05),
-                    GO_lines$p2 %>% max(),
-                    length.out = 500
+                    GO_lines$x_end %>% max(),
+                    length.out = 300
                 ),
                 xend = x0,
                 y0 = -Inf,

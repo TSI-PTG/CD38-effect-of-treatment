@@ -65,7 +65,7 @@ DEG_plots <- DEG_plots00 %>%
                         col = dplyr::case_when(
                             p < 0.05 & logFC < 0 ~ col_dn,
                             p < 0.05 & logFC > 0 ~ col_up,
-                            TRUE ~ "grey20"
+                            TRUE ~ "grey30"
                         )
                     )
                 order_symb <- data %>%
@@ -109,7 +109,7 @@ DEG_plots <- DEG_plots00 %>%
                         col = dplyr::case_when(
                             p < 0.05 & logFC < 0 ~ col_dn,
                             p < 0.05 & logFC > 0 ~ col_up,
-                            TRUE ~ "grey20"
+                            TRUE ~ "grey30"
                         )
                     )
                 order_symb <- data %>%

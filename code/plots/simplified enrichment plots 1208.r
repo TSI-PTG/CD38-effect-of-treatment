@@ -54,10 +54,22 @@ data_enrichment <- data_joined_00 %>%
                             GO %>% str_detect(injury) ~ "injury response",
                             GO %>% str_detect(metabolic_response) ~ "metabolic response",
                             GO %>% str_detect(external_stimulus) ~ "response to external stimilus",
-                            GO %>% str_detect(reg_cellular_processes) ~ "regulation of cellular processes",
+                            GO %>% str_detect(reg_cellular_processes) ~ "cellular regulation",
                             GO %>% str_detect(cellular_development) ~ "cellular development",
                             GO %>% str_detect(cellular_communication) ~ "cellular communication",
-                        ) %>% factor()
+                        ) %>% factor(),
+                        col_group = case_when(
+                            group == "immune response" ~ "#ff0000",
+                            group == "cell cycling" ~ "#00ff33",
+                            group == "response to infection" ~ "#ff0000",
+                            group == "inflammation" ~ "#ff9900",
+                            group == "injury response" ~ "#5d00ff",
+                            group == "metabolic response" ~ "#0099ff",
+                            group == "response to external stimilus" ~ "#00ff91",
+                            group == "cellular regulation" ~ "#ff00ea",
+                            group == "cellular development" ~ "#4dff00",
+                            group == "cellular communication" ~ "#00d0ff"
+                        )
                     ) %>%
                     mutate(
                         count = n(),
@@ -94,7 +106,7 @@ data_enrichment_plot <- data_enrichment %>%
             }
         )
     )
-data_enrichment_plot$data_plot[[3]]  %>% print(n="all")
+# data_enrichment_plot$data_plot[[3]] %>% print(n = "all")
 
 
 # MAKE SIMPLIFIED ENRICHEMENT PLOTS ####
@@ -109,21 +121,23 @@ simplified_enrichment_plot <- data_enrichment_plot %>%
                         plot = pmap(
                             list(group, data),
                             function(group, data) {
-                                # data  %>% print
                                 data %>%
                                     ggplot2::ggplot(mapping = ggplot2::aes(x = 1, y = Symb, label = Symb)) +
                                     ggplot2::geom_label(
                                         hjust = "left",
-                                        size = 1
+                                        size = 2
                                     ) +
                                     labs(
-                                        title = paste(group, "\n(", data$n_in_group, " GO term(s) enriched)", sep = "")
+                                        title = paste(" ", group, "\n (", data$n_in_group, " GO term(s) enriched)", sep = "")
                                     ) +
                                     ggplot2::theme_void() +
                                     ggplot2::coord_cartesian(xlim = c(1, 1.01), expand = 0.1) +
                                     ggplot2::theme(
-                                        plot.title = element_text(hjust = 0, size = 6),
-                                        plot.margin = unit(c(0, 0, 0, 0), "cm")
+                                        plot.title = element_text(hjust = 0, size = 6.5),
+                                        plot.margin = unit(c(0, 0, 0, 0), "cm"),
+                                        plot.background = element_rect(
+                                            colour = data$col_group[[1]]
+                                        )
                                     )
                             }
                         )

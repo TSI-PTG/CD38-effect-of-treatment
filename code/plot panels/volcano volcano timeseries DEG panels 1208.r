@@ -32,30 +32,30 @@ df_DEG_plot <- DEG_plots %>%
 
 
 # MAKE THE DOTPLOT PANELS ####
-panel_DEG1 <- wrap_plots(
-        df_DEG_plot$plot_long,
-    nrow = 3, ncol = 1
-) +
-    plot_annotation(tag_levels = list(c("E", "F", "G"))) +
-    plot_layout(
-        guides = "collect",
-        # axes = "collect", axis_titles = "collect"
-    ) &
-    theme(
-        axis.text.y = element_text(size = 5),
-        legend.position = "top",
-        plot.background = element_rect(fill = "white"),
-        plot.tag = element_text(vjust = 4)
-    )
+# panel_DEG1 <- wrap_plots(
+#         df_DEG_plot$plot_long,
+#     nrow = 3, ncol = 1
+# ) +
+#     plot_annotation(tag_levels = list(c("E", "F", "G"))) +
+#     plot_layout(
+#         guides = "collect",
+#         # axes = "collect", axis_titles = "collect"
+#     ) &
+#     theme(
+#         axis.text.y = element_text(size = 5),
+#         legend.position = "top",
+#         plot.background = element_rect(fill = "white"),
+#         plot.tag = element_text(vjust = 1)
+#     )
 
-panel_DEG1 <- panel_DEG1 %>%
-    ggarrange(., NULL, ncol = 2, nrow = 1, widths = c(1, 0)) %>%
-    ggpubr::annotate_figure(
-        top = text_grob(
-            "Effect Felzartamab on Select Genes",
-            face = "bold.italic", size = size_title, hjust = 0.55
-        )
-    )
+# panel_DEG1 <- panel_DEG1 %>%
+#     ggarrange(., NULL, ncol = 2, nrow = 1, widths = c(1, 0)) %>%
+#     ggpubr::annotate_figure(
+#         top = text_grob(
+#             "Effect Felzartamab on Select Genes",
+#             face = "bold.italic", size = size_title, hjust = 0.55
+#         )
+#     )
 
 
 # MAKE THE DOTPLOT PANELS ####
@@ -72,7 +72,7 @@ panel_DEG2 <- wrap_plots(
         axis.text.y = element_text(size = 6),
         legend.position = "top",
         plot.background = element_rect(fill = "white"),
-        plot.tag = element_text(vjust = 4)
+        plot.tag = element_text(vjust = 1)
     )
 
 panel_DEG2 <- panel_DEG2 %>%
@@ -100,15 +100,15 @@ panel_volcano <- wrap_plots(
     theme(
         legend.position = "top",
         plot.background = element_rect(fill = "white"),
-        plot.tag = element_text(vjust = 4)
+        plot.tag = element_text(vjust = 1)
     )
 
 panel_volcano <- panel_volcano %>%
     ggarrange(., NULL, ncol = 2, nrow = 1, widths = c(1, 0)) %>%
     ggpubr::annotate_figure(
         top = text_grob(
-            "Genome-wide Effect Felzartamab",
-            face = "bold.italic", size = size_title, hjust = 1.28
+            "Genome-wide Effect of Felzartamab",
+            face = "bold.italic", size = size_title, hjust = 1.27
         )
     )
 
@@ -120,7 +120,7 @@ panel_volcano_enrichment <- wrap_plots(
     C = plot_volcano_enrichment$plot_volcano_enrichment[[3]],
     design = "ABC"
 ) +
-    plot_annotation(tag_levels = list(c("A", "", "", "B", "", "", "C", "", ""))) +
+    plot_annotation(tag_levels = list(c("A", "B", "C" ))) +
     plot_layout(
         # guides = "collect"
         # axes = "collect", axis_titles = "collect"
@@ -128,15 +128,15 @@ panel_volcano_enrichment <- wrap_plots(
     theme(
         legend.position = "none",
         plot.background = element_rect(fill = "white"),
-        plot.tag = element_text(vjust = 4)
+        plot.tag = element_text(vjust = 1, face = "plain")
     )
 
 panel_volcano_enrichment <- panel_volcano_enrichment %>%
     ggarrange(., NULL, ncol = 2, nrow = 1, widths = c(1, 0)) %>%
     ggpubr::annotate_figure(
         top = text_grob(
-            "Genome-wide Effect Felzartamab",
-            face = "bold.italic", size = size_title, hjust = 2.4
+            "Genome-wide Effect of Felzartamab Treatment",
+            face = "bold.italic", size = size_title, hjust = 1.71
         )
     )
 
@@ -147,15 +147,15 @@ panel_volcano_timeseries <- plot_volcano_timeseries +
     theme(
         legend.position = "top",
         plot.background = element_rect(fill = "grey95"),
-        plot.tag = element_text(vjust = 4)
+        plot.tag = element_text(vjust = 1)
     )
 
 panel_volcano_timeseries1 <- panel_volcano_timeseries %>%
     ggarrange(NULL, ., NULL, ncol = 3, nrow = 1, widths = c(0.25, 1, 0.25)) %>%
     ggpubr::annotate_figure(
         top = text_grob(
-            "Longitiduinal Relapse of Effect Felzartamab",
-            face = "bold.italic", size = size_title, hjust = 0.635 # hjust = 0.95
+            "Longitiduinal Relapse of Felzartamab Effects",
+            face = "bold.italic", size = size_title, hjust = 0.63 # hjust = 0.95
         )
     )
 
