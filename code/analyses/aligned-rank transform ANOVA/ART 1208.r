@@ -155,7 +155,7 @@ data_01 <- data_00 %>%
                             variable == "cfDNA_cpml" ~ "Donor-derived cell-free DNA (dd-cfDNA, cp/mL)",
                             variable == "TCMRt" ~ "TCMR classifier (TCMRProb)",
                             variable == "TCMRt" ~ "TCMR classifier (TCMRProb)",
-                            variable == "TCB" ~ "T-cell burden (TCB)",
+                            variable == "TCB" ~ "T cell burden (TCB)",
                             variable == "TCMR-RAT" ~ "TCMR-associated RATs (TCMR-RAT)",
                             variable == "tgt1" ~ "Tubulitis classifier (t>1Prob)",
                             variable == "igt1" ~ "Interstitial infiltrate classifier (i>1Prob)",
