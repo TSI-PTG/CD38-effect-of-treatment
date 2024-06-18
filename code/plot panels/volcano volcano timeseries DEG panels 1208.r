@@ -32,30 +32,30 @@ df_DEG_plot <- DEG_plots %>%
 
 
 # MAKE THE DOTPLOT PANELS ####
-# panel_DEG1 <- wrap_plots(
-#         df_DEG_plot$plot_long,
-#     nrow = 3, ncol = 1
-# ) +
-#     plot_annotation(tag_levels = list(c("E", "F", "G"))) +
-#     plot_layout(
-#         guides = "collect",
-#         # axes = "collect", axis_titles = "collect"
-#     ) &
-#     theme(
-#         axis.text.y = element_text(size = 5),
-#         legend.position = "top",
-#         plot.background = element_rect(fill = "white"),
-#         plot.tag = element_text(vjust = 1)
-#     )
+panel_DEG1 <- wrap_plots(
+        df_DEG_plot$plot_long,
+    nrow = 3, ncol = 1
+) +
+    plot_annotation(tag_levels = list(c("E", "F", "G"))) +
+    plot_layout(
+        guides = "collect",
+        # axes = "collect", axis_titles = "collect"
+    ) &
+    theme(
+        axis.text.y = element_text(size = 5),
+        legend.position = "top",
+        plot.background = element_rect(fill = "white"),
+        plot.tag = element_text(vjust = 1)
+    )
 
-# panel_DEG1 <- panel_DEG1 %>%
-#     ggarrange(., NULL, ncol = 2, nrow = 1, widths = c(1, 0)) %>%
-#     ggpubr::annotate_figure(
-#         top = text_grob(
-#             "Effect Felzartamab on Select Genes",
-#             face = "bold.italic", size = size_title, hjust = 0.55
-#         )
-#     )
+panel_DEG1 <- panel_DEG1 %>%
+    ggarrange(., NULL, ncol = 2, nrow = 1, widths = c(1, 0)) %>%
+    ggpubr::annotate_figure(
+        top = text_grob(
+            "Effect Felzartamab on Select Genes",
+            face = "bold.italic", size = size_title, hjust = 0.55
+        )
+    )
 
 
 # MAKE THE DOTPLOT PANELS ####

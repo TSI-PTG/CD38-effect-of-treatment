@@ -41,13 +41,13 @@ probes_abmr <- simplefile %>%
     pull(Affy)
 
 
-genes_NK
+# genes_NK_L765
 
-genes_ABMR_endothelial
+# genes_ABMR_endothelial
 
 
 labels_probes <- list(
-    genes_NK %>%
+    genes_NK_L765 %>%
         mutate(label = "NK genes") %>% dplyr::select(AffyID, label),
     genes_ABMR_endothelial %>%
         mutate(label = "Endothelial genes")

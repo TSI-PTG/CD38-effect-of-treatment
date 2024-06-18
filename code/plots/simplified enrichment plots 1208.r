@@ -34,7 +34,7 @@ data_enrichment <- data_joined_00 %>%
             gsea_go_tables,
             function(gsea_go_tables) {
                 gsea_go_tables %>%
-                    slice_min(pvalue, n = 20) %>%
+                    # slice_min(pvalue, n = 20) %>%
                     mutate(
                         ID = ID %>% str_remove(":"),
                         GO = Description %>% as.character(),
@@ -48,27 +48,36 @@ data_enrichment <- data_joined_00 %>%
                     mutate(
                         group = case_when(
                             GO %>% str_detect(immune_response) ~ "immune response",
-                            GO %>% str_detect(cell_cycle) ~ "cell cycling",
                             GO %>% str_detect(infection_response) ~ "response to infection",
+                            GO %>% str_detect(external_stimulus) ~ "response to external stimilus",
                             GO %>% str_detect(inflammation) ~ "inflammation",
                             GO %>% str_detect(injury) ~ "injury response",
-                            GO %>% str_detect(metabolic_response) ~ "metabolic response",
-                            GO %>% str_detect(external_stimulus) ~ "response to external stimilus",
-                            GO %>% str_detect(reg_cellular_processes) ~ "cellular regulation",
-                            GO %>% str_detect(cellular_development) ~ "cellular development",
-                            GO %>% str_detect(cellular_communication) ~ "cellular communication",
-                        ) %>% factor(),
+                            GO %>% str_detect(cell_cycle) ~ "cell cycling",
+                            GO %>% str_detect(cell_signalling) ~ "cell signalling",
+                            GO %>% str_detect(cell_mobilization) ~ "cell mobilization",
+                            GO %>% str_detect(cellular_development) ~ "cell development",
+                            GO %>% str_detect(cellular_regulation) ~ "cellular regulation",
+                            # GO %>% str_detect(protein_metabolism) ~ "protein metabolism",
+                            # GO %>% str_detect(nitrogen_metabolism) ~ "nitrogen metabolism",
+                            # GO %>% str_detect(xenobiotic_metabolism) ~ "xenobiotic metabolism",
+                            GO %>% str_detect(general_metabolic_response) ~ "metabolic response"
+                            # ) %>% factor(levels = GO_annotation_levels),
+                        ) %>% factor(levels = GO_annotation_levels_truncated),
                         col_group = case_when(
-                            group == "immune response" ~ "#ff0000",
-                            group == "cell cycling" ~ "#00ff33",
+                            group == "immune response" ~ "#ffb700",
                             group == "response to infection" ~ "#ff0000",
+                            group == "response to external stimilus" ~ "#00ff91",
                             group == "inflammation" ~ "#ff9900",
                             group == "injury response" ~ "#5d00ff",
-                            group == "metabolic response" ~ "#0099ff",
-                            group == "response to external stimilus" ~ "#00ff91",
+                            group == "cell cycling" ~ "#00ff33",
+                            group == "cell signalling" ~ "#00ff33",
+                            group == "cell mobilization" ~ "#00ff33",
+                            group == "cell development" ~ "#4dff00",
                             group == "cellular regulation" ~ "#ff00ea",
-                            group == "cellular development" ~ "#4dff00",
-                            group == "cellular communication" ~ "#00d0ff"
+                            # group == "protein metabolism" ~ "#7b00ff",
+                            # group == "nitrogen metabolism" ~ "#7b00ff",
+                            # group == "xenobiotic metabolism" ~ "#7b00ff",
+                            group == "metabolic response" ~ "#7b00ff"
                         )
                     ) %>%
                     mutate(

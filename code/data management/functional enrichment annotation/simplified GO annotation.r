@@ -1,22 +1,69 @@
-# PATHWAY KEYS ####
+# IMMUNE PROCESSES ####
 immune_response <- paste(
     c(
         "immune", "immunity", "cytokine", "leukocyte", "cell activation",
         "response to", "interaction", "virus", "symbiont", "defense response",
-        "cell killing"
+        "cell killing", "cell surface receptor", "interspecies"
     ),
     collapse = "|"
 )
-cell_cycle <- paste(c("cycle"), collapse = "|")
+infection_response <- paste(c("virus", "symbiont", "defense response"), collapse = "|")
+
+
+# FOREIGN STIMULUS ####
+external_stimulus <- paste(c("response to", "interaction"), collapse = "|")
+
+
+# INJURY PROCESSES ####
 inflammation <- paste(c("inflam"), collapse = "|")
 injury <- paste(c("injury"), collapse = "|")
-external_stimulus <- paste(c("response to", "interaction"), collapse = "|")
-reg_cellular_processes <- paste(c("regulation of"), collapse = "|")
+
+
+# CELLULAR PROCESSES ####
+cell_cycle <- paste(c("cycle"), collapse = "|")
+cell_signalling <- paste(c("communication", "signal", "signalling"), collapse = "|")
+cell_mobilization <- paste(c("locomotion", "loco", "migration", "motility"), collapse = "|")
 cellular_development <- paste(c(
     "chromosome", "organelle fission", "organization", "segregation", "division",
     "development", "neurogenesis", "generation", "morphogenesis", "differentiation", "component",
-    "cellular process", "biological_process"
+    "biological_process", "hemopoiesis", "localization", "endocytosis"
 ), collapse = "|")
-cellular_communication <- paste(c("communication", "signal", "signalling"), collapse = "|")
-infection_response <- paste(c("virus", "symbiont", "defense response"), collapse = "|")
-metabolic_response <- paste(c("metabolism", "metabolic", "catabolic"), collapse = "|")
+cellular_regulation <- paste(c("regulation of","cellular process"), collapse = "|")
+
+
+# METABOLIC PROCESSES ####
+protein_metabolism <- paste(
+    c("protein metabolic", "protein metabolism"),
+    collapse = "|"
+)
+
+nitrogen_metabolism <- paste(
+    c("nitrogen"),
+    collapse = "|"
+)
+
+xenobiotic_metabolism <- paste(
+    c("organic substance", "macromolecule metabolic"),
+    collapse = "|"
+)
+
+metabolic_response <- paste(c("metabolism", "metabolic", "catabolic", "cellular metabolic"), collapse = "|")
+general_metabolic_response <- paste(protein_metabolism, nitrogen_metabolism, xenobiotic_metabolism, metabolic_response,  sep = "|")
+
+
+GO_annotation_levels <- c(
+"immune response","response to infection",
+"response to external stimilus",
+"inflammation","injury response",
+"cell cycling", "cell signalling", "cell mobilization",  "cell development", "cellular regulation",
+"protein metabolism","nitrogen metabolism","xenobiotic metabolism","metabolic response"
+)
+
+
+GO_annotation_levels_truncated <- c(
+    "immune response", "response to infection",
+    "response to external stimilus",
+    "inflammation", "injury response",
+    "cell cycling", "cell signalling", "cell mobilization", "cell development", "cellular regulation",
+    "metabolic response"
+)

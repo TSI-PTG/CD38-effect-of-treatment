@@ -48,7 +48,7 @@ data_joined_01 <- data_joined_00 %>%
             gsea_go_tables,
             function(gsea_go_tables) {
                 gsea_go_tables %>%
-                    slice_min(pvalue, n = 20) %>%
+                    # slice_min(pvalue, n = 20) %>%
                     mutate(
                         ID = ID %>% str_remove(":"),
                         GO = Description %>% as.character(),
@@ -62,27 +62,36 @@ data_joined_01 <- data_joined_00 %>%
                     mutate(
                         group = case_when(
                             GO %>% str_detect(immune_response) ~ "immune response",
-                            GO %>% str_detect(cell_cycle) ~ "cell cycling",
                             GO %>% str_detect(infection_response) ~ "response to infection",
+                            GO %>% str_detect(external_stimulus) ~ "response to external stimilus",
                             GO %>% str_detect(inflammation) ~ "inflammation",
                             GO %>% str_detect(injury) ~ "injury response",
-                            GO %>% str_detect(metabolic_response) ~ "metabolic response",
-                            GO %>% str_detect(external_stimulus) ~ "response to external stimilus",
-                            GO %>% str_detect(reg_cellular_processes) ~ "cellular regulation",
-                            GO %>% str_detect(cellular_development) ~ "cellular development",
-                            GO %>% str_detect(cellular_communication) ~ "cellular communication",
-                        ) %>% factor(),
+                            GO %>% str_detect(cell_cycle) ~ "cell cycling",
+                            GO %>% str_detect(cell_signalling) ~ "cell signalling",
+                            GO %>% str_detect(cell_mobilization) ~ "cell mobilization",
+                            GO %>% str_detect(cellular_development) ~ "cell development",
+                            GO %>% str_detect(cellular_regulation) ~ "cellular regulation",
+                            # GO %>% str_detect(protein_metabolism) ~ "protein metabolism",
+                            # GO %>% str_detect(nitrogen_metabolism) ~ "nitrogen metabolism",
+                            # GO %>% str_detect(xenobiotic_metabolism) ~ "xenobiotic metabolism",
+                            GO %>% str_detect(general_metabolic_response) ~ "metabolic response"
+                            # ) %>% factor(levels = GO_annotation_levels),
+                        ) %>% factor(levels = GO_annotation_levels_truncated),
                         col_group = case_when(
-                            group == "immune response" ~ "#ff0000",
-                            group == "cell cycling" ~ "#00ff33",
+                            group == "immune response" ~ "#ffb700",
                             group == "response to infection" ~ "#ff0000",
+                            group == "response to external stimilus" ~ "#00ff91",
                             group == "inflammation" ~ "#ff9900",
                             group == "injury response" ~ "#5d00ff",
-                            group == "metabolic response" ~ "#0099ff",
-                            group == "response to external stimilus" ~ "#00ff91",
+                            group == "cell cycling" ~ "#00ff33",
+                            group == "cell signalling" ~ "#00ff33",
+                            group == "cell mobilization" ~ "#00ff33",
+                            group == "cell development" ~ "#4dff00",
                             group == "cellular regulation" ~ "#ff00ea",
-                            group == "cellular development" ~ "#4dff00",
-                            group == "cellular communication" ~ "#00d0ff"
+                            # group == "protein metabolism" ~ "#7b00ff",
+                            # group == "nitrogen metabolism" ~ "#7b00ff",
+                            # group == "xenobiotic metabolism" ~ "#7b00ff",
+                            group == "metabolic response" ~ "#7b00ff"
                         )
                     ) %>%
                     mutate(
@@ -97,7 +106,7 @@ data_joined_01 <- data_joined_00 %>%
                     ) %>%
                     mutate(
                         n_group = group %>% unique() %>% length(),
-                        groupID = group %>% as.numeric(),
+                        groupID = group %>% factor() %>% as.numeric(),
                         group_mult = groupID / n_group
                     )
             }
@@ -117,6 +126,10 @@ data_joined_01 <- data_joined_00 %>%
         )
     ) %>%
     dplyr::select(design, data_plot, data_enrichment, data_annotation)
+
+data_joined_01$data_enrichment[[2]] %>%
+    dplyr::select(GO, group) %>%
+    dplyr::filter(group %>% is.na()) 
 
 
 # DEFINE THE PATHWAY ENRICHMENT LINES ####
@@ -141,6 +154,8 @@ data_joined_02 <- data_joined_01 %>%
                     unique()
                 interval <- y_diff / (n_group + 1)
                 interval_prop <- 1 / (n_group + 1)
+                # interval <- y_diff / (n_group)
+                # interval_prop <- 1 / (n_group)
                 data_annotation %>%
                     dplyr::arrange(count %>% dplyr::desc()) %>%
                     dplyr::distinct(Symb, group, .keep_all = TRUE) %>%
@@ -173,6 +188,8 @@ data_joined_02 <- data_joined_01 %>%
         )
     )
 data_joined_02$GO_lines[[3]]
+# data_joined_02$GO_lines[[2]] %>%
+#     dplyr::select(GO, group)  %>% print(n="all")
 
 
 # MAKE PLOTS ####
@@ -183,12 +200,11 @@ df_plot <- data_joined_02 %>%
             gg_volcano_enrichment
         )
     )
-
-df_plot$plot[[1]]
-
+# df_plot$plot[[1]]
 
 
-# ADD SIMPLIFIED ENRICHMENT ANNOTATION INDIVIDUALLY TO PLOTS ####
+
+# ADD SIMPLIFIED ENRICHMENT ANNOTATION TO Baseline_vs_Week24 PLOTS ####
 plot_baseline_week24 <- df_plot %>%
     dplyr::filter(design == "Baseline_vs_Week24") %>%
     pull(plot) %>%
@@ -223,39 +239,11 @@ plot_baseline_week24 <- df_plot %>%
             dplyr::filter(groupID == 1) %>%
             pull(y_end_prop) %>%
             unique() + 0.1
-    ) +
-    patchwork::inset_element(
-        simplified_enrichment_plot %>%
-            dplyr::filter(design == "Baseline_vs_Week24") %>%
-            pull(plot_enrichment) %>%
-            pluck(1) %>%
-            pull(plot) %>%
-            pluck(2),
-        align_to = "plot",
-        left = df_plot %>%
-            dplyr::filter(design == "Baseline_vs_Week24") %>%
-            pull(GO_lines) %>%
-            pluck(1) %>%
-            dplyr::filter(groupID == 2) %>%
-            pull(x_end_prop) %>%
-            unique(),
-        right = 0.995,
-        bottom = df_plot %>%
-            dplyr::filter(design == "Baseline_vs_Week24") %>%
-            pull(GO_lines) %>%
-            pluck(1) %>%
-            dplyr::filter(groupID == 2) %>%
-            pull(y_end_prop) %>%
-            unique() - 0.1,
-        top = df_plot %>%
-            dplyr::filter(design == "Baseline_vs_Week24") %>%
-            pull(GO_lines) %>%
-            pluck(1) %>%
-            dplyr::filter(groupID == 2) %>%
-            pull(y_end_prop) %>%
-            unique() + 0.1
     )
 
+
+
+# ADD SIMPLIFIED ENRICHMENT ANNOTATION TO Week24_vs_Week52 PLOTS ####
 plot_week24_week52 <- df_plot %>%
     dplyr::filter(design == "Week24_vs_Week52") %>%
     pull(plot) %>%
@@ -323,6 +311,9 @@ plot_week24_week52 <- df_plot %>%
             unique() + 0.1
     )
 
+
+
+# ADD SIMPLIFIED ENRICHMENT ANNOTATION TO Baseline_vs_Week52 PLOTS ####
 plot_baseline_week52 <- df_plot %>%
     dplyr::filter(design == "Baseline_vs_Week52") %>%
     pull(plot) %>%
@@ -450,6 +441,68 @@ plot_baseline_week52 <- df_plot %>%
             dplyr::filter(groupID == 4) %>%
             pull(y_end_prop) %>%
             unique() + 0.1
+    ) +
+    patchwork::inset_element(
+        simplified_enrichment_plot %>%
+            dplyr::filter(design == "Baseline_vs_Week52") %>%
+            pull(plot_enrichment) %>%
+            pluck(1) %>%
+            pull(plot) %>%
+            pluck(5),
+        align_to = "plot",
+        left = df_plot %>%
+            dplyr::filter(design == "Baseline_vs_Week52") %>%
+            pull(GO_lines) %>%
+            pluck(1) %>%
+            dplyr::filter(groupID == 5) %>%
+            pull(x_end_prop) %>%
+            unique(),
+        right = 0.995,
+        bottom = df_plot %>%
+            dplyr::filter(design == "Baseline_vs_Week52") %>%
+            pull(GO_lines) %>%
+            pluck(1) %>%
+            dplyr::filter(groupID == 5) %>%
+            pull(y_end_prop) %>%
+            unique() - 0.1,
+        top = df_plot %>%
+            dplyr::filter(design == "Baseline_vs_Week52") %>%
+            pull(GO_lines) %>%
+            pluck(1) %>%
+            dplyr::filter(groupID == 5) %>%
+            pull(y_end_prop) %>%
+            unique() + 0.1
+    ) +
+    patchwork::inset_element(
+        simplified_enrichment_plot %>%
+            dplyr::filter(design == "Baseline_vs_Week52") %>%
+            pull(plot_enrichment) %>%
+            pluck(1) %>%
+            pull(plot) %>%
+            pluck(6),
+        align_to = "plot",
+        left = df_plot %>%
+            dplyr::filter(design == "Baseline_vs_Week52") %>%
+            pull(GO_lines) %>%
+            pluck(1) %>%
+            dplyr::filter(groupID == 6) %>%
+            pull(x_end_prop) %>%
+            unique(),
+        right = 0.995,
+        bottom = df_plot %>%
+            dplyr::filter(design == "Baseline_vs_Week52") %>%
+            pull(GO_lines) %>%
+            pluck(1) %>%
+            dplyr::filter(groupID == 6) %>%
+            pull(y_end_prop) %>%
+            unique() - 0.1,
+        top = df_plot %>%
+            dplyr::filter(design == "Baseline_vs_Week52") %>%
+            pull(GO_lines) %>%
+            pluck(1) %>%
+            dplyr::filter(groupID == 6) %>%
+            pull(y_end_prop) %>%
+            unique() + 0.1
     )
 
 
@@ -479,7 +532,7 @@ save(plot_volcano_enrichment, file = paste(saveDir, "Volcano enrichment plots IQ
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/output/"
 ggsave(
     filename = paste(saveDir, "volcano enrichment draft.png"),
-    plot = plot_volcano_enrichment$plot_volcano_enrichment[[1]],
+    plot = plot_volcano_enrichment$plot_volcano_enrichment[[3]],
     dpi = 300,
     width = 20,
     height = 20,

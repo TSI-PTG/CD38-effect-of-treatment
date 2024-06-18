@@ -58,7 +58,7 @@ enrichment_chord <- function(
         dplyr::pull(Description)
 
     sector_cellcommunication <- data %>%
-        dplyr::filter(group == "cellular communication") %>%
+        dplyr::filter(group == "cell signalling") %>%
         dplyr::distinct(Description, .keep_all = TRUE) %>%
         dplyr::pull(Description)
 
@@ -96,7 +96,7 @@ enrichment_chord <- function(
                 group == "metabolic response" ~ "green",
                 group == "regulation of cellular processes" ~ "pink",
                 group == "cellular development" ~ "green",
-                group == "cellular communication" ~ "pink",
+                group == "cell signalling" ~ "pink",
             ),
             data = purrr::pmap(
                 list(name, group, data, hue),
@@ -339,7 +339,7 @@ enrichment_chord <- function(
             track.index = 1,
             col = cols_group["cellcommunication"],
             padding = c(track_nudge, 0, track_width, 0),
-            text = "cellular communication",
+            text = "cell signalling",
             cex = sector_title_text_size,
             text.col = "black",
             facing = "bending.outside",
