@@ -51,7 +51,7 @@ genes_ABMR_endothelial <- vienna_1208 %>%
 
 # SAVE THE DATA ####
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/"
-save(genes_ABMR_endothelial, file = paste(saveDir, "ABMR_endothelial_genes.RData", sep = ""))
+# save(genes_ABMR_endothelial, file = paste(saveDir, "ABMR_endothelial_genes.RData", sep = ""))
 
 
 # EXPLORE THE DATA ####

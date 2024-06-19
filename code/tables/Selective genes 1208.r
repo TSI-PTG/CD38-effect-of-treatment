@@ -12,7 +12,7 @@ load("Z:/DATA/Datalocks/Other data/affymap219_21Oct2019_1306_JR.RData")
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/all_probes_limma_1208.RData")
 # load gene lists
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/genes_NK_GEP.RData")
-load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/NK_genes_L765.RData")
+load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/NK_genes_TBB896.RData")
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/ABMR_endothelial_genes.RData")
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/ABMR_activity_genes.RData")
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/IFNG_genes.RData")
@@ -54,7 +54,7 @@ gene_tables <- limma_tables %>%
             geneset == "NK_ATAGC_U133" ~ genes_NK_ATAGC_U133$AffyID %>% list(),
             geneset == "NK_KTB18_RNAseq" ~ genes_NK_KTB18_RNAseq$AffyID %>% list(),
             geneset == "NK_LM22_U133" ~ genes_NK_LM22_U133$AffyID %>% list(),
-            geneset == "NK_L765" ~ genes_NK_L765$AffyID %>% list(),
+            geneset == "NK_L765" ~ genes_NK_TBB896$AffyID %>% list(),
             geneset == "Endothelial" ~ genes_ABMR_endothelial$AffyID %>% list(),
             geneset == "IFNG" ~ genes_IFNG$AffyID %>% list()
         )

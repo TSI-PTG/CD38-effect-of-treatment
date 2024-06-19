@@ -13,7 +13,7 @@ source("C:/R/CD38-effect-of-treatment/code/functions/plot.gg_volcano_timeseries.
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/IQR_filtered_probes_unique_genes_baseline_corrected_cortex_corrected_limma_1208.RData")
 # load gene lists
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/genes_NK_GEP.RData")
-load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/NK_genes_L765.RData")
+load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/NK_genes_TBB896.RData")
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/ABMR_endothelial_genes.RData")
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/ABMR_activity_genes.RData")
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/IFNG_genes.RData")
@@ -44,7 +44,7 @@ labels_probes <- list(
     genes_IFNG %>%
         dplyr::select(AffyID) %>%
         mutate(label = "IFNG-inducible ABMR activity genes"),
-    genes_NK_L765 %>% dplyr::select(AffyID) %>%
+    genes_NK_TBB896 %>% dplyr::select(AffyID) %>%
         mutate(label = "NK cell expressed ABMR activity genes"),
     genes_ABMR_endothelial %>%
         dplyr::select(AffyID) %>%

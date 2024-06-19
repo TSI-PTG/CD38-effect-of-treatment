@@ -15,7 +15,7 @@ load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular e
 simplefile <- read_excel("Z:/MISC/Phil/AA All papers in progress/A GC papers/0000 simple XL files/Kidney 5086/MASTER COPY K5086 SimpleCorrAAInjRej 5AAInjNR 7AARej.xlsx")
 # load gene lists
 # load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/NK cell selective genes.RData")
-load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/NK_genes_L765.RData")
+load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/NK_genes_TBB896.RData")
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/ABMR_endothelial_genes.RData")
 # load simplified enrichment plots
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/simplified_enrichment_plots.RData")
@@ -41,13 +41,13 @@ probes_abmr <- simplefile %>%
     pull(Affy)
 
 
-# genes_NK_L765
+# genes_NK_TBB896
 
 # genes_ABMR_endothelial
 
 
 labels_probes <- list(
-    genes_NK_L765 %>%
+    genes_NK_TBB896 %>%
         mutate(label = "NK genes") %>% dplyr::select(AffyID, label),
     genes_ABMR_endothelial %>%
         mutate(label = "Endothelial genes")

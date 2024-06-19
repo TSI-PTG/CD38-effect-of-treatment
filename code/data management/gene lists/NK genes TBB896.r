@@ -14,7 +14,7 @@ load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vi
 
 
 # DEFINE THE ABMR ACTIVITY GENES ####
-genes_NK_L765 <- Hmisc::.q(
+genes_NK_TBB896 <- Hmisc::.q(
     KLRF1,
     PRF1,
     TBX21,
@@ -40,21 +40,21 @@ genes_NK_L765 <- Hmisc::.q(
 
 
 # DEFINE THE ABMR ACTIVITY GENES BY MEAN EXPRESSION ####
-genes_NK_L765 <- vienna_1208 %>%
+genes_NK_TBB896 <- vienna_1208 %>%
     exprs() %>%
     as.data.frame() %>%
     mutate(means = rowMeans(.), .before = 1) %>%
     as_tibble(rownames = "AffyID") %>%
     right_join(affymap219 %>% dplyr::select(AffyID, Symb) %>% tibble(), ., by = "AffyID") %>%
-    dplyr::filter(Symb %in% genes_NK_L765) %>%
+    dplyr::filter(Symb %in% genes_NK_TBB896) %>%
     arrange(Symb, means) %>%
     dplyr::select(AffyID, Symb, means)
 
 
 # SAVE THE DATA ####
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/"
-save(genes_NK_L765, file = paste(saveDir, "NK_genes_L765.RData", sep = ""))
+save(genes_NK_TBB896, file = paste(saveDir, "NK_genes_TBB896.RData", sep = ""))
 
 
 # EXPLORE THE DATA ####
-genes_NK_L765 %>% slice_max(means, by = "Symb")
+genes_NK_TBB896 %>% slice_max(means, by = "Symb") %>% print(n="all")
