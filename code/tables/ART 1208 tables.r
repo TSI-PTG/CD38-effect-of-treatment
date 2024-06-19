@@ -175,7 +175,7 @@ data_pairwise_formatted <- data_delta_formatted %>%
 
 
 # UNIVERSAL VARIABLES FOR FLEXTABLE ####
-title_art_pairwise <- paste("Table i. Median \u00B1 IQR molecular scores in biopsies from treated vs untreated patients")
+title_art_pairwise <- paste("Table i. Median \u00B1 IQR molecular scores in biopsies from Felzartamab-treated vs placebo-treated patients")
 
 footnoteText <- c(
     paste(

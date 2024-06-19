@@ -35,7 +35,7 @@ seed <- 42
 vars_cfDNA <- c("cfDNA_cpml", "cfDNA_percent")
 vars_abmr <- c("ABMRpm", "ggt0", "ptcgt0", "DSAST", "NKB") # "cggt0", "RejAA_EABMR", "RejAA_FABMR", "RejAA_LABMR")
 vars_tcmr <- c("TCMRt", "tgt1", "igt1", "QCAT", "TCB") # , "TCMR-RAT", )
-vars_injury <- c("IRRAT30", "IRITD3", "IRITD5")
+vars_injury <- c("IRRAT30", "IRITD3", "IRITD5", "cigt1", "ctgt1")
 # Endothelium <- c("ENDAT")
 vars_parenchyma <- c("KT1", "KT2")
 vars_macrophage <- c("AMAT1", "QCMAT")
