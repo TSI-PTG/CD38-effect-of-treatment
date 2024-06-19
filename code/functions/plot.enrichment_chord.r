@@ -43,7 +43,7 @@ enrichment_chord <- function(
         dplyr::pull(Description)
 
     sector_stimulus <- data %>%
-        dplyr::filter(group == "response to external stimilus") %>%
+        dplyr::filter(group == "response to exogenous stimilus") %>%
         dplyr::distinct(Description, .keep_all = TRUE) %>%
         dplyr::pull(Description)
 
@@ -92,7 +92,7 @@ enrichment_chord <- function(
                 group == "response to infection" ~ "orange",
                 group == "inflammation" ~ "yellow",
                 group == "injury response" ~ "purple",
-                group == "response to external stimilus" ~ "green",
+                group == "response to exogenous stimilus" ~ "green",
                 group == "metabolic response" ~ "green",
                 group == "regulation of cellular processes" ~ "pink",
                 group == "cellular development" ~ "green",

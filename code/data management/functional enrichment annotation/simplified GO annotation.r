@@ -2,7 +2,7 @@
 immune_response <- paste(
     c(
         "immune", "immunity", "cytokine", "leukocyte", "cell activation",
-        "response to", "interaction", "virus", "symbiont", "defense response",
+        "interaction", "virus", "symbiont", "defense response",
         "cell killing", "cell surface receptor", "interspecies"
     ),
     collapse = "|"
@@ -10,8 +10,16 @@ immune_response <- paste(
 infection_response <- paste(c("virus", "symbiont", "defense response"), collapse = "|")
 
 
+# STRESS RESPONSE ####
+stress_response <- paste(c("cellular response to stress", "stress"), collapse = "|")
+
+
 # FOREIGN STIMULUS ####
-external_stimulus <- paste(c("response to", "interaction"), collapse = "|")
+exogenous_stimlulus <- paste(c("external stimulus", "interaction"), collapse = "|")
+
+
+# ENDOGENOUS STIMULUS ####
+endogenous_stimulus <- paste(c("endogenous stimulus", "cellular response to endogenous stimulus"), collapse = "|")
 
 
 # INJURY PROCESSES ####
@@ -28,7 +36,7 @@ cellular_development <- paste(c(
     "development", "neurogenesis", "generation", "morphogenesis", "differentiation", "component",
     "biological_process", "hemopoiesis", "localization", "endocytosis"
 ), collapse = "|")
-cellular_regulation <- paste(c("regulation of","cellular process"), collapse = "|")
+cellular_regulation <- paste(c("cellular process", "regulation of cellular", "positive regulation of response to stimulus"), collapse = "|")
 
 
 # METABOLIC PROCESSES ####
@@ -38,12 +46,12 @@ protein_metabolism <- paste(
 )
 
 nitrogen_metabolism <- paste(
-    c("nitrogen"),
+    c("nitrogen", "response to organonitrogen compound"),
     collapse = "|"
 )
 
 xenobiotic_metabolism <- paste(
-    c("organic substance", "macromolecule metabolic"),
+    c("organic substance", "macromolecule metabolic", "response to organic cyclic compound"),
     collapse = "|"
 )
 
@@ -51,19 +59,29 @@ metabolic_response <- paste(c("metabolism", "metabolic", "catabolic", "cellular 
 general_metabolic_response <- paste(protein_metabolism, nitrogen_metabolism, xenobiotic_metabolism, metabolic_response,  sep = "|")
 
 
+# PROTEIN SYNTHESIS ####
+protein_synthesis <- paste(
+    c("positive regulation of macromolecule biosynthetic process"),
+    collapse = "|"
+)
+
+
+
 GO_annotation_levels <- c(
-"immune response","response to infection",
-"response to external stimilus",
+"immune response","response to infection", "stress response",
+"response to exogenous stimilus", "response to endogenous stimilus",
 "inflammation","injury response",
 "cell cycling", "cell signalling", "cell mobilization",  "cell development", "cellular regulation",
-"protein metabolism","nitrogen metabolism","xenobiotic metabolism","metabolic response"
+"protein metabolism","nitrogen metabolism","xenobiotic metabolism","metabolic response",
+"protein synthesis"
 )
 
 
 GO_annotation_levels_truncated <- c(
-    "immune response", "response to infection",
-    "response to external stimilus",
+    "immune response", "response to infection","stress response",
+    "response to exogenous stimilus", "response to endogenous stimilus",
     "inflammation", "injury response",
     "cell cycling", "cell signalling", "cell mobilization", "cell development", "cellular regulation",
-    "metabolic response"
+    "metabolic response",
+    "protein_synthesis"
 )

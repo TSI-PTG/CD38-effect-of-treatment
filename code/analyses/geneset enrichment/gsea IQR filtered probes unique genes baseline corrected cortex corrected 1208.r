@@ -68,7 +68,7 @@ gsea_go_simplified <- gsea_go %>%
 
 
 # FORMAT TABLES FOR GENESET ENRICHMENT ANALYSES (GSEA) ####
-gsea_go_tables <- gsea_go_simplified %>%
+gsea_go_simplified_formatted <- gsea_go_simplified %>%
     mutate(
         gsea_go_tables = map(
             gsea_go_simplified,
@@ -89,7 +89,14 @@ gsea_go_tables <- gsea_go_simplified %>%
                         .after = Description,
                     )
             }
-        ),
+        )
+    )
+
+
+
+# FORMAT TABLES FOR GENESET ENRICHMENT ANALYSES (GSEA) ####
+gsea_go_tables <- gsea_go_simplified_formatted %>%
+    mutate(
         gsea_go_flextables = map(
             gsea_go_tables,
             function(gsea_go_tables) {
@@ -117,26 +124,32 @@ gsea_go_tables <- gsea_go_simplified %>%
             }
         )
     )
-# gsea_go_tables$gsea_go_tables[[1]] 
-# gsea_go_tables$gsea_go_flextables[[3]]
+
+
+# gsea_go_tables$gsea_go_tables[[1]]
+gsea_go_tables$gsea_go_flextables[[3]]
+
+
+# PREPARE THE RESULTS FOR EXPORT ####
+felzartamab_gsea_k1208 <- gsea_go_tables
+names(felzartamab_gsea_k1208$gsea_go_flextables) <- felzartamab_gsea_k1208$design
+
 
 
 # SAVE THE GSEA RESULTS ####
-felzartamab_gsea_k1208 <- gsea_go_tables
-names(felzartamab_gsea_k1208$gsea_go_flextables) <- felzartamab_gsea_k1208$design
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/"
-save(felzartamab_gsea_k1208, file = paste(saveDir, "felzartamab_gsea_baseline_corrected_cortex_corrected_k1208.RData", sep = ""))
+# save(felzartamab_gsea_k1208, file = paste(saveDir, "felzartamab_gsea_baseline_corrected_cortex_corrected_k1208.RData", sep = ""))
 
 
 
 # EXPORT THE GSEA RESULTS TO EXCEL FILE ####
 saveDir1 <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/output/"
-openxlsx::write.xlsx(felzartamab_gsea_k1208$gsea_go_tables,
-    asTable = TRUE,
-    file = paste(saveDir1, "Pathways_IQR_filtered_probes_unique_genes_baseline_corrected_cortex_corrected_limma_1208_13June24",
-        # Sys.Date(),
-        # format(Sys.time(), "_%I%M%p"),
-        ".xlsx",
-        sep = ""
-    )
-)
+# openxlsx::write.xlsx(felzartamab_gsea_k1208$gsea_go_tables,
+#     asTable = TRUE,
+#     file = paste(saveDir1, "Pathways_IQR_filtered_probes_unique_genes_baseline_corrected_cortex_corrected_limma_1208_13June24",
+#         # Sys.Date(),
+#         # format(Sys.time(), "_%I%M%p"),
+#         ".xlsx",
+#         sep = ""
+#     )
+# )
