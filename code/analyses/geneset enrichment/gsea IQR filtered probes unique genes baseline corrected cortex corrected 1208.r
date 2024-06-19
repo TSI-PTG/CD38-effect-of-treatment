@@ -113,7 +113,6 @@ gsea_go_tables <- gsea_go_simplified %>%
                     flextable::align(align = "center", part = "all") %>%
                     flextable::align(j = "core_enrichment", align = "left", part = "body") %>%
                     flextable::bg(bg = "white", part = "all") %>%
-                    # flextable::bg(i = ~ NES < 0, bg = "grey80", part = "body") %>%
                     flextable::autofit()
             }
         )
