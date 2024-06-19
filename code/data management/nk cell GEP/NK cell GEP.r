@@ -10,7 +10,7 @@ KTB18 <- read.delim("Z:/MISC/Phil/AA All papers in progress/A GC papers/A a kidn
 # load KTB18 SIGNATURE MATRIX
 LM22 <- read.delim("Z:/MISC/Phil/AA All papers in progress/A GC papers/A a kidney cibersort/data/CIBERSORTx Signature Matrix/LM22.txt")
 # load in house cell panel
-atagc <- read_excel("Z:/MISC/Patrick Gauthier/R/affymap219-CELL-PANEL/backup/UPDATED 2017 ANNOTATIONS - MASTERFILE - U133 HUMAN CELL PANEL - ALL PROBESETS (nonIQR) pfhptg.xlsx") # TBB with TBBParaRef
+atagc <- read_excel("Z:/MISC/Patrick Gauthier/R/affymap219-CELL-PANEL/backup/UPDATED 2017 ANNOTATIONS - MASTERFILE - U133 HUMAN CELL PANEL - ALL PROBESETS (nonIQR) pfhptg.xlsx")
 # load k1208 data
 # if (!exists("K1208")) {
 #     load("Z:/DATA/Datalocks/Kidney/K1208_Feb28_2022_JR.RData")
