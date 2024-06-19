@@ -62,7 +62,7 @@ df_plot_00 <- felzartamab_gsea_k1208 %>%
                             Description %>% str_detect(inflammation) ~ "inflammation",
                             Description %>% str_detect(injury) ~ "injury response",
                             Description %>% str_detect(metabolic_response) ~ "metabolic response",
-                            Description %>% str_detect(exogenous_stimlulus) ~ "response to exogenous stimilus",
+                            Description %>% str_detect(exogenous_stimlulus) ~ "response to exogenous stimulus",
                             Description %>% str_detect(cellular_regulation) ~ "regulation of cellular processes",
                             Description %>% str_detect(cellular_development) ~ "cellular development",
                             Description %>% str_detect(cell_signalling) ~ "cell signalling",
@@ -101,7 +101,7 @@ df_plot_02 <- df_plot_01 %>%
                         group = case_when(
                             GO %>% str_detect(immune_response) ~ "immune response",
                             GO %>% str_detect(infection_response) ~ "response to infection",
-                            GO %>% str_detect(exogenous_stimlulus) ~ "response to exogenous stimilus",
+                            GO %>% str_detect(exogenous_stimlulus) ~ "response to exogenous stimulus",
                             GO %>% str_detect(inflammation) ~ "inflammation",
                             GO %>% str_detect(injury) ~ "injury response",
                             GO %>% str_detect(cell_cycle) ~ "cell cycling",
@@ -117,7 +117,7 @@ df_plot_02 <- df_plot_01 %>%
                         col_group = case_when(
                             group == "immune response" ~ "#ffb700",
                             group == "response to infection" ~ "#ff0000",
-                            group == "response to exogenous stimilus" ~ "#00ff91",
+                            group == "response to exogenous stimulus" ~ "#00ff91",
                             group == "inflammation" ~ "#ff9900",
                             group == "injury response" ~ "#5d00ff",
                             group == "cell cycling" ~ "#00ff33",
@@ -157,7 +157,7 @@ df_plot_02 <- df_plot_01 %>%
                             Description %>% str_detect(inflammation) ~ "inflammation",
                             Description %>% str_detect(injury) ~ "injury response",
                             Description %>% str_detect(metabolic_response) ~ "metabolic response",
-                            Description %>% str_detect(exogenous_stimlulus) ~ "response to exogenous stimilus",
+                            Description %>% str_detect(exogenous_stimlulus) ~ "response to exogenous stimulus",
                             Description %>% str_detect(cellular_regulation) ~ "regulation of cellular processes",
                             Description %>% str_detect(cellular_development) ~ "cellular development",
                             Description %>% str_detect(cell_signalling) ~ "cell signalling"

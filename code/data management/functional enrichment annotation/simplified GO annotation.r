@@ -69,7 +69,7 @@ protein_synthesis <- paste(
 
 GO_annotation_levels <- c(
 "immune response","response to infection", "stress response",
-"response to exogenous stimilus", "response to endogenous stimilus",
+"response to exogenous stimulus", "response to endogenous stimulus",
 "inflammation","injury response",
 "cell cycling", "cell signalling", "cell mobilization",  "cell development", "cellular regulation",
 "protein metabolism","nitrogen metabolism","xenobiotic metabolism","metabolic response",
@@ -79,7 +79,7 @@ GO_annotation_levels <- c(
 
 GO_annotation_levels_truncated <- c(
     "immune response", "response to infection","stress response",
-    "response to exogenous stimilus", "response to endogenous stimilus",
+    "response to exogenous stimulus", "response to endogenous stimulus",
     "inflammation", "injury response",
     "cell cycling", "cell signalling", "cell mobilization", "cell development", "cellular regulation",
     "metabolic response",

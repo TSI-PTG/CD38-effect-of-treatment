@@ -63,7 +63,7 @@ data_joined_01 <- data_joined_00 %>%
                         group = case_when(
                             GO %>% str_detect(immune_response) ~ "immune response",
                             GO %>% str_detect(infection_response) ~ "response to infection",
-                            GO %>% str_detect(exogenous_stimlulus) ~ "response to exogenous stimilus",
+                            GO %>% str_detect(exogenous_stimlulus) ~ "response to exogenous stimulus",
                             GO %>% str_detect(inflammation) ~ "inflammation",
                             GO %>% str_detect(injury) ~ "injury response",
                             GO %>% str_detect(cell_cycle) ~ "cell cycling",
@@ -80,7 +80,7 @@ data_joined_01 <- data_joined_00 %>%
                         col_group = case_when(
                             group == "immune response" ~ "#ffb700",
                             group == "response to infection" ~ "#ff0000",
-                            group == "response to exogenous stimilus" ~ "#00ff91",
+                            group == "response to exogenous stimulus" ~ "#00ff91",
                             group == "inflammation" ~ "#ff9900",
                             group == "injury response" ~ "#5d00ff",
                             group == "cell cycling" ~ "#00ff33",

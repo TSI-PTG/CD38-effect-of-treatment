@@ -24,8 +24,8 @@ gsea_go_tables <- felzartamab_gsea_k1208 %>%
                         "Simplified description" = case_when(
                             Description %>% str_detect(immune_response) ~ "immune response",
                             Description %>% str_detect(infection_response) ~ "response to infection",
-                            Description %>% str_detect(exogenous_stimlulus) ~ "response to exogenous stimilus",
-                            Description %>% str_detect(endogenous_stimulus) ~ "response to exogenous stimilus",
+                            Description %>% str_detect(exogenous_stimlulus) ~ "response to exogenous stimulus",
+                            Description %>% str_detect(endogenous_stimulus) ~ "response to exogenous stimulus",
                             Description %>% str_detect(inflammation) ~ "inflammation",
                             Description %>% str_detect(injury) ~ "injury response",
                             Description %>% str_detect(cell_cycle) ~ "cell cycling",
