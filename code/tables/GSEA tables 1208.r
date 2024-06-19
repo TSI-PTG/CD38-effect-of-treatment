@@ -92,4 +92,4 @@ gsea_go_flextables <- gsea_go_tables %>%
 # PRINT FLEXTABLES TO POWERPOINT ####
 gsea_go_flextables$gsea_go_flextables[[1]] %>% print(preview = "pptx")
 gsea_go_flextables$gsea_go_flextables[[2]] %>% print(preview = "pptx")
-# gsea_go_flextables$gsea_go_flextables[[3]] %>% print(preview = "pptx")
+gsea_go_flextables$gsea_go_flextables[[3]] %>% print(preview = "pptx")
