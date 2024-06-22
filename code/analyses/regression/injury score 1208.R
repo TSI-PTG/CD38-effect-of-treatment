@@ -142,7 +142,7 @@ table_slope_IRRAT30 <- model_IRRAT30 %>%
   flextable::set_table_properties(layout = "autofit") %>%
   flextable::set_header_labels(
     name = "Group", result = "IRRAT30 Slope (95%CI)",
-    "p_value" = "P-Value"
+    "p_adjusted" = "FDR"
   ) %>%
   flextable::bold(i = NULL, part = "header") %>%
   flextable::fontsize(size = size_font, part = "all")
@@ -154,7 +154,7 @@ table_slope_IRITD3 <- model_IRITD3 %>%
   flextable::set_table_properties(layout = "autofit") %>%
   flextable::set_header_labels(
     name = "Group", result = "IRITD3 Slope (95%CI)",
-    "p_value" = "P-Value"
+    "p_adjusted" = "FDR"
   ) %>%
   flextable::bold(i = NULL, part = "header") %>%
   flextable::fontsize(size = size_font, part = "all")
@@ -166,7 +166,7 @@ table_slope_IRITD5 <- model_IRITD5 %>%
   flextable::set_table_properties(layout = "autofit") %>%
   flextable::set_header_labels(
     name = "Group", result = "IRITD5 Slope (95%CI)",
-    "p_value" = "P-Value"
+    "p_adjusted" = "FDR"
   ) %>%
   flextable::bold(i = NULL, part = "header") %>%
   flextable::fontsize(size = size_font, part = "all")
