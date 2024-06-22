@@ -137,7 +137,7 @@ model_IRITD5 <- slopes_IRITD5 %>%
 # CREATE TABLE SUMMARIES OF SLOPES ####
 size_font <- 10
 table_slope_IRRAT30 <- model_IRRAT30 %>%
-  dplyr::select(-p_adjusted) %>%
+  dplyr::select(-p_value) %>%
   flextable::qflextable() %>%
   flextable::set_table_properties(layout = "autofit") %>%
   flextable::set_header_labels(
@@ -149,7 +149,7 @@ table_slope_IRRAT30 <- model_IRRAT30 %>%
 # table_slope_IRRAT30 %>% print(preview = "pptx")
 
 table_slope_IRITD3 <- model_IRITD3 %>%
-  dplyr::select(-p_adjusted) %>%
+  dplyr::select(-p_value) %>%
   flextable::qflextable() %>%
   flextable::set_table_properties(layout = "autofit") %>%
   flextable::set_header_labels(
@@ -161,7 +161,7 @@ table_slope_IRITD3 <- model_IRITD3 %>%
 # table_slope_IRRAT30 %>% print(preview = "pptx")
 
 table_slope_IRITD5 <- model_IRITD5 %>%
-  dplyr::select(-p_adjusted) %>%
+  dplyr::select(-p_value) %>%
   flextable::qflextable() %>%
   flextable::set_table_properties(layout = "autofit") %>%
   flextable::set_header_labels(
