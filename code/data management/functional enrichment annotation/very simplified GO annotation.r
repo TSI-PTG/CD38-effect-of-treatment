@@ -67,7 +67,8 @@ protein_synthesis <- paste(
 
 
 # MERGE ANNOTATIONS ####
-cellular_development_and_metabolism <- (general_metabolic_response, cellular_development, cellular_regulation)
+cellular_development_and_metabolism <- c(general_metabolic_response, cellular_development, cellular_regulation)
+
 
 
 
