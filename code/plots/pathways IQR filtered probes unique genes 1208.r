@@ -15,7 +15,7 @@ immune_response <- paste(c("immune", "immunity", "cytokine", "leukocyte", "cell 
 cell_cycle <- paste(c("cycle", "division"), collapse = "|")
 inflammation <- paste(c("inflam"), collapse = "|")
 injury <- paste(c("injury"), collapse = "|")
-exogenous_stimlulus <- paste(c("response to", "interaction"), collapse = "|")
+exogenous_stimulus <- paste(c("response to", "interaction"), collapse = "|")
 cellular_regulation <- paste(c("regulation of"), collapse = "|")
 cellular_development <- paste(c(
     "chromosome", "organelle fission", "organization", "segregation",
@@ -62,7 +62,7 @@ df_plot_00 <- felzartamab_gsea_k1208 %>%
                             Description %>% str_detect(inflammation) ~ "inflammation",
                             Description %>% str_detect(injury) ~ "injury response",
                             Description %>% str_detect(metabolic_response) ~ "metabolic response",
-                            Description %>% str_detect(exogenous_stimlulus) ~ "response to exogenous stimulus",
+                            Description %>% str_detect(exogenous_stimulus) ~ "response to exogenous stimulus",
                             Description %>% str_detect(cellular_regulation) ~ "regulation of cellular processes",
                             Description %>% str_detect(cellular_development) ~ "cellular development",
                             Description %>% str_detect(cell_signalling) ~ "cell signalling",
@@ -101,7 +101,7 @@ df_plot_02 <- df_plot_01 %>%
                         group = case_when(
                             GO %>% str_detect(immune_response) ~ "immune response",
                             GO %>% str_detect(infection_response) ~ "response to infection",
-                            GO %>% str_detect(exogenous_stimlulus) ~ "response to exogenous stimulus",
+                            GO %>% str_detect(exogenous_stimulus) ~ "response to exogenous stimulus",
                             GO %>% str_detect(inflammation) ~ "inflammation",
                             GO %>% str_detect(injury) ~ "injury response",
                             GO %>% str_detect(cell_cycle) ~ "cell cycling",
@@ -157,7 +157,7 @@ df_plot_02 <- df_plot_01 %>%
                             Description %>% str_detect(inflammation) ~ "inflammation",
                             Description %>% str_detect(injury) ~ "injury response",
                             Description %>% str_detect(metabolic_response) ~ "metabolic response",
-                            Description %>% str_detect(exogenous_stimlulus) ~ "response to exogenous stimulus",
+                            Description %>% str_detect(exogenous_stimulus) ~ "response to exogenous stimulus",
                             Description %>% str_detect(cellular_regulation) ~ "regulation of cellular processes",
                             Description %>% str_detect(cellular_development) ~ "cellular development",
                             Description %>% str_detect(cell_signalling) ~ "cell signalling"

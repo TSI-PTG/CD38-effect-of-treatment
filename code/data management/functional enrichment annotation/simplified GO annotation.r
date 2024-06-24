@@ -15,7 +15,7 @@ stress_response <- paste(c("cellular response to stress", "stress"), collapse = 
 
 
 # FOREIGN STIMULUS ####
-exogenous_stimlulus <- paste(c("external stimulus", "interaction"), collapse = "|")
+exogenous_stimulus <- paste(c("external stimulus", "interaction"), collapse = "|")
 
 
 # ENDOGENOUS STIMULUS ####

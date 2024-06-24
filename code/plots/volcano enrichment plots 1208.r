@@ -17,7 +17,7 @@ load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular e
 # load simplified enrichment plots
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/simplified_enrichment_plots.RData")
 # load simplified GO annotations
-source("C:/R/CD38-effect-of-treatment/code/data management/functional enrichment annotation/simplified GO annotation.r")
+source("C:/R/CD38-effect-of-treatment/code/data management/functional enrichment annotation/very simplified GO annotation.r")
 
 
 
@@ -63,35 +63,21 @@ data_joined_01 <- data_joined_00 %>%
                         group = case_when(
                             GO %>% str_detect(immune_response) ~ "immune response",
                             GO %>% str_detect(infection_response) ~ "response to infection",
-                            GO %>% str_detect(exogenous_stimlulus) ~ "response to exogenous stimulus",
+                            GO %>% str_detect(response_to_stimulus) ~ "response to exogenous/endogenous stimulus",
                             GO %>% str_detect(inflammation) ~ "inflammation",
                             GO %>% str_detect(injury) ~ "injury response",
-                            GO %>% str_detect(cell_cycle) ~ "cell cycling",
-                            GO %>% str_detect(cell_signalling) ~ "cell signalling",
-                            GO %>% str_detect(cell_mobilization) ~ "cell mobilization",
-                            GO %>% str_detect(cellular_development) ~ "cell development",
-                            GO %>% str_detect(cellular_regulation) ~ "cellular regulation",
-                            # GO %>% str_detect(protein_metabolism) ~ "protein metabolism",
-                            # GO %>% str_detect(nitrogen_metabolism) ~ "nitrogen metabolism",
-                            # GO %>% str_detect(xenobiotic_metabolism) ~ "xenobiotic metabolism",
-                            GO %>% str_detect(general_metabolic_response) ~ "metabolic response"
-                            # ) %>% factor(levels = GO_annotation_levels),
+                            GO %>% str_detect(cell_signalling_and_RNA_transcription) ~ "cell signalling and\n RNAtranscription",
+                            GO %>% str_detect(cellular_development_and_metabolism) ~ "cell development,\nmobilization,\nand metabolism",
+                            TRUE ~ GO
                         ) %>% factor(levels = GO_annotation_levels_truncated),
                         col_group = case_when(
-                            group == "immune response" ~ "#ffb700",
+                            group == "immune response" ~ "#5d00ff",
                             group == "response to infection" ~ "#ff0000",
-                            group == "response to exogenous stimulus" ~ "#00ff91",
+                            group == "response to exogenous/endogenous stimulus" ~ "#00ff91",
                             group == "inflammation" ~ "#ff9900",
                             group == "injury response" ~ "#5d00ff",
-                            group == "cell cycling" ~ "#00ff33",
-                            group == "cell signalling" ~ "#00ff33",
-                            group == "cell mobilization" ~ "#00ff33",
-                            group == "cell development" ~ "#4dff00",
-                            group == "cellular regulation" ~ "#ff00ea",
-                            # group == "protein metabolism" ~ "#7b00ff",
-                            # group == "nitrogen metabolism" ~ "#7b00ff",
-                            # group == "xenobiotic metabolism" ~ "#7b00ff",
-                            group == "metabolic response" ~ "#7b00ff"
+                            group == "cell signalling and\nRNA transcription" ~ "#ff00ee",
+                            group == "cell development, mobilization, and metabolism" ~ "#4dff00"
                         )
                     ) %>%
                     mutate(
@@ -127,9 +113,40 @@ data_joined_01 <- data_joined_00 %>%
     ) %>%
     dplyr::select(design, data_plot, data_enrichment, data_annotation)
 
-data_joined_01$data_enrichment[[2]] %>%
-    dplyr::select(GO, group) %>%
-    dplyr::filter(group %>% is.na()) 
+
+# MAKE ONE-OFF EDITS TO GO ANNOTATIONS ####
+data_joined_01 <- data_joined_01 %>%
+    mutate(
+        data_enrichment = pmap(
+            list(design, data_enrichment),
+            function(design, data_enrichment) {
+                data_enrichment %>%
+                    mutate(
+                        group = case_when(
+                            design == "Baseline_vs_Week24" ~ "immune response",
+                            TRUE ~ group
+                        )%>% factor(levels = GO_annotation_levels_truncated)
+                    )
+            }
+        ),
+        data_annotation = pmap(
+            list(design, data_annotation),
+            function(design, data_annotation) {
+                data_annotation %>%
+                    mutate(
+                        group = case_when(
+                            design == "Baseline_vs_Week24" ~ "immune response",
+                            TRUE ~ group
+                        )%>% factor(levels = GO_annotation_levels_truncated)
+                    )
+            }
+        )
+    )
+
+data_joined_01$data_annotation[[1]] %>%
+    dplyr::select(GO, group)
+
+
 
 
 # DEFINE THE PATHWAY ENRICHMENT LINES ####
@@ -278,37 +295,6 @@ plot_week24_week52 <- df_plot %>%
             dplyr::filter(groupID == 1) %>%
             pull(y_end_prop) %>%
             unique() + 0.1
-    ) +
-    patchwork::inset_element(
-        simplified_enrichment_plot %>%
-            dplyr::filter(design == "Week24_vs_Week52") %>%
-            pull(plot_enrichment) %>%
-            pluck(1) %>%
-            pull(plot) %>%
-            pluck(2),
-        align_to = "plot",
-        left = df_plot %>%
-            dplyr::filter(design == "Week24_vs_Week52") %>%
-            pull(GO_lines) %>%
-            pluck(1) %>%
-            dplyr::filter(groupID == 2) %>%
-            pull(x_end_prop) %>%
-            unique(),
-        right = 0.995,
-        bottom = df_plot %>%
-            dplyr::filter(design == "Week24_vs_Week52") %>%
-            pull(GO_lines) %>%
-            pluck(1) %>%
-            dplyr::filter(groupID == 2) %>%
-            pull(y_end_prop) %>%
-            unique() - 0.1,
-        top = df_plot %>%
-            dplyr::filter(design == "Week24_vs_Week52") %>%
-            pull(GO_lines) %>%
-            pluck(1) %>%
-            dplyr::filter(groupID == 2) %>%
-            pull(y_end_prop) %>%
-            unique() + 0.1
     )
 
 
@@ -441,71 +427,7 @@ plot_baseline_week52 <- df_plot %>%
             dplyr::filter(groupID == 4) %>%
             pull(y_end_prop) %>%
             unique() + 0.1
-    ) +
-    patchwork::inset_element(
-        simplified_enrichment_plot %>%
-            dplyr::filter(design == "Baseline_vs_Week52") %>%
-            pull(plot_enrichment) %>%
-            pluck(1) %>%
-            pull(plot) %>%
-            pluck(5),
-        align_to = "plot",
-        left = df_plot %>%
-            dplyr::filter(design == "Baseline_vs_Week52") %>%
-            pull(GO_lines) %>%
-            pluck(1) %>%
-            dplyr::filter(groupID == 5) %>%
-            pull(x_end_prop) %>%
-            unique(),
-        right = 0.995,
-        bottom = df_plot %>%
-            dplyr::filter(design == "Baseline_vs_Week52") %>%
-            pull(GO_lines) %>%
-            pluck(1) %>%
-            dplyr::filter(groupID == 5) %>%
-            pull(y_end_prop) %>%
-            unique() - 0.1,
-        top = df_plot %>%
-            dplyr::filter(design == "Baseline_vs_Week52") %>%
-            pull(GO_lines) %>%
-            pluck(1) %>%
-            dplyr::filter(groupID == 5) %>%
-            pull(y_end_prop) %>%
-            unique() + 0.1
-    ) +
-    patchwork::inset_element(
-        simplified_enrichment_plot %>%
-            dplyr::filter(design == "Baseline_vs_Week52") %>%
-            pull(plot_enrichment) %>%
-            pluck(1) %>%
-            pull(plot) %>%
-            pluck(6),
-        align_to = "plot",
-        left = df_plot %>%
-            dplyr::filter(design == "Baseline_vs_Week52") %>%
-            pull(GO_lines) %>%
-            pluck(1) %>%
-            dplyr::filter(groupID == 6) %>%
-            pull(x_end_prop) %>%
-            unique(),
-        right = 0.995,
-        bottom = df_plot %>%
-            dplyr::filter(design == "Baseline_vs_Week52") %>%
-            pull(GO_lines) %>%
-            pluck(1) %>%
-            dplyr::filter(groupID == 6) %>%
-            pull(y_end_prop) %>%
-            unique() - 0.1,
-        top = df_plot %>%
-            dplyr::filter(design == "Baseline_vs_Week52") %>%
-            pull(GO_lines) %>%
-            pluck(1) %>%
-            dplyr::filter(groupID == 6) %>%
-            pull(y_end_prop) %>%
-            unique() + 0.1
-    )
-
-
+    ) 
 
 
 # MAKE PLOT PANELS ####
