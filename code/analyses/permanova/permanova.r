@@ -45,20 +45,20 @@ seed <- 42
 
 # DEFINE CATEGORIES FOR FEATURES ####
 # Rejectionrelated <- c("GRIT3", "Rej-RAT", "RejAA_NR")
-vars_cfDNA <- c("cfDNA")
+vars_cfDNA <- c("cfDNA_percent")
 vars_abmr <- c("ABMRpm", "ggt0", "ptcgt0", "DSAST", "NKB") # "cggt0", "RejAA_EABMR", "RejAA_FABMR", "RejAA_LABMR")
 vars_tcmr <- c("TCMRt", "tgt1", "igt1", "QCAT", "TCB") # , "TCMR-RAT", )
 
 # Endothelium <- c("ENDAT")
-# Parenchyma <- c("KT1", "KT2")
-# Macrophage <- c("AMAT1", "QCMAT")
+vars_parenchyma <- c("KT1", "KT2")
+vars_macrophage <- c("AMAT1", "QCMAT")
 # Injuryrecent <- c("FICOL", "IRRAT30", "IRITD3", "IRITD5")
-# Injurylate <- c("IGT", "MCAT", "BAT", "cigt1", "ctgt1")
+vars_atrophyfibrosis <- c("IGT", "MCAT", "BAT", "cigt1", "ctgt1")
 
 
 # DEFINE VARIABLES TO ASSESS ####
 # vars <- c("cfDNA", "ABMRpm", "ggt0", "ptcgt0", "DSAST", "NKB", "TCMRt", "tgt1", "igt1", "QCAT", "TCB")
-vars <- c(vars_cfDNA, vars_abmr, vars_tcmr)
+vars <- c(vars_cfDNA, vars_abmr, vars_tcmr, vars_macrophage, vars_atrophyfibrosis, vars_parenchyma)
 
 
 # DEFINE THE data ####
@@ -72,7 +72,7 @@ data <- data_scores_k1208 %>%
 
 # WRANGLE THE PHENOTYPE DATA ####
 df00 <- data %>%
-    expand_grid(category = c("cfDNA", "ABMR", "TCMR")) %>%
+    expand_grid(category = c("cfDNA", "ABMR", "TCMR", "macrophage", "atrophyfibrosis", "parenchyma")) %>%
     nest(.by = category) %>%
     mutate(
         features = map(
@@ -84,6 +84,12 @@ df00 <- data %>%
                     vars_abmr
                 } else if (category == "TCMR") {
                     vars_tcmr
+                }else if (category == "macrophage") {
+                    vars_macrophage
+                }else if (category == "atrophyfibrosis") {
+                    vars_atrophyfibrosis
+                }else if (category == "parenchyma") {
+                    vars_parenchyma
                 }
             }
         ),
@@ -115,7 +121,7 @@ df_permanova <- df00 %>%
                     data = data,
                     method = "euclidean",
                     # by = "margin", # only specify margin if the sample sizes are unequal
-                    permutations = 100000
+                    permutations = 1000000
                 )
             }
         ),
@@ -136,5 +142,9 @@ df_permanova <- df00 %>%
             }
         )
     )
+names(df_permanova$permanova) <- df_permanova$category
+
 df_permanova$permanova_pairwise[[2]]
 df_permanova$permanova[[2]]
+
+df_permanova$permanova

@@ -154,7 +154,7 @@ panel_volcano_timeseries1 <- panel_volcano_timeseries %>%
     ggarrange(NULL, ., NULL, ncol = 3, nrow = 1, widths = c(0.25, 1, 0.25)) %>%
     ggpubr::annotate_figure(
         top = text_grob(
-            "Longitiduinal Relapse of Felzartamab Effects",
+            "Longitudinal Relapse of Felzartamab Effects",
             face = "bold.italic", size = size_title, hjust = 0.63 # hjust = 0.95
         )
     )
@@ -163,7 +163,7 @@ panel_volcano_timeseries2 <- panel_volcano_timeseries %>%
     ggarrange(NULL, ., NULL, ncol = 3, nrow = 1, widths = c(0, 1, 0)) %>%
     ggpubr::annotate_figure(
         top = text_grob(
-            "Longitiduinal Relapse of Effect Felzartamab",
+            "Longitudinal Relapse of Effect Felzartamab",
             face = "bold.italic", size = size_title, hjust = 0.515 # hjust = 0.95
         )
     )
