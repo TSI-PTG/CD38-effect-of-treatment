@@ -41,8 +41,8 @@ panel_violin_archetypes <- panel_violin_archetypes %>%
     ) %>%
     ggpubr::annotate_figure(
         top = text_grob(
-            "Effect of Felzartamab on Rejection Archetype Scores",
-            face = "bold.italic", size = 25, hjust = 0.89
+            "Effect of felzartamab on rejection archetype scores",
+            face = "bold.italic", size = 25, hjust = 0.919
         )
     )
 
@@ -73,8 +73,8 @@ panel_violin_RejPC <- panel_violin_RejPC %>%
         #         fig.lab = "fuckyou",   fig.lab.size = 25,
         #   fig.lab.face = "bold.italic"
         top = text_grob(
-            "Effect of Felzartamab on Rejection Principal Component Scores",
-            face = "bold.italic", size = 25, hjust = 0.74
+            "Effect of felzartamab on rejection principal component scores",
+            face = "bold.italic", size = 25, hjust = 0.762
         )
     )
 
@@ -106,8 +106,8 @@ panel_violin_InjPC <- panel_violin_InjPC %>%
     ) %>%
     ggpubr::annotate_figure(
         top = text_grob(
-            "Effect of Felzartamab on Injury Principal Component Scores",
-            face = "bold.italic", size = 25, hjust = 0.785
+            "Effect of felzartamab on injury principal component scores",
+            face = "bold.italic", size = 25, hjust = 0.80
         )
     )
 
