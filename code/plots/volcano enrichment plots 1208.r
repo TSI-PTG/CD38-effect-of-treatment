@@ -72,7 +72,7 @@ data_joined_01 <- data_joined_00 %>%
                         col_group = case_when(
                             group == "immune response" ~ "#5d00ff",
                             group == "response to infection" ~ "#ff0000",
-                            group == "response to exogenous/endogenous stimulus" ~ "#00ff91",
+                            group == "response to exogenous/endogenous stimulus" ~ "#ff9900",
                             group == "inflammation" ~ "#ff9900",
                             group == "injury response" ~ "#5d00ff",
                             group == "cell signalling and RNA transcription" ~ "#ff00ee",
@@ -232,38 +232,39 @@ df_plot <- data_joined_02 %>%
 plot_baseline_week24 <- df_plot %>%
     dplyr::filter(design == "Baseline_vs_Week24") %>%
     pull(plot) %>%
-    pluck(1) +
-    patchwork::inset_element(
-        simplified_enrichment_plot %>%
-            dplyr::filter(design == "Baseline_vs_Week24") %>%
-            pull(plot_enrichment) %>%
-            pluck(1) %>%
-            pull(plot) %>%
-            pluck(1),
-        align_to = "plot",
-        left = df_plot %>%
-            dplyr::filter(design == "Baseline_vs_Week24") %>%
-            pull(GO_lines) %>%
-            pluck(1) %>%
-            dplyr::filter(groupID == 1) %>%
-            pull(x_end_prop) %>%
-            unique(),
-        right = 0.995,
-        bottom = df_plot %>%
-            dplyr::filter(design == "Baseline_vs_Week24") %>%
-            pull(GO_lines) %>%
-            pluck(1) %>%
-            dplyr::filter(groupID == 1) %>%
-            pull(y_end_prop) %>%
-            unique() - 0.1,
-        top = df_plot %>%
-            dplyr::filter(design == "Baseline_vs_Week24") %>%
-            pull(GO_lines) %>%
-            pluck(1) %>%
-            dplyr::filter(groupID == 1) %>%
-            pull(y_end_prop) %>%
-            unique() + 0.1
-    )
+    pluck(1)
+    #  +
+    # patchwork::inset_element(
+    #     simplified_enrichment_plot %>%
+    #         dplyr::filter(design == "Baseline_vs_Week24") %>%
+    #         pull(plot_enrichment) %>%
+    #         pluck(1) %>%
+    #         pull(plot) %>%
+    #         pluck(1),
+    #     align_to = "plot",
+    #     left = df_plot %>%
+    #         dplyr::filter(design == "Baseline_vs_Week24") %>%
+    #         pull(GO_lines) %>%
+    #         pluck(1) %>%
+    #         dplyr::filter(groupID == 1) %>%
+    #         pull(x_end_prop) %>%
+    #         unique(),
+    #     right = 0.995,
+    #     bottom = df_plot %>%
+    #         dplyr::filter(design == "Baseline_vs_Week24") %>%
+    #         pull(GO_lines) %>%
+    #         pluck(1) %>%
+    #         dplyr::filter(groupID == 1) %>%
+    #         pull(y_end_prop) %>%
+    #         unique() - 0.1,
+    #     top = df_plot %>%
+    #         dplyr::filter(design == "Baseline_vs_Week24") %>%
+    #         pull(GO_lines) %>%
+    #         pluck(1) %>%
+    #         dplyr::filter(groupID == 1) %>%
+    #         pull(y_end_prop) %>%
+    #         unique() + 0.1
+    # )
 
 
 
@@ -271,38 +272,39 @@ plot_baseline_week24 <- df_plot %>%
 plot_week24_week52 <- df_plot %>%
     dplyr::filter(design == "Week24_vs_Week52") %>%
     pull(plot) %>%
-    pluck(1) +
-    patchwork::inset_element(
-        simplified_enrichment_plot %>%
-            dplyr::filter(design == "Week24_vs_Week52") %>%
-            pull(plot_enrichment) %>%
-            pluck(1) %>%
-            pull(plot) %>%
-            pluck(1),
-        align_to = "plot",
-        left = df_plot %>%
-            dplyr::filter(design == "Week24_vs_Week52") %>%
-            pull(GO_lines) %>%
-            pluck(1) %>%
-            dplyr::filter(groupID == 1) %>%
-            pull(x_end_prop) %>%
-            unique(),
-        right = 0.995,
-        bottom = df_plot %>%
-            dplyr::filter(design == "Week24_vs_Week52") %>%
-            pull(GO_lines) %>%
-            pluck(1) %>%
-            dplyr::filter(groupID == 1) %>%
-            pull(y_end_prop) %>%
-            unique() - 0.1,
-        top = df_plot %>%
-            dplyr::filter(design == "Week24_vs_Week52") %>%
-            pull(GO_lines) %>%
-            pluck(1) %>%
-            dplyr::filter(groupID == 1) %>%
-            pull(y_end_prop) %>%
-            unique() + 0.1
-    )
+    pluck(1) 
+    # +
+    # patchwork::inset_element(
+    #     simplified_enrichment_plot %>%
+    #         dplyr::filter(design == "Week24_vs_Week52") %>%
+    #         pull(plot_enrichment) %>%
+    #         pluck(1) %>%
+    #         pull(plot) %>%
+    #         pluck(1),
+    #     align_to = "plot",
+    #     left = df_plot %>%
+    #         dplyr::filter(design == "Week24_vs_Week52") %>%
+    #         pull(GO_lines) %>%
+    #         pluck(1) %>%
+    #         dplyr::filter(groupID == 1) %>%
+    #         pull(x_end_prop) %>%
+    #         unique(),
+    #     right = 0.995,
+    #     bottom = df_plot %>%
+    #         dplyr::filter(design == "Week24_vs_Week52") %>%
+    #         pull(GO_lines) %>%
+    #         pluck(1) %>%
+    #         dplyr::filter(groupID == 1) %>%
+    #         pull(y_end_prop) %>%
+    #         unique() - 0.1,
+    #     top = df_plot %>%
+    #         dplyr::filter(design == "Week24_vs_Week52") %>%
+    #         pull(GO_lines) %>%
+    #         pluck(1) %>%
+    #         dplyr::filter(groupID == 1) %>%
+    #         pull(y_end_prop) %>%
+    #         unique() + 0.1
+    # )
 
 
 
@@ -310,131 +312,132 @@ plot_week24_week52 <- df_plot %>%
 plot_baseline_week52 <- df_plot %>%
     dplyr::filter(design == "Baseline_vs_Week52") %>%
     pull(plot) %>%
-    pluck(1) +
-    patchwork::inset_element(
-        simplified_enrichment_plot %>%
-            dplyr::filter(design == "Baseline_vs_Week52") %>%
-            pull(plot_enrichment) %>%
-            pluck(1) %>%
-            pull(plot) %>%
-            pluck(1),
-        align_to = "plot",
-        left = df_plot %>%
-            dplyr::filter(design == "Baseline_vs_Week52") %>%
-            pull(GO_lines) %>%
-            pluck(1) %>%
-            dplyr::filter(groupID == 1) %>%
-            pull(x_end_prop) %>%
-            unique(),
-        right = 0.995,
-        bottom = df_plot %>%
-            dplyr::filter(design == "Baseline_vs_Week52") %>%
-            pull(GO_lines) %>%
-            pluck(1) %>%
-            dplyr::filter(groupID == 1) %>%
-            pull(y_end_prop) %>%
-            unique() - 0.1,
-        top = df_plot %>%
-            dplyr::filter(design == "Baseline_vs_Week52") %>%
-            pull(GO_lines) %>%
-            pluck(1) %>%
-            dplyr::filter(groupID == 1) %>%
-            pull(y_end_prop) %>%
-            unique() + 0.1
-    ) +
-    patchwork::inset_element(
-        simplified_enrichment_plot %>%
-            dplyr::filter(design == "Baseline_vs_Week52") %>%
-            pull(plot_enrichment) %>%
-            pluck(1) %>%
-            pull(plot) %>%
-            pluck(2),
-        align_to = "plot",
-        left = df_plot %>%
-            dplyr::filter(design == "Baseline_vs_Week52") %>%
-            pull(GO_lines) %>%
-            pluck(1) %>%
-            dplyr::filter(groupID == 2) %>%
-            pull(x_end_prop) %>%
-            unique(),
-        right = 0.995,
-        bottom = df_plot %>%
-            dplyr::filter(design == "Baseline_vs_Week52") %>%
-            pull(GO_lines) %>%
-            pluck(1) %>%
-            dplyr::filter(groupID == 2) %>%
-            pull(y_end_prop) %>%
-            unique() - 0.1,
-        top = df_plot %>%
-            dplyr::filter(design == "Baseline_vs_Week52") %>%
-            pull(GO_lines) %>%
-            pluck(1) %>%
-            dplyr::filter(groupID == 2) %>%
-            pull(y_end_prop) %>%
-            unique() + 0.1
-    ) +
-    patchwork::inset_element(
-        simplified_enrichment_plot %>%
-            dplyr::filter(design == "Baseline_vs_Week52") %>%
-            pull(plot_enrichment) %>%
-            pluck(1) %>%
-            pull(plot) %>%
-            pluck(3),
-        align_to = "plot",
-        left = df_plot %>%
-            dplyr::filter(design == "Baseline_vs_Week52") %>%
-            pull(GO_lines) %>%
-            pluck(1) %>%
-            dplyr::filter(groupID == 3) %>%
-            pull(x_end_prop) %>%
-            unique(),
-        right = 0.995,
-        bottom = df_plot %>%
-            dplyr::filter(design == "Baseline_vs_Week52") %>%
-            pull(GO_lines) %>%
-            pluck(1) %>%
-            dplyr::filter(groupID == 3) %>%
-            pull(y_end_prop) %>%
-            unique() - 0.1,
-        top = df_plot %>%
-            dplyr::filter(design == "Baseline_vs_Week52") %>%
-            pull(GO_lines) %>%
-            pluck(1) %>%
-            dplyr::filter(groupID == 3) %>%
-            pull(y_end_prop) %>%
-            unique() + 0.1
-    ) +
-    patchwork::inset_element(
-        simplified_enrichment_plot %>%
-            dplyr::filter(design == "Baseline_vs_Week52") %>%
-            pull(plot_enrichment) %>%
-            pluck(1) %>%
-            pull(plot) %>%
-            pluck(4),
-        align_to = "plot",
-        left = df_plot %>%
-            dplyr::filter(design == "Baseline_vs_Week52") %>%
-            pull(GO_lines) %>%
-            pluck(1) %>%
-            dplyr::filter(groupID == 4) %>%
-            pull(x_end_prop) %>%
-            unique(),
-        right = 0.995,
-        bottom = df_plot %>%
-            dplyr::filter(design == "Baseline_vs_Week52") %>%
-            pull(GO_lines) %>%
-            pluck(1) %>%
-            dplyr::filter(groupID == 4) %>%
-            pull(y_end_prop) %>%
-            unique() - 0.1,
-        top = df_plot %>%
-            dplyr::filter(design == "Baseline_vs_Week52") %>%
-            pull(GO_lines) %>%
-            pluck(1) %>%
-            dplyr::filter(groupID == 4) %>%
-            pull(y_end_prop) %>%
-            unique() + 0.1
-    )
+    pluck(1) 
+    # +
+    # patchwork::inset_element(
+    #     simplified_enrichment_plot %>%
+    #         dplyr::filter(design == "Baseline_vs_Week52") %>%
+    #         pull(plot_enrichment) %>%
+    #         pluck(1) %>%
+    #         pull(plot) %>%
+    #         pluck(1),
+    #     align_to = "plot",
+    #     left = df_plot %>%
+    #         dplyr::filter(design == "Baseline_vs_Week52") %>%
+    #         pull(GO_lines) %>%
+    #         pluck(1) %>%
+    #         dplyr::filter(groupID == 1) %>%
+    #         pull(x_end_prop) %>%
+    #         unique(),
+    #     right = 0.995,
+    #     bottom = df_plot %>%
+    #         dplyr::filter(design == "Baseline_vs_Week52") %>%
+    #         pull(GO_lines) %>%
+    #         pluck(1) %>%
+    #         dplyr::filter(groupID == 1) %>%
+    #         pull(y_end_prop) %>%
+    #         unique() - 0.1,
+    #     top = df_plot %>%
+    #         dplyr::filter(design == "Baseline_vs_Week52") %>%
+    #         pull(GO_lines) %>%
+    #         pluck(1) %>%
+    #         dplyr::filter(groupID == 1) %>%
+    #         pull(y_end_prop) %>%
+    #         unique() + 0.1
+    # ) +
+    # patchwork::inset_element(
+    #     simplified_enrichment_plot %>%
+    #         dplyr::filter(design == "Baseline_vs_Week52") %>%
+    #         pull(plot_enrichment) %>%
+    #         pluck(1) %>%
+    #         pull(plot) %>%
+    #         pluck(2),
+    #     align_to = "plot",
+    #     left = df_plot %>%
+    #         dplyr::filter(design == "Baseline_vs_Week52") %>%
+    #         pull(GO_lines) %>%
+    #         pluck(1) %>%
+    #         dplyr::filter(groupID == 2) %>%
+    #         pull(x_end_prop) %>%
+    #         unique(),
+    #     right = 0.995,
+    #     bottom = df_plot %>%
+    #         dplyr::filter(design == "Baseline_vs_Week52") %>%
+    #         pull(GO_lines) %>%
+    #         pluck(1) %>%
+    #         dplyr::filter(groupID == 2) %>%
+    #         pull(y_end_prop) %>%
+    #         unique() - 0.1,
+    #     top = df_plot %>%
+    #         dplyr::filter(design == "Baseline_vs_Week52") %>%
+    #         pull(GO_lines) %>%
+    #         pluck(1) %>%
+    #         dplyr::filter(groupID == 2) %>%
+    #         pull(y_end_prop) %>%
+    #         unique() + 0.1
+    # ) +
+    # patchwork::inset_element(
+    #     simplified_enrichment_plot %>%
+    #         dplyr::filter(design == "Baseline_vs_Week52") %>%
+    #         pull(plot_enrichment) %>%
+    #         pluck(1) %>%
+    #         pull(plot) %>%
+    #         pluck(3),
+    #     align_to = "plot",
+    #     left = df_plot %>%
+    #         dplyr::filter(design == "Baseline_vs_Week52") %>%
+    #         pull(GO_lines) %>%
+    #         pluck(1) %>%
+    #         dplyr::filter(groupID == 3) %>%
+    #         pull(x_end_prop) %>%
+    #         unique(),
+    #     right = 0.995,
+    #     bottom = df_plot %>%
+    #         dplyr::filter(design == "Baseline_vs_Week52") %>%
+    #         pull(GO_lines) %>%
+    #         pluck(1) %>%
+    #         dplyr::filter(groupID == 3) %>%
+    #         pull(y_end_prop) %>%
+    #         unique() - 0.1,
+    #     top = df_plot %>%
+    #         dplyr::filter(design == "Baseline_vs_Week52") %>%
+    #         pull(GO_lines) %>%
+    #         pluck(1) %>%
+    #         dplyr::filter(groupID == 3) %>%
+    #         pull(y_end_prop) %>%
+    #         unique() + 0.1
+    # ) +
+    # patchwork::inset_element(
+    #     simplified_enrichment_plot %>%
+    #         dplyr::filter(design == "Baseline_vs_Week52") %>%
+    #         pull(plot_enrichment) %>%
+    #         pluck(1) %>%
+    #         pull(plot) %>%
+    #         pluck(4),
+    #     align_to = "plot",
+    #     left = df_plot %>%
+    #         dplyr::filter(design == "Baseline_vs_Week52") %>%
+    #         pull(GO_lines) %>%
+    #         pluck(1) %>%
+    #         dplyr::filter(groupID == 4) %>%
+    #         pull(x_end_prop) %>%
+    #         unique(),
+    #     right = 0.995,
+    #     bottom = df_plot %>%
+    #         dplyr::filter(design == "Baseline_vs_Week52") %>%
+    #         pull(GO_lines) %>%
+    #         pluck(1) %>%
+    #         dplyr::filter(groupID == 4) %>%
+    #         pull(y_end_prop) %>%
+    #         unique() - 0.1,
+    #     top = df_plot %>%
+    #         dplyr::filter(design == "Baseline_vs_Week52") %>%
+    #         pull(GO_lines) %>%
+    #         pluck(1) %>%
+    #         dplyr::filter(groupID == 4) %>%
+    #         pull(y_end_prop) %>%
+    #         unique() + 0.1
+    # )
 
 
 # MAKE PLOT PANELS ####

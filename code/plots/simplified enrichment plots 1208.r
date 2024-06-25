@@ -59,7 +59,7 @@ data_enrichment <- data_joined_00 %>%
                         col_group = case_when(
                             group == "immune response" ~ "#5d00ff",
                             group == "response to infection" ~ "#ff0000",
-                            group == "response to exogenous/endogenous stimulus" ~ "#00ff91",
+                            group == "response to exogenous/endogenous stimulus" ~ "#ff9900",
                             group == "inflammation" ~ "#ff9900",
                             group == "injury response" ~ "#5d00ff",
                             group == "cell signalling and RNA transcription" ~ "#ff00ee",
@@ -107,7 +107,7 @@ data_enrichment <- data_enrichment %>%
             }
         )
     )
-data_enrichment$data_enrichment[[2]]
+
 
 
 data_enrichment$data_enrichment[[3]] %>%
@@ -130,62 +130,35 @@ data_enrichment_plot <- data_enrichment %>%
         data_dag = map(
             data_plot,
             function(data_plot) {
-                symb <- data_plot %>% pull(Symb)
-                data_dag <- dagify(
-                    a ~ b,
-                    b ~ c,
-                    c ~ d,
-                    d ~ e,
-                    e ~ a
-                ) %>%
-                    tidy_dagitty(seed = 42) %>%
+                data_dag <- data_plot %>%
+                    nest(.by = group) %>%
                     mutate(
-                        name = symb,
-                        to = c(symb[-1], symb[1])
-                    )
+                        symb = map(data, pull, Symb),
+                        dag = map(
+                            symb,
+                            function(symb) {
+                                dagify(
+                                    a ~ b,
+                                    b ~ c,
+                                    c ~ d,
+                                    d ~ e,
+                                    e ~ a
+                                ) %>%
+                                    tidy_dagitty(seed = 42) %>%
+                                    mutate(
+                                        name = symb,
+                                        to = c(symb[-1], symb[1])
+                                    )
+                            }
+                        ),
+                        n_in_group = map_dbl(data, function(data){data  %>% pull(n_in_group) %>% unique})
+                    ) 
+                    # %>%
+                    # dplyr::select(group,n_in_group, dag)
             }
         )
     )
-# data_enrichment_plot$data_plot[[3]] %>% print(n = "all")
-
-
-symb <- data_enrichment_plot$data_enrichment[[3]]%>%
-                    dplyr::distinct(Symb, group, .keep_all = TRUE) %>%
-                    dplyr::slice_max(prop, n = 5, by = c("group"), with_ties = FALSE) 
-
-
-data_dag <- dagify(
-    {{ symb1 }} ~ {{ symb2 }
-    }
-    # symb[2] ~ symb[3],c
-    # symb[3] ~ symb[4],
-    # symb[4] ~ symb[5],
-    # symb[5] ~ symb[1]
-) %>%
-    tidy_dagitty()
-
-data_dag <- dagify(
-    a ~ b,
-    b ~ c,
-    c ~ d,
-    d ~ e,
-    e ~ a
-) %>%
-    tidy_dagitty(seed = 42) %>%
-    mutate(
-        name = symb,
-        to = c(symb[-1], symb[1])
-    )
-
-
-
-ggplot(aes(x = x, y = y, xend = xend, yend = yend), data = data_dag) +
-    geom_dag_point(colour = "black") +
-    geom_dag_edges(arrow_directed = grid::arrow(length = grid::unit(0, "pt"), type = "closed")) +
-    geom_dag_text(colour = "#FFFFFF") +
-    theme_dag()
-
-
+data_enrichment_plot
 
 
 # MAKE SIMPLIFIED ENRICHEMENT PLOTS ####
@@ -224,7 +197,14 @@ simplified_enrichment_plot <- data_enrichment_plot %>%
             }
         )
     )
-simplified_enrichment_plot$plot_enrichment[[3]]$plot
+simplified_enrichment_plot$plot_enrichment[[3]]$plot[[4]]
+
+data_enrichment_plot$data_enrichment[[3]] %>%
+    summarise(
+        ngenes = Symb %>% unique() %>% length(),
+        ngo = GO  %>% unique  %>% length,
+        .by = group
+    )
 
 
 # SAVE THE PLOT DATA ####
@@ -233,40 +213,47 @@ save(simplified_enrichment_plot, file = paste(saveDir, "simplified_enrichment_pl
 
 
 
-# # MAKE SIMPLIFIED ENRICHEMENT PLOTS ####
-# simplified_enrichment_plot <- data_enrichment_plot %>%
-#     mutate(
-#         plot_enrichment = map(
-#             data_plot,
-#             function(data_plot) {
-#                 data_plot %>%
-#                     nest(.by = group) %>%
-#                     mutate(
-#                         plot = pmap(
-#                             list(group, data),
-#                             function(group, data) {
-#                                 data %>%
-#                                     ggplot2::ggplot(mapping = ggplot2::aes(x = 1, y = Symb, label = Symb)) +
-#                                     ggplot2::geom_label(
-#                                         hjust = "left",
-#                                         size = 2
-#                                     ) +
-#                                     labs(
-#                                         title = paste(" ", group, "\n (", data$n_in_group, " GO term(s) enriched)", sep = "")
-#                                     ) +
-#                                     ggplot2::theme_void() +
-#                                     ggplot2::coord_cartesian(xlim = c(1, 1.01), expand = 0.1) +
-#                                     ggplot2::theme(
-#                                         plot.title = element_text(hjust = 0, size = 6.5),
-#                                         plot.margin = unit(c(0, 0, 0, 0), "cm"),
-#                                         plot.background = element_rect(
-#                                             colour = data$col_group[[1]]
-#                                         )
-#                                     )
-#                             }
-#                         )
-#                     )
-#             }
-#         )
-#     )
-# simplified_enrichment_plot$plot_enrichment[[3]]$plot
+
+# MAKE SIMPLIFIED ENRICHEMENT PLOTS ####
+simplified_enrichment_plot <- data_enrichment_plot %>%
+    mutate(
+        plot_enrichment = map(
+            data_dag,
+            function(data_dag) {
+                data_dag %>%
+                    mutate(
+                        plot = pmap(
+                            list(group, dag, n_in_group),
+                            function(group, dag, n_in_group) {
+                                dag %>%
+                                    ggplot2::ggplot(ggplot2::aes(
+                                        x = x,
+                                        y = y,
+                                        xend = xend,
+                                        yend = yend,
+                                        # shape = adjusted,
+                                        # col = d_relationship
+                                    )) +
+                                    ggdag::geom_dag_point(size = 8) +
+                                    ggdag::geom_dag_text(col = "white", size = 3) +
+                                    ggdag::geom_dag_edges(arrow_directed = grid::arrow(length = grid::unit(0, "pt"))) +
+                                    labs(
+                                        title = paste(" ", group, "\n (", n_in_group, " GO term(s) enriched)", sep = "")
+                                    ) +
+                                    ggplot2::theme_void() +
+                                    ggplot2::theme(
+                                        plot.title = element_text(hjust = 0, size = 6.5),
+                                        plot.margin = unit(c(0, 0, 0, 0.1), "cm"),
+                                        # plot.background = element_rect(
+                                        #     colour = data$col_group[[1]]
+                                        # )
+                                    )
+                            }
+                        )
+                    )
+            }
+        )
+    )
+simplified_enrichment_plot$plot_enrichment[[1]]$plot[[1]]
+
+simplified_enrichment_plot
