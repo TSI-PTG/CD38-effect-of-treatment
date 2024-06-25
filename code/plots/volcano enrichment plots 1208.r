@@ -48,7 +48,6 @@ data_joined_01 <- data_joined_00 %>%
             gsea_go_tables,
             function(gsea_go_tables) {
                 gsea_go_tables %>%
-                    # slice_min(pvalue, n = 20) %>%
                     mutate(
                         ID = ID %>% str_remove(":"),
                         GO = Description %>% as.character(),
@@ -66,7 +65,7 @@ data_joined_01 <- data_joined_00 %>%
                             GO %>% str_detect(response_to_stimulus) ~ "response to exogenous/endogenous stimulus",
                             GO %>% str_detect(inflammation) ~ "inflammation",
                             GO %>% str_detect(injury) ~ "injury response",
-                            GO %>% str_detect(cell_signalling_and_RNA_transcription) ~ "cell signalling and\n RNAtranscription",
+                            GO %>% str_detect(cell_signalling_and_RNA_transcription) ~ "cell signalling and RNA transcription",
                             GO %>% str_detect(cellular_development_and_metabolism) ~ "cell development,\nmobilization,\nand metabolism",
                             TRUE ~ GO
                         ) %>% factor(levels = GO_annotation_levels_truncated),
@@ -76,8 +75,8 @@ data_joined_01 <- data_joined_00 %>%
                             group == "response to exogenous/endogenous stimulus" ~ "#00ff91",
                             group == "inflammation" ~ "#ff9900",
                             group == "injury response" ~ "#5d00ff",
-                            group == "cell signalling and\nRNA transcription" ~ "#ff00ee",
-                            group == "cell development, mobilization, and metabolism" ~ "#4dff00"
+                            group == "cell signalling and RNA transcription" ~ "#ff00ee",
+                            group == "cell development,\nmobilization,\nand metabolism" ~ "#4dff00"
                         )
                     ) %>%
                     mutate(
@@ -125,7 +124,10 @@ data_joined_01 <- data_joined_01 %>%
                         group = case_when(
                             design == "Baseline_vs_Week24" ~ "immune response",
                             TRUE ~ group
-                        )%>% factor(levels = GO_annotation_levels_truncated)
+                        ) %>% factor(levels = GO_annotation_levels_truncated),
+                        # n_group = group %>% unique() %>% length(),
+                        # groupID = group %>% as.numeric(),
+                        # group_mult = groupID / n_group
                     )
             }
         ),
@@ -137,14 +139,19 @@ data_joined_01 <- data_joined_01 %>%
                         group = case_when(
                             design == "Baseline_vs_Week24" ~ "immune response",
                             TRUE ~ group
-                        )%>% factor(levels = GO_annotation_levels_truncated)
+                        ) %>% factor(levels = GO_annotation_levels_truncated),
+                        # n_group = group %>% unique() %>% length(),
+                        # groupID = group %>% as.numeric(),
+                        # group_mult = groupID / n_group
                     )
             }
         )
     )
 
-data_joined_01$data_annotation[[1]] %>%
-    dplyr::select(GO, group)
+data_joined_01$data_annotation[[3]] %>%
+    dplyr::select(GO, group, n_group, groupID, group_mult)
+
+
 
 
 
@@ -427,7 +434,7 @@ plot_baseline_week52 <- df_plot %>%
             dplyr::filter(groupID == 4) %>%
             pull(y_end_prop) %>%
             unique() + 0.1
-    ) 
+    )
 
 
 # MAKE PLOT PANELS ####

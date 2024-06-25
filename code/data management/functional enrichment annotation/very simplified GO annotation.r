@@ -88,6 +88,6 @@ GO_annotation_levels_truncated <- c(
     "immune response", "response to infection",
     "inflammation", "injury response",
     "response to exogenous/endogenous stimulus",
-    "cell signalling and\nRNA transcription", 
-    "cell development,\n mobilization,\n and metabolism"
+    "cell signalling and RNA transcription", 
+    "cell development,\nmobilization,\nand metabolism"
 )
