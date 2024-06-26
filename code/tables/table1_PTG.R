@@ -66,19 +66,29 @@ d<- d %>% mutate(mfi_immunodominant = case_when(DSA_highest_Category_Screening >
 # Create table 1 
 # Select variables 
 
-tbl1_data <- d %>% dplyr::select(Female_gender, Age_at_Tx, LD_Tx, Donor_Age, MM_ABDR, 
-                          Age_at_Screening, Years_to_ScreeningVisit, Screening_GFR, Screening_Prot_Krea, 
+# Copy cont. variables to be calculated as mean 
+d<- d |> mutate(age_at_tx_mean = Age_at_Tx, 
+                donor_age_mean = Donor_Age, 
+                age_at_screening_mean = Age_at_Screening, 
+                screening_egfr_mean = Screening_GFR, 
+                screening_prot_krea_mean = Screening_Prot_Krea)
+
+
+tbl1_data <- d %>% select(Female_gender, Age_at_Tx, age_at_tx_mean, LD_Tx, Donor_Age, donor_age_mean, MM_ABDR, 
+                          Age_at_Screening, age_at_screening_mean, Years_to_ScreeningVisit, Screening_GFR, screening_egfr_mean, Screening_Prot_Krea, screening_prot_krea_mean,
+                          Dual_Therapy_Screening, Triple_Therapy_Screening,
                           IndexBx_Active_ABMR_Banff19 ,IndexBx_Chronic_active_ABMR_Banff19, 
-                          IndexBx_Borderline_Banff, DSA_HLA_class_I_Only_Screening, DSA_HLA_class_II_Only_Screening, DSA_HLA_class_I_and_II_Screening,HLA_DQ_DSA_Screening, 
-                          mfi_immunodominant, HLA_DQ_DSA_Screening, DSA_Number_Screening, Felzartamab) 
+                          IndexBx_Borderline_Banff,IndexBx_TCMR_Banff,  DSA_HLA_class_I_Only_Screening, DSA_HLA_class_II_Only_Screening, DSA_HLA_class_I_and_II_Screening,
+                          HLA_DQ_DSA_Screening, mfi_immunodominant, DSA_Number_Screening,
+                          Felzartamab) 
 
 
 
-explanatory <- Hmisc::.q(Female_gender, Age_at_Tx, LD_Tx, Donor_Age, MM_ABDR, 
-                         Age_at_Screening, Years_to_ScreeningVisit, Screening_GFR, Screening_Prot_Krea, 
+explanatory <- Hmisc::.q(Female_gender, Age_at_Tx, age_at_tx_mean, LD_Tx, Donor_Age, donor_age_mean, MM_ABDR, 
+                         Age_at_Screening, age_at_screening_mean, Years_to_ScreeningVisit, Screening_GFR, screening_egfr_mean, Screening_Prot_Krea, screening_prot_krea_mean,
                          IndexBx_Active_ABMR_Banff19 ,IndexBx_Chronic_active_ABMR_Banff19, 
-                         IndexBx_Borderline_Banff, DSA_HLA_class_I_Only_Screening, DSA_HLA_class_II_Only_Screening, DSA_HLA_class_I_and_II_Screening,HLA_DQ_DSA_Screening, 
-                         mfi_immunodominant, HLA_DQ_DSA_Screening, DSA_Number_Screening)
+                         IndexBx_Borderline_Banff, DSA_HLA_class_I_Only_Screening, DSA_HLA_class_II_Only_Screening, 
+                         DSA_HLA_class_I_and_II_Screening, HLA_DQ_DSA_Screening, mfi_immunodominant, DSA_Number_Screening )    
 
 
 
@@ -89,53 +99,62 @@ dependent <- ("Felzartamab")
 
 tbl1<- tbl1_data %>% mutate(Felzartamab = factor(Felzartamab), 
                             Female_gender = ff_label(Female_gender, "Female sex – no. (%)"), 
-                            Age_at_Tx = ff_label(Age_at_Tx, "Median recipient age (IQR) – yr"), 
+                            Age_at_Tx = ff_label(Age_at_Tx, "Median recipient age (IQR) – yr"),
+                            age_at_tx_mean = ff_label(age_at_tx_mean, "Mean recipient age (SD) - yr"), 
                             LD_Tx = ff_label(LD_Tx , "Living donor – no. (%)"), 
                             Donor_Age = ff_label(Donor_Age, "Median donor age (IQR) – yr"), 
+                            donor_age_mean = ff_label(donor_age_mean,"Mean donor age (SD) – yr" ),
                             MM_ABDR = ff_label(MM_ABDR, "Median HLA (A, B, DR) mismatch (IQR)"), 
                             Age_at_Screening = ff_label(Age_at_Screening, "Median age of study patients (IQR) – yr"), 
+                            age_at_screening_mean = ff_label(age_at_screening_mean, "Mean age of study patients (SD) – yr"), 
                             Years_to_ScreeningVisit = ff_label(Years_to_ScreeningVisit, "Median time to inclusion in the trial (IQR) – yr"), 
                             Screening_GFR= ff_label(Screening_GFR, "Median eGFR (IQR) – mL/min/1.73 m2"), 
+                            screening_egfr_mean= ff_label(screening_egfr_mean, "Mean eGFR (SD) – mL/min/1.73 m2"), 
                             Screening_Prot_Krea = ff_label(Screening_Prot_Krea, "Median protein/creatinine ratio (IQR) –  mg/g"), 
+                            screening_prot_krea_mean = ff_label(screening_prot_krea_mean, "Mean protein/creatinine ratio (SD) –  mg/g"), 
                             IndexBx_Active_ABMR_Banff19 = ff_label(IndexBx_Active_ABMR_Banff19, "Active ABMR"), 
                             IndexBx_Chronic_active_ABMR_Banff19 = ff_label(IndexBx_Chronic_active_ABMR_Banff19, "Chronic active ABMR"), 
                             IndexBx_Borderline_Banff = ff_label(IndexBx_Borderline_Banff, "Additional borderline lesion"), 
                             DSA_HLA_class_I_Only_Screening = ff_label(DSA_HLA_class_I_Only_Screening, "HLA class I DSA only – no. (%)"), 
                             DSA_HLA_class_II_Only_Screening = ff_label(DSA_HLA_class_II_Only_Screening, "HLA class II DSA only – no. (%)"), 
-                            DSA_HLA_class_I_and_II_Screening = ff_label(DSA_HLA_class_I_and_II_Screening, "HLA class I and II DSA – no. (%)") , 
-                            mfi_immunodominant = ff_label(mfi_immunodominant, "Peak MFI of DSA >10,000 – no. (%)") , 
+                            DSA_HLA_class_I_and_II_Screening = ff_label(DSA_HLA_class_I_and_II_Screening, "HLA class I and II DSA – no. (%)"), 
+                            # Dual_Therapy_Screening = ff_label(Dual_Therapy_Screening, "Dual immunosuppression – no. (%)"), 
+                            #Triple_Therapy_Screening = ff_label(Triple_Therapy_Screening, "Triple immunosuppression – no. (%)"), 
                             HLA_DQ_DSA_Screening = ff_label(HLA_DQ_DSA_Screening, "Anti-DQ DSA – no. (%)"), 
-                            DSA_Number_Screening = ff_label(DSA_Number_Screening, " Median DSA (IQR) – n"))%>% 
+                            mfi_immunodominant = ff_label(mfi_immunodominant, "Peak MFI of DSA >10,000 – no. (%)"), 
+                            DSA_Number_Screening = ff_label(DSA_Number_Screening, "Median DSA (IQR) – n")) |> 
   summary_factorlist(dependent, explanatory, 
                      total_col = T, 
-                     cont = "median", 
+                     #cont = "median", 
                      na_include = T,
                      p=F,
                      cont_cut = F, 
-                     digits = c(0, 0, 3, 1, 0)) %>% 
+                     digits = c(0, 0, 3, 1, 0), 
+                     cont_nonpara = c(2,5,7,8,10,11,13,23)) %>% 
   ff_remove_ref(only_binary = F) |> 
-  dplyr::select(-levels)
+  select(-levels)
 
 
 # Add the extra rows
-tbl1<- tbl1 %>% 
+tbl1<- 
+  tbl1 %>% 
   tibble::add_row(label = "Recorded at transplantation", .after = 0) %>% 
-  tibble::add_row(label = "Recorded at trial inclusion", .after = 6) %>%
-  tibble::add_row(label = "Banff 2019 ABMR phenotypes (baseline biopsies) – no. (%)", .after = 11) %>%
-  tibble::add_row(label = "DSA characteristics (screening visit)", .after = 15) 
+  tibble::add_row(label = "Recorded at trial inclusion", .after = 8) %>%
+  tibble::add_row(label = "Banff 2019 ABMR phenotypes (baseline biopsies) – no. (%)", .after = 16) %>%
+  tibble::add_row(label = "DSA characteristics (screening visit)", .after = 20) 
 
 
 # Save table 1 
 
 flextable::qflextable(tbl1) %>% 
   set_table_properties(layout = "autofit") %>%
-  set_header_labels(label = "Variables", Total = "Total (N=22)", 
-                    "0" = "Placebo (n=11)", "1" = "Felzartamab (n=11)") %>% 
+  set_header_labels(label = "Variables", Total = "Total (N=20)", 
+                    "0" = "Placebo (n=10)", "1" = "Felzartamab (n=10)") %>% 
   flextable::bold(i = NULL, part = "header") %>% 
-  flextable::bold(i = c(1,22), j=1) %>%
-  flextable::padding(i= c(14:16, 18:23), j=1, padding.left=20) %>% 
+  flextable::bold(i = c(1,9), j=1) %>%
+  flextable::padding(i= c(18:20, 22:27), j=1, padding.left=20) %>% 
   set_caption(caption="Table 1. Demographic and Characteristics of the Participants at Baseline.") %>%
-  add_footer_lines("ABMR, antibody-mediated rejection; DSA, donor-specific antibody; eGFR, estimated glomerular filtration rate; HLA, human leukocyte antigen; IQR, interquartile range; MFI, mean fluorescence intensity") %>%
+  add_footer_lines("ABMR, antibody-mediated rejection; DSA, donor-specific antibody; eGFR, estimated glomerular filtration rate; HLA, human leukocyte antigen; IQR, interquartile range; MFI, mean fluorescence intensity; SD, standard deviation") %>%
   hline_bottom(part = "body", border = fp_border(color = "black", width = 1)) |> 
   hline_bottom(part = "header", border = fp_border(color = "black", width = 1)) |> 
   hline_top(part = "header", border = fp_border(color = "black", width = 1)) |> 
