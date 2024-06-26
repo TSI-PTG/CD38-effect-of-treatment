@@ -4,18 +4,33 @@ library(tidyverse) # install.packages("tidyverse")
 library(flextable) # install.packages("flextable")
 library(officer) # install.packages("officer")
 library(openxlsx) # install.packages("openxlsx")
+library(readxl) # install.packages("readxl")
 # Custom operators, functions, and datasets
 "%nin%" <- function(a, b) match(a, b, nomatch = 0) == 0
 # load affymap
 load("Z:/DATA/Datalocks/Other data/affymap219_21Oct2019_1306_JR.RData")
 # load limma results
-load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/all_probes_limma_1208.RData")
+# load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/all_probes_limma_1208.RData")
 # load gene lists
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/genes_NK_GEP.RData")
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/NK_genes_TBB896.RData")
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/ABMR_endothelial_genes.RData")
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/ABMR_activity_genes.RData")
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/IFNG_genes.RData")
+# load in house cell panel
+atagc <- read_excel("Z:/MISC/Patrick Gauthier/R/affymap219-CELL-PANEL/backup/UPDATED 2017 ANNOTATIONS - MASTERFILE - U133 HUMAN CELL PANEL - ALL PROBESETS (nonIQR) pfhptg.xlsx")
+
+
+
+# WRANGLE THE CELL PANEL DATA ####
+cell_panel <- atagc %>%
+    dplyr::select(`Index`, `NK cell`, CD4, CD8, `Unstim HUVEC`, `HUVEC + IFNg`) %>%
+    dplyr::rename(
+        Symb = Index,
+        NK = `NK cell`,
+        `HUVEC (unstimulated)` = `Unstim HUVEC`
+    )
+
 
 
 
@@ -40,14 +55,18 @@ genes_NK_LM22_U133 <- genes_NK_GEP %>%
 
 
 
+cell_panel %>%
+    dplyr::filter(Symb %in% genes_NK_ATAGC_U133$Symb)
+
+
 # FILTER THE GENE TABLES ####
-gene_tables <- limma_tables %>%
-    dplyr::select(design, table) %>%
-    expand_grid(geneset = c(
+gene_tables <- expand_grid(
+    geneset = c(
         "ABMR_activity",
         "NK_ATAGC_U133", "NK_KTB18_RNAseq", "NK_LM22_U133", "NK_L765",
         "Endothelial", "IFNG"
-    )) %>%
+    )
+) %>%
     mutate(
         genes = case_when(
             geneset == "ABMR_activity" ~ genes_ABMR_activity$AffyID %>% list(),
@@ -59,14 +78,14 @@ gene_tables <- limma_tables %>%
             geneset == "IFNG" ~ genes_IFNG$AffyID %>% list()
         )
     ) %>%
-    relocate(geneset, genes, .after = design) %>%
     mutate(
         gene_tables = pmap(
-            list(table, genes),
-            function(table, genes) {
-                table %>%
-                    dplyr::filter(AffyID %in% genes) %>%
-                    dplyr::slice_min(`<U+0394><U+0394> p`, by = "Symb")
+            list(genes),
+            function(genes) {
+                cell_panel %>%
+                    dplyr::filter(Symb %in% genes)
+                    #  %>%
+                    # dplyr::slice_min(`<U+0394><U+0394> p`, by = "Symb")
             }
         )
     )
