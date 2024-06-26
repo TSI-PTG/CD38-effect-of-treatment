@@ -52,7 +52,7 @@ panel_DEG1 <- panel_DEG1 %>%
     ggarrange(., NULL, ncol = 2, nrow = 1, widths = c(1, 0)) %>%
     ggpubr::annotate_figure(
         top = text_grob(
-            "Effect Felzartamab on Select Genes",
+            "Effect felzartamab on select genes",
             face = "bold.italic", size = size_title, hjust = 0.55
         )
     )
@@ -79,8 +79,8 @@ panel_DEG2 <- panel_DEG2 %>%
     ggarrange(., NULL, ncol = 2, nrow = 1, widths = c(1, 0)) %>%
     ggpubr::annotate_figure(
         top = text_grob(
-            "Effect Felzartamab on Select Genes",
-            face = "bold.italic", size = size_title, hjust = 1.55
+            "Effect felzartamab on select genes",
+            face = "bold.italic", size = size_title, hjust = 1.61
         )
     )
 
@@ -107,8 +107,8 @@ panel_volcano <- panel_volcano %>%
     ggarrange(., NULL, ncol = 2, nrow = 1, widths = c(1, 0)) %>%
     ggpubr::annotate_figure(
         top = text_grob(
-            "Genome-wide Effect of Felzartamab",
-            face = "bold.italic", size = size_title, hjust = 1.27
+            "Genome-wide effect of felzartamab treatment",
+            face = "bold.italic", size = size_title, hjust = 1.755
         )
     )
 
@@ -135,8 +135,8 @@ panel_volcano_enrichment <- panel_volcano_enrichment %>%
     ggarrange(., NULL, ncol = 2, nrow = 1, widths = c(1, 0)) %>%
     ggpubr::annotate_figure(
         top = text_grob(
-            "Genome-wide Effect of Felzartamab Treatment",
-            face = "bold.italic", size = size_title, hjust = 1.71
+            "Genome-wide effect of felzartamab treatment",
+            face = "bold.italic", size = size_title, hjust = 1.755
         )
     )
 
@@ -154,7 +154,7 @@ panel_volcano_timeseries1 <- panel_volcano_timeseries %>%
     ggarrange(NULL, ., NULL, ncol = 3, nrow = 1, widths = c(0.25, 1, 0.25)) %>%
     ggpubr::annotate_figure(
         top = text_grob(
-            "Longitiduinal Relapse of Felzartamab Effects",
+            "Longitudinal relapse of felzartamab effects",
             face = "bold.italic", size = size_title, hjust = 0.63 # hjust = 0.95
         )
     )
@@ -163,7 +163,7 @@ panel_volcano_timeseries2 <- panel_volcano_timeseries %>%
     ggarrange(NULL, ., NULL, ncol = 3, nrow = 1, widths = c(0, 1, 0)) %>%
     ggpubr::annotate_figure(
         top = text_grob(
-            "Longitiduinal Relapse of Effect Felzartamab",
+            "Longitudinal relapse of felzartamab effects",
             face = "bold.italic", size = size_title, hjust = 0.515 # hjust = 0.95
         )
     )
@@ -196,15 +196,15 @@ panels_enrichment <- ggarrange(
 
 # SAVE THE PLOT ####
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/output/"
-ggsave(
-    panels,
-    file = paste(saveDir, "Volcano timerseries GEP IQR_filtered_probes_unique_genes_baseline_corrected_cortex_corrected 1208.png", sep = ""),
-    dpi = 300,
-    width = 32,
-    height = 18,
-    units = "cm",
-    bg = "white"
-) %>% suppressWarnings()
+# ggsave(
+#     panels,
+#     file = paste(saveDir, "Volcano timerseries GEP IQR_filtered_probes_unique_genes_baseline_corrected_cortex_corrected 1208.png", sep = ""),
+#     dpi = 300,
+#     width = 32,
+#     height = 18,
+#     units = "cm",
+#     bg = "white"
+# ) %>% suppressWarnings()
 
 ggsave(
     panels_enrichment,

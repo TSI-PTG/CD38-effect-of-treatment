@@ -88,7 +88,7 @@ panel_violin_abmr <- panel_violin_abmr %>%
         legend = "none"
     ) %>%
     ggpubr::annotate_figure(
-        top = text_grob("Effect of Felzartamab on molecular ABMR activity",
+        top = text_grob("Effect of felzartamab on molecular ABMR activity",
             face = "bold.italic",
             size = 25,
             hjust = 1.43
@@ -119,7 +119,7 @@ panel_violin_tcmr <- panel_violin_tcmr %>%
         legend = "none"
     ) %>%
     ggpubr::annotate_figure(
-        top = text_grob("Effect of Felzartamab on molecular TCMR activity",
+        top = text_grob("Effect of felzartamab on molecular TCMR activity",
             face = "bold.italic",
             size = 25,
             hjust = 1.43

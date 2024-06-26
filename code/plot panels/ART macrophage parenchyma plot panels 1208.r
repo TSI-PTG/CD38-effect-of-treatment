@@ -38,8 +38,8 @@ panel_violin_macrophages <- panel_violin_macrophages %>%
     ) %>%
     ggpubr::annotate_figure(
         top = text_grob(
-            "Effect of Felzartamab on Macrophage Scores",
-            face = "bold.italic", size = 25, hjust = 0.912
+            "Effect of felzartamab on macrophage scores",
+            face = "bold.italic", size = 25, hjust = 0.93
         )
     )
 
@@ -66,8 +66,8 @@ panel_violin_parenchyma <- panel_violin_parenchyma %>%
         #         fig.lab = "fuckyou",   fig.lab.size = 25,
         #   fig.lab.face = "bold.italic"
         top = text_grob(
-            "Effect of Felzartamab on Kidney Parenchyma Scores",
-            face = "bold.italic", size = 25, hjust = 0.775
+            "Effect of felzartamab on kidney parenchyma scores",
+            face = "bold.italic", size = 25, hjust = 0.79
         )
     )
 

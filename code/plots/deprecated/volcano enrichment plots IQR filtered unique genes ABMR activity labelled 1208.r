@@ -43,7 +43,7 @@ immune_response <- paste(c("immune", "immunity", "cytokine", "leukocyte", "cell 
 cell_cycle <- paste(c("cycle"), collapse = "|")
 inflammation <- paste(c("inflam"), collapse = "|")
 injury <- paste(c("injury"), collapse = "|")
-exogenous_stimlulus <- paste(c("response to", "interaction"), collapse = "|")
+exogenous_stimulus <- paste(c("response to", "interaction"), collapse = "|")
 cellular_regulation <- paste(c("regulation of"), collapse = "|")
 cellular_development <- paste(c(
     "chromosome", "organelle fission", "organization", "segregation", "division",
@@ -96,7 +96,7 @@ data_joined_01 <- data_joined_00 %>%
                         group = case_when(
                             GO %>% str_detect(immune_response) ~ "immune response",
                             GO %>% str_detect(infection_response) ~ "response to infection",
-                            GO %>% str_detect(exogenous_stimlulus) ~ "response to exogenous stimulus",
+                            GO %>% str_detect(exogenous_stimulus) ~ "response to exogenous stimulus",
                             GO %>% str_detect(inflammation) ~ "inflammation",
                             GO %>% str_detect(injury) ~ "injury response",
                             GO %>% str_detect(cell_cycle) ~ "cell cycling",
