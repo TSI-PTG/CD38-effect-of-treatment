@@ -9,68 +9,78 @@ library(readxl) # install.packages("readxl")
 "%nin%" <- function(a, b) match(a, b, nomatch = 0) == 0
 # load affymap
 load("Z:/DATA/Datalocks/Other data/affymap219_21Oct2019_1306_JR.RData")
-# load limma results
-# load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/all_probes_limma_1208.RData")
 # load gene lists
-load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/genes_NK_GEP.RData")
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/Hinze_injury_markers.RData")
-
-load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/NK_genes_TBB896.RData")
-load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/ABMR_endothelial_genes.RData")
-load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/ABMR_activity_genes.RData")
-load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/IFNG_genes.RData")
-# load in house cell panel
-atagc <- read_excel("Z:/MISC/Patrick Gauthier/R/affymap219-CELL-PANEL/backup/UPDATED 2017 ANNOTATIONS - MASTERFILE - U133 HUMAN CELL PANEL - ALL PROBESETS (nonIQR) pfhptg.xlsx")
+# load K4502 injury simple file
+simplefile_path <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/0000 simple XL files/Kidney 4502/MASTER COPY K4502 Injset SimpleCorrAAInjRej 5AAInj 7AARej.xlsx"
+simplefile <- read_excel(path = simplefile_path, sheet = "simpleCorrAAInjRejInjset")
 
 
-# WRANGLE THE CELL PANEL DATA ####
-cell_panel <- atagc %>%
-    dplyr::select(`Index`, `NK cell`, CD4, CD8, `Unstim HUVEC`, `HUVEC + IFNg`) %>%
-    dplyr::rename(
-        Symb = Index,
-        NK = `NK cell`,
-        `HUVEC (unstimulated)` = `Unstim HUVEC`
-    )
+# DEFINE CELL STATES OF INTEREST ####
+cell_states <- c(
+    "PT-New1",
+    "PT-New2",
+    "PT-New3",
+    "PT-New4",
+    "TAL-New1",
+    "TAL-New2",
+    "TAL-New3",
+    "TAL-New4",
+    "DCT-New1",
+    "DCT-New2",
+    "DCT-New3",
+    "DCT-New4",
+    "CNT-New1",
+    "CNT-New2",
+    "CNT-New3",
+    "CD-PC-New1",
+    "CD-PC-New2",
+    "CD-IC-New1",
+    "CD-IC-New2"
+)
+
+
+# DEFINE INJURY SELECTIVE GENES ####
+genes_injury <- Hmisc::.q(
+    IFITM3,
+    LRP2,
+    MET,
+    MYO5B,
+    NQO1,
+    SLC2A1,
+    SLC12A1,
+    VCAM1,
+    IGFBP7,
+    ALDOB,
+    SERPINA1,
+    SPP1,
+    LCN2,
+    HAVCR1,
+    NRF2,
+    HIF1A,
+    MYC,
+    JUN
+)
 
 
 # WRANGLE THE INJURY MARKER DATA ####
 injury_markers <- genes_injury_markers %>%
     unnest(data) %>%
-    nest(.by = c(celltypename, cluster))
-
-
-# FILTER NK SELECTIVITY BY GEP ####
-genes_NK_ATAGC_U133 <- genes_NK_GEP %>%
-    dplyr::filter(panel == "ATAGC_U133") %>%
-    pull(data) %>%
-    pluck(1) %>%
-    dplyr::select(AffyID, Symb)
-
-genes_NK_KTB18_RNAseq <- genes_NK_GEP %>%
-    dplyr::filter(panel == "KTB18_RNAseq") %>%
-    pull(data) %>%
-    pluck(1) %>%
-    dplyr::select(AffyID, Symb)
-
-genes_NK_LM22_U133 <- genes_NK_GEP %>%
-    dplyr::filter(panel == "LM22_U133") %>%
-    pull(data) %>%
-    pluck(1) %>%
-    dplyr::select(AffyID, Symb)
-
-
-# ISOLATE INJURY SELECTIVE GENE MARKERS ####
-genes_PT_New4 <- injury_markers %>%
-    dplyr::filter(celltypename == "proximal tubules", cluster == "PT-New4") %>%
-    pull(data) %>%
-    pluck(1) %>%
-    dplyr::select(AffyID, Symb)
-
-genes_TAL_New4 <- injury_markers %>%
-    dplyr::filter(celltypename == "thick ascending limb", cluster == "TAL-New4") %>%
-    pull(data) %>%
-    pluck(1) %>%
-    dplyr::select(AffyID, Symb)
+    dplyr::filter(cluster %in% cell_states) %>%
+    dplyr::select(celltypename:PBT) %>%
+    nest(.by = AffyID) %>%
+    mutate(
+        "cellular expression" = map_chr(
+            data,
+            function(data) {
+                data %>%
+                    pull(cluster) %>%
+                    paste(collapse = ",")
+            }
+        )
+    ) %>%
+    unnest(data) %>%
+    dplyr::select(AffyID, Symb, Gene, PBT, `cellular expression`)
 
 
 # FILTER THE GENE TABLES ####

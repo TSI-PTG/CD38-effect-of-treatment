@@ -1,129 +1,121 @@
 # HOUSEKEEPING ####
 # CRAN libraries
 library(tidyverse) # install.packages("tidyverse")
-# Bioconductor libraries
-library(Biobase) # BiocManager::install("Biobase")
-library(genefilter) # BiocManager::install("genefilter")
-
+library(flextable) # install.packages("flextable")
+library(officer) # install.packages("officer")
+library(openxlsx) # install.packages("openxlsx")
+library(readxl) # install.packages("readxl")
 # Custom operators, functions, and datasets
 "%nin%" <- function(a, b) match(a, b, nomatch = 0) == 0
 # load affymap
 load("Z:/DATA/Datalocks/Other data/affymap219_21Oct2019_1306_JR.RData")
-# load reference set
-load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vienna/G_Rstuff/data/vienna_1208_6Mar24.RData")
+# load gene lists
+load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/Hinze_injury_markers.RData")
+# load K4502 injury simple file
+simplefile_path <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/0000 simple XL files/Kidney 4502/MASTER COPY K4502 Injset SimpleCorrAAInjRej 5AAInj 7AARej.xlsx"
+simplefile <- read_excel(path = simplefile_path, sheet = "simpleCorrAAInjRejInjset")
 
 
-# DEFINE GENERIC INJURY MARKER GENES ####
-genes_markers <- Hmisc::.q(
+# DEFINE CELL STATES OF INTEREST ####
+cell_states <- c(
+    "PT-New1",
+    "PT-New2",
+    "PT-New3",
+    "PT-New4",
+    "TAL-New1",
+    "TAL-New2",
+    "TAL-New3",
+    "TAL-New4",
+    "DCT-New1",
+    "DCT-New2",
+    "DCT-New3",
+    "DCT-New4",
+    "CNT-New1",
+    "CNT-New2",
+    "CNT-New3",
+    "CD-PC-New1",
+    "CD-PC-New2",
+    "CD-IC-New1",
+    "CD-IC-New2"
+)
+
+
+# DEFINE INJURY SELECTIVE GENES ####
+genes_injury <- Hmisc::.q(
+    IFITM3,
+    LRP2,
+    MET,
+    MYO5B,
+    NQO1,
+    SLC2A1,
+    SLC12A1,
+    VCAM1,
+    IGFBP7,
+    ALDOB,
+    SERPINA1,
+    SPP1,
     LCN2,
     HAVCR1,
-    IGFBP7,
-    TIMP2,
-    IL18,
-    CHI3L1,
-    SPP1,
-    S100A9
+    NRF2,
+    HIF1A,
+    MYC,
+    JUN
 )
 
 
-# DEFINE PROXIMAL TUBULE INJURY GENES ####
-genes_PT <- Hmisc::.q(
-    SPARC,
-    VCAM1,
-    IFITM2,
-    IFITM3,
-    VIM,
-    "HLA-A",
-    BTG1,
-    SERPINA1,
-    RPL5,
-    RPL4,
-    MYO5B,
-    AKAP12,
-    ERO1A,
-    KLF6,
-    NQ01,
-    MT1F,
-    MT1HL1,
-    FTL,
-    FTH1,
-    GPX3,
-    SCL7A13,
-    SCL22A24,
-    SLC5A11,
-    SLC22A7,
-    SLC34A1,
-    SLC7A7,
-    SLC5A2
-)
+# WRANGLE THE INJURY MARKER DATA ####
+injury_markers <- genes_injury_markers %>%
+    unnest(data) %>%
+    dplyr::filter(Symb %in% genes_injury) %>%
+    dplyr::select(cluster:PBT) %>%
+    nest(.by = AffyID) %>%
+    mutate(
+        "cellular expression" = map_chr(
+            data,
+            function(data) {
+                data %>%
+                    pull(cluster) %>%
+                    paste(collapse = ",")
+            }
+        )
+    ) %>%
+    unnest(data) %>%
+    dplyr::select(-cluster)
 
 
-# DEFINE THICK ASCENDING LIMB INJURY GENES ####
-genes_TAL <- Hmisc::.q(
-    MET,
-    ITGA2,
-    ITGB1,
-    LAMC2,
-    CD44,
-    TMP1,
-    NNMT,
-    SERPINA1,
-    "HLA-A",
-    IFITM3,
-    IFITM2,
-    RPL30,
-    RPL5,
-    RPL4,
-    ERO1A,
-    SLC2A1,
-    VEGFA,
-    ALDOB,
-    FTH1,
-    MT1E,
-    FTL,
-    MT1G,
-    GPX3,
-    CLDN10,
-    SLC12A1,
-    FGF9,
-    CLDN16,
-    CASR,
-    ROBO2,
-    PAPP2,
-    NOS1
-)
+
+# WRANGLE THE SIMPLE FILE DATA ####
+K4502 <- simplefile %>%
+    dplyr::select(Affy, corrInjPCA1, corrInjPCA2, corrInjPCA3) %>%
+    dplyr::rename(AffyID = Affy)
 
 
-# DEFINE THE INJURY GENES BY MEAN EXPRESSION ####
-genes_injury_PT <- vienna_1208 %>%
-    exprs() %>%
-    as.data.frame() %>%
-    mutate(means = rowMeans(.), .before = 1) %>%
-    as_tibble(rownames = "AffyID") %>%
-    right_join(affymap219 %>% dplyr::select(AffyID, Symb) %>% tibble(), ., by = "AffyID") %>%
-    dplyr::filter(Symb %in% genes_PT) %>%
-    arrange(Symb, means) %>%
-    dplyr::select(AffyID, Symb, means) %>%
-    mutate(celltype = "PT", .before = 1)
+join <- injury_markers %>%
+    left_join(K4502, by = "AffyID") %>%
+    distinct(Symb, .keep_all = TRUE) %>%
+    dplyr::select(-AffyID)
 
-genes_injury_TAL <- vienna_1208 %>%
-    exprs() %>%
-    as.data.frame() %>%
-    mutate(means = rowMeans(.), .before = 1) %>%
-    as_tibble(rownames = "AffyID") %>%
-    right_join(affymap219 %>% dplyr::select(AffyID, Symb) %>% tibble(), ., by = "AffyID") %>%
-    dplyr::filter(Symb %in% genes_TAL) %>%
-    arrange(Symb, means) %>%
-    dplyr::select(AffyID, Symb, means) %>%
-    mutate(celltype = "TAL", .before = 1)
-
-genes_injury <- bind_rows(genes_injury_PT, genes_injury_TAL)
 
 
 # SAVE THE DATA ####
-saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/"
-save(genes_injury, file = paste(saveDir, "injury_genes.RData", sep = ""))
+# saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/"
+# save(genes_injury, file = paste(saveDir, "injury_genes.RData", sep = ""))
 
 
 # EXPLORE THE DATA ####
-genes_injury %>% slice_max(means, by = c("celltype", "Symb"))
+flextable <- join %>%
+    flextable::flextable() %>%
+    flextable::border(part = "header", border = fp_border()) %>%
+    flextable::border(part = "body", border = fp_border()) %>%
+    flextable::align(align = "center") %>%
+    flextable::align(align = "center", part = "header") %>%
+    flextable::font(fontname = "Arial", part = "all") %>%
+    flextable::fontsize(size = 8, part = "all") %>%
+    flextable::fontsize(size = 8, part = "footer") %>%
+    flextable::fontsize(i = 1, size = 12, part = "header") %>%
+    flextable::bold(part = "header") %>%
+    flextable::bg(bg = "white", part = "all") %>%
+    flextable::padding(padding = 0, part = "all")
+
+
+flextable  %>% print(preview = "pptx")
