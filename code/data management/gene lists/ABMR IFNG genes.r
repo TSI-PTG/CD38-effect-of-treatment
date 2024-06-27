@@ -44,7 +44,7 @@ cell_panel <- atagc %>%
         `HUVEC (unstimulated)` = `Unstim HUVEC`,
         `HUVEC (IFNg stimulated)` = `HUVEC + IFNg`
     ) %>%
-    slice_max(NK, by = "Symb", with_ties = FALSE)
+    slice_max(`HUVEC (IFNg stimulated)`, by = "Symb", with_ties = FALSE)
 
 
 
@@ -55,55 +55,65 @@ data <- K5086 %>%
 
 # DEFINE THE ABMR ACTIVITY GENES BY MEAN EXPRESSION ####
 genes_EABMR <- data %>%
+    dplyr::filter(`corrRej7AA4-EABMR` > 0) %>%
     slice_min(`pvalRej7AA4-EABMR`, n = 100)
 
-genes_ABMR_NK <- genes_EABMR %>%
+genes_ABMR_IFNG <- genes_EABMR %>%
     dplyr::filter(
-        `HUVEC (unstimulated)` < quantile(`HUVEC (unstimulated)`, 0.5, na.rm = TRUE),
-        `HUVEC (IFNg stimulated)` < quantile(`HUVEC (IFNg stimulated)`, 0.5, na.rm = TRUE),
+        `HUVEC (unstimulated)` < quantile(`HUVEC (unstimulated)`, 0.75, na.rm = TRUE),
+        NK < quantile(NK, 0.5, na.rm = TRUE),
+        `HUVEC (IFNg stimulated)` > quantile(`HUVEC (unstimulated)`, 0.90, na.rm = TRUE),
     ) %>%
-    slice_max(NK, n = 20) %>%
+    slice_max(`HUVEC (IFNg stimulated)`, n = 20) %>%
     relocate(AffyID_U133, .after = AffyID) %>%
-    relocate(
-        c(
-            `corrRej7AA4-EABMR`, `pvalRej7AA4-EABMR`,
-            `corrRej7AA5-FABMR`, `pvalRej7AA5-FABMR`
-        ),
+    relocate(`corrRej7AA4-EABMR`, `pvalRej7AA4-EABMR`, `corrRej7AA5-FABMR`, `pvalRej7AA5-FABMR`,
         .after = last_col()
     ) %>%
-    mutate_at(
-        vars(
-            `corrRej7AA4-EABMR`,
-            `corrRej7AA5-FABMR`
-        ),
-        ~ round(., 2)
-    ) %>%
-    mutate_at(
-        vars(
-            `pvalRej7AA4-EABMR`,
-            `pvalRej7AA5-FABMR`
-        ),
-        ~ formatC(., digits = 0, format = "e")
-    ) %>%
-    mutate(Gene = Gene %>% stringr::str_remove("///.*"))
-
-
-
+    mutate_at(vars(contains("corrRej")), ~ round(., 2)) %>%
+    mutate_at(vars(contains("pvalRej")), ~ formatC(., digits = 0, format = "e")) %>%
+    mutate(
+        Gene = Gene %>% stringr::str_remove("///.*"),
+        PBT = PBT %>%
+            stringr::str_remove("RAT") %>%
+            stringr::str_remove("Rej-RAT") %>%
+            stringr::str_replace(",,", ",")
+    )
 
 
 # SAVE THE DATA ####
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/"
-# save(genes_ABMR_NK, file = paste(saveDir, "NK_genes_TBB896.RData", sep = ""))
+save(genes_ABMR_IFNG, file = paste(saveDir, "ABMR_IFNG_genes.RData", sep = ""))
 
 
-# EXPLORE THE DATA ####
-genes_NK_TBB896 %>%
-    slice_max(means, by = "Symb") %>%
-    print(n = "all")
+
+# UNIVERSAL VARIABLES FOR FLEXTABLE ####
+header1 <- c(
+    "Gene\nsymbol", "Gene", "PBT",
+    rep("Cell panel expression", 5),
+    rep("Correlation with ABMR in K5086", 4)
+)
+
+header2 <- c(
+    "Gene\nsymbol", "Gene", "PBT",
+    "NK", "CD4", "CD8", "HUVEC\n(unstimulated)", "HUVEC\n(IFNg stimulated)",
+    "SCC\nEABMR\nK5086", "p\nEABMR\nK5086",
+    "SCC\nFABMR\nK5086", "p\nFABMR\nK5086"
+)
+
+title <- c("Table Si. Definition of IFNG-inducible ABMR activity genes")
+cellWidths <- c(1.5, 10, 4.6, 1, 1, 1, 2, 2, rep(1.3, 4))
 
 
-flextable <- genes_ABMR_NK %>%
+# MAKE FLEXTABLE ####
+flextable <- genes_ABMR_IFNG %>%
+    dplyr::select(!contains("AffyID")) %>%
     flextable::flextable() %>%
+    flextable::delete_part("header") %>%
+    flextable::add_header_row(top = TRUE, values = header2) %>%
+    flextable::add_header_row(top = TRUE, values = header1) %>%
+    flextable::add_header_row(top = TRUE, values = rep(title, ncol_keys(.))) %>%
+    flextable::merge_v(part = "header") %>%
+    flextable::merge_h(part = "header") %>%
     flextable::border_remove() %>%
     flextable::border(part = "header", border = fp_border()) %>%
     flextable::border(part = "body", border = fp_border()) %>%
@@ -114,8 +124,8 @@ flextable <- genes_ABMR_NK %>%
     flextable::bold(part = "header") %>%
     flextable::bg(bg = "white", part = "all") %>%
     flextable::padding(padding = 0, part = "all") %>%
-    flextable::width(., width = dim(.)$widths * 33 / (flextable::flextable_dim(.)$widths), unit = "cm")
+    flextable::width(width = cellWidths, unit = "cm")
+#   %>%
+# flextable::width(., width = dim(.)$widths * 33 / (flextable::flextable_dim(.)$widths), unit = "cm")
 
-
-
-flextable  %>% print(preview = "pptx")
+flextable %>% print(preview = "pptx")
