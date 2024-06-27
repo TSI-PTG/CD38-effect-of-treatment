@@ -13,6 +13,8 @@ load("Z:/DATA/Datalocks/Other data/affymap219_21Oct2019_1306_JR.RData")
 # load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/all_probes_limma_1208.RData")
 # load gene lists
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/genes_NK_GEP.RData")
+load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/Hinze_injury_markers.RData")
+
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/NK_genes_TBB896.RData")
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/ABMR_endothelial_genes.RData")
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/ABMR_activity_genes.RData")
@@ -30,6 +32,12 @@ cell_panel <- atagc %>%
         NK = `NK cell`,
         `HUVEC (unstimulated)` = `Unstim HUVEC`
     )
+
+
+# WRANGLE THE INJURY MARKER DATA ####
+injury_markers <- genes_injury_markers %>%
+    unnest(data) %>%
+    nest(.by = c(celltypename, cluster))
 
 
 
@@ -54,9 +62,20 @@ genes_NK_LM22_U133 <- genes_NK_GEP %>%
     dplyr::select(AffyID, Symb)
 
 
+# ISOLATE INJURY SELECTIVE GENE MARKERS ####
+genes_PT_New4 <- injury_markers %>%
+    dplyr::filter(celltypename == "proximal tubules", cluster == "PT-New4") %>%
+    pull(data) %>%
+    pluck(1) %>%
+    dplyr::select(AffyID, Symb)
 
-cell_panel %>%
-    dplyr::filter(Symb %in% genes_NK_ATAGC_U133$Symb)
+genes_TAL_New4 <- injury_markers %>%
+    dplyr::filter(celltypename == "thick ascending limb", cluster == "TAL-New4") %>%
+    pull(data) %>%
+    pluck(1) %>%
+    dplyr::select(AffyID, Symb)
+
+
 
 
 # FILTER THE GENE TABLES ####
@@ -64,18 +83,22 @@ gene_tables <- expand_grid(
     geneset = c(
         "ABMR_activity",
         "NK_ATAGC_U133", "NK_KTB18_RNAseq", "NK_LM22_U133", "NK_L765",
-        "Endothelial", "IFNG"
+        "Endothelial", "IFNG", 
+        "injury_PT_New4", "Injury_TAL_New4"
     )
 ) %>%
     mutate(
         genes = case_when(
-            geneset == "ABMR_activity" ~ genes_ABMR_activity$AffyID %>% list(),
-            geneset == "NK_ATAGC_U133" ~ genes_NK_ATAGC_U133$AffyID %>% list(),
-            geneset == "NK_KTB18_RNAseq" ~ genes_NK_KTB18_RNAseq$AffyID %>% list(),
-            geneset == "NK_LM22_U133" ~ genes_NK_LM22_U133$AffyID %>% list(),
-            geneset == "NK_L765" ~ genes_NK_TBB896$AffyID %>% list(),
-            geneset == "Endothelial" ~ genes_ABMR_endothelial$AffyID %>% list(),
-            geneset == "IFNG" ~ genes_IFNG$AffyID %>% list()
+            geneset == "ABMR_activity" ~ genes_ABMR_activity$Symb %>% list(),
+            geneset == "NK_ATAGC_U133" ~ genes_NK_ATAGC_U133$Symb %>% list(),
+            geneset == "NK_KTB18_RNAseq" ~ genes_NK_KTB18_RNAseq$Symb %>% list(),
+            geneset == "NK_LM22_U133" ~ genes_NK_LM22_U133$Symb %>% list(),
+            geneset == "NK_L765" ~ genes_NK_TBB896$Symb %>% list(),
+            geneset == "Endothelial" ~ genes_ABMR_endothelial$Symb %>% list(),
+            geneset == "IFNG" ~ genes_IFNG$Symb %>% list(),
+            geneset == "injury_PT_New4" ~ genes_PT_New4$Symb %>% list(),
+            geneset == "Injury_TAL_New4" ~ genes_TAL_New4$Symb %>% list(),
+
         )
     ) %>%
     mutate(

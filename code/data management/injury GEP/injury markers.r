@@ -38,12 +38,14 @@ genes_injury_markers <- hinze %>%
             function(data) {
                 data %>%
                     left_join(affy_genes, by = "Symb") %>%
-                    mutate(contrast = "AKI vs control")  %>% 
-                    relocate(AffyID, Symb, Gene, PBT, contrast, .before = log2FC)
+                    mutate(contrast = "AKI vs control") %>%
+                    relocate(AffyID, Symb, Gene, PBT, contrast, .before = log2FC) %>%
+                    dplyr::select(-celltype)
             }
         )
-    )
-genes_injury_markers$data[[1]]
+    ) %>%
+    unnest(data) %>%
+    nest(.by = c(celltypename)) 
 
 
 # EXPORT THE GENE SET ####
@@ -53,12 +55,12 @@ save(genes_injury_markers, file = paste(saveDir, "Hinze_injury_markers.RData", s
 
 # EXPORT THE DATA AS AN EXCEL SHEET ####
 saveDir1 <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/output/"
-openxlsx::write.xlsx(genes_injury_markers$data,
-    asTable = TRUE,
-    file = paste(saveDir1, "Hinze_injury_markers_26Jun24",
-        # Sys.Date(),
-        # format(Sys.time(), "_%I%M%p"),
-        ".xlsx",
-        sep = ""
-    )
-)
+# openxlsx::write.xlsx(genes_injury_markers$data,
+#     asTable = TRUE,
+#     file = paste(saveDir1, "Hinze_injury_markers_26Jun24",
+#         # Sys.Date(),
+#         # format(Sys.time(), "_%I%M%p"),
+#         ".xlsx",
+#         sep = ""
+#     )
+# )
