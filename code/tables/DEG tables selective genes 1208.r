@@ -13,14 +13,30 @@ load("Z:/DATA/Datalocks/Other data/affymap219_21Oct2019_1306_JR.RData")
 # load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/all_probes_limma_1208.RData")
 # load gene lists
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/genes_NK_GEP.RData")
-load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/Hinze_injury_markers.RData")
-
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/NK_genes_TBB896.RData")
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/ABMR_endothelial_genes.RData")
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/ABMR_activity_genes.RData")
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/IFNG_genes.RData")
 # load in house cell panel
 atagc <- read_excel("Z:/MISC/Patrick Gauthier/R/affymap219-CELL-PANEL/backup/UPDATED 2017 ANNOTATIONS - MASTERFILE - U133 HUMAN CELL PANEL - ALL PROBESETS (nonIQR) pfhptg.xlsx")
+# load SCC data
+simplefile_path <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/0000 simple XL files/Kidney 5086/MASTER COPY K5086 SimpleCorrAAInjRej 5AAInjNR 7AARej.xlsx"
+simplefile <- read_excel(path = simplefile_path)
+# load mean expression in K1208
+load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/mean_expression_by_probe_1208.RData")
+
+
+
+# WRANGLE THE MEAN EXPRESSION DATA ####
+means_1208 <- mean_exprs_1208 %>%
+    slice_max(mean_expression, by = "Symb")
+
+
+# WRANGLE THE SIMPLE FILE DATA ####
+K5086 <- simplefile %>%
+    dplyr::select(Affy, SYMB, Name, PBT, `corrRej7AA4-EABMR`, `pvalRej7AA4-EABMR`) %>%
+    dplyr::rename(AffyID = Affy, Symb = SYMB, Gene = Name) %>%
+    dplyr::filter(AffyID %in% means_1208$AffyID)
 
 
 # WRANGLE THE CELL PANEL DATA ####
@@ -33,10 +49,11 @@ cell_panel <- atagc %>%
     )
 
 
-# WRANGLE THE INJURY MARKER DATA ####
-injury_markers <- genes_injury_markers %>%
-    unnest(data) %>%
-    nest(.by = c(celltypename, cluster))
+# JOIN THE CELL PANELA AND SIMPLE FILE ####
+# pheno <- cell_panel %>%
+#     right_join(K5086, by = "Symb") %>%
+#     relocate(Gene, PBT, .after = Symb)
+
 
 
 # FILTER NK SELECTIVITY BY GEP ####
@@ -59,27 +76,12 @@ genes_NK_LM22_U133 <- genes_NK_GEP %>%
     dplyr::select(AffyID, Symb)
 
 
-# ISOLATE INJURY SELECTIVE GENE MARKERS ####
-genes_PT_New4 <- injury_markers %>%
-    dplyr::filter(celltypename == "proximal tubules", cluster == "PT-New4") %>%
-    pull(data) %>%
-    pluck(1) %>%
-    dplyr::select(AffyID, Symb)
-
-genes_TAL_New4 <- injury_markers %>%
-    dplyr::filter(celltypename == "thick ascending limb", cluster == "TAL-New4") %>%
-    pull(data) %>%
-    pluck(1) %>%
-    dplyr::select(AffyID, Symb)
-
-
 # FILTER THE GENE TABLES ####
 gene_tables <- expand_grid(
     geneset = c(
         "ABMR_activity",
         "NK_ATAGC_U133", "NK_KTB18_RNAseq", "NK_LM22_U133", "NK_L765",
-        "Endothelial", "IFNG", 
-        "injury_PT_New4", "Injury_TAL_New4"
+        "Endothelial", "IFNG"
     )
 ) %>%
     mutate(
@@ -90,25 +92,18 @@ gene_tables <- expand_grid(
             geneset == "NK_LM22_U133" ~ genes_NK_LM22_U133$Symb %>% list(),
             geneset == "NK_L765" ~ genes_NK_TBB896$Symb %>% list(),
             geneset == "Endothelial" ~ genes_ABMR_endothelial$Symb %>% list(),
-            geneset == "IFNG" ~ genes_IFNG$Symb %>% list(),
-            geneset == "injury_PT_New4" ~ genes_PT_New4$Symb %>% list(),
-            geneset == "Injury_TAL_New4" ~ genes_TAL_New4$Symb %>% list(),
-
+            geneset == "IFNG" ~ genes_IFNG$Symb %>% list()
         )
     ) %>%
     mutate(
         gene_tables = pmap(
             list(genes),
             function(genes) {
-                cell_panel %>%
+                pheno %>%
                     dplyr::filter(Symb %in% genes)
-                    #  %>%
-                    # dplyr::slice_min(`<U+0394><U+0394> p`, by = "Symb")
             }
         )
     )
-
-names(gene_tables$gene_tables) <- gene_tables$design
 gene_tables$gene_tables
 
 
@@ -246,7 +241,7 @@ gene_flextables$gene_flextables[[1]]
 
 # EXPORT THE DATA AS .RData FILE ####
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/"
-save(gene_tables, file = paste(saveDir, "gene_tables_limma_1208.RData", sep = ""))
+# save(gene_tables, file = paste(saveDir, "gene_tables_limma_1208.RData", sep = ""))
 
 
 
@@ -262,79 +257,69 @@ gene_tables_IFNG <- gene_tables %>% dplyr::filter(geneset == "IFNG")
 
 # EXPORT THE DATA AS AN EXCEL SHEET ####
 saveDir1 <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/output/"
-openxlsx::write.xlsx(gene_tables_ABMR_activity$gene_tables,
-    asTable = TRUE,
-    file = paste(saveDir1, "ABMR_activity_genes_limma_1208_12Jun24",
-        # Sys.Date(),
-        # format(Sys.time(), "_%I%M%p"),
-        ".xlsx",
-        sep = ""
-    )
-)
-openxlsx::write.xlsx(gene_tables_NK_ATAGC_U133$gene_tables,
-    asTable = TRUE,
-    file = paste(saveDir1, "NK_ATAGC_U133_genes_limma_1208_12Jun24",
-        # Sys.Date(),
-        # format(Sys.time(), "_%I%M%p"),
-        ".xlsx",
-        sep = ""
-    )
-)
-openxlsx::write.xlsx(gene_tables_NK_KTB18_RNAseq$gene_tables,
-    asTable = TRUE,
-    file = paste(saveDir1, "NK_KTB18_RNAseq_genes_limma_1208_12Jun24",
-        # Sys.Date(),
-        # format(Sys.time(), "_%I%M%p"),
-        ".xlsx",
-        sep = ""
-    )
-)
-openxlsx::write.xlsx(gene_tables_NK_LM22_U133$gene_tables,
-    asTable = TRUE,
-    file = paste(saveDir1, "NK_LM22_U133_genes_limma_1208_12Jun24",
-        # Sys.Date(),
-        # format(Sys.time(), "_%I%M%p"),
-        ".xlsx",
-        sep = ""
-    )
-)
+# openxlsx::write.xlsx(gene_tables_ABMR_activity$gene_tables,
+#     asTable = TRUE,
+#     file = paste(saveDir1, "ABMR_activity_genes_limma_1208_12Jun24",
+#         # Sys.Date(),
+#         # format(Sys.time(), "_%I%M%p"),
+#         ".xlsx",
+#         sep = ""
+#     )
+# )
+# openxlsx::write.xlsx(gene_tables_NK_ATAGC_U133$gene_tables,
+#     asTable = TRUE,
+#     file = paste(saveDir1, "NK_ATAGC_U133_genes_limma_1208_12Jun24",
+#         # Sys.Date(),
+#         # format(Sys.time(), "_%I%M%p"),
+#         ".xlsx",
+#         sep = ""
+#     )
+# )
+# openxlsx::write.xlsx(gene_tables_NK_KTB18_RNAseq$gene_tables,
+#     asTable = TRUE,
+#     file = paste(saveDir1, "NK_KTB18_RNAseq_genes_limma_1208_12Jun24",
+#         # Sys.Date(),
+#         # format(Sys.time(), "_%I%M%p"),
+#         ".xlsx",
+#         sep = ""
+#     )
+# )
+# openxlsx::write.xlsx(gene_tables_NK_LM22_U133$gene_tables,
+#     asTable = TRUE,
+#     file = paste(saveDir1, "NK_LM22_U133_genes_limma_1208_12Jun24",
+#         # Sys.Date(),
+#         # format(Sys.time(), "_%I%M%p"),
+#         ".xlsx",
+#         sep = ""
+#     )
+# )
 
 
 
-
-
-
-
-
-
-
-
-
-
-openxlsx::write.xlsx(gene_tables_NK_L765$gene_tables,
-    asTable = TRUE,
-    file = paste(saveDir1, "NK_L765_genes_limma_1208_12Jun24",
-        # Sys.Date(),
-        # format(Sys.time(), "_%I%M%p"),
-        ".xlsx",
-        sep = ""
-    )
-)
-openxlsx::write.xlsx(gene_tables_Endothelial$gene_tables,
-    asTable = TRUE,
-    file = paste(saveDir1, "Endothelial_genes_limma_1208_12Jun24",
-        # Sys.Date(),
-        # format(Sys.time(), "_%I%M%p"),
-        ".xlsx",
-        sep = ""
-    )
-)
-openxlsx::write.xlsx(gene_tables_IFNG$gene_tables,
-    asTable = TRUE,
-    file = paste(saveDir1, "IFNG_genes_limma_1208_12Jun24",
-        # Sys.Date(),
-        # format(Sys.time(), "_%I%M%p"),
-        ".xlsx",
-        sep = ""
-    )
-)
+# openxlsx::write.xlsx(gene_tables_NK_L765$gene_tables,
+#     asTable = TRUE,
+#     file = paste(saveDir1, "NK_L765_genes_limma_1208_12Jun24",
+#         # Sys.Date(),
+#         # format(Sys.time(), "_%I%M%p"),
+#         ".xlsx",
+#         sep = ""
+#     )
+# )
+# openxlsx::write.xlsx(gene_tables_Endothelial$gene_tables,
+#     asTable = TRUE,
+#     file = paste(saveDir1, "Endothelial_genes_limma_1208_12Jun24",
+#         # Sys.Date(),
+#         # format(Sys.time(), "_%I%M%p"),
+#         ".xlsx",
+#         sep = ""
+#     )
+# )
+# openxlsx::write.xlsx(gene_tables_IFNG$gene_tables,
+#     asTable = TRUE,
+#     file = paste(saveDir1, "IFNG_genes_limma_1208_12Jun24",
+#         # Sys.Date(),
+#         # format(Sys.time(), "_%I%M%p"),
+#         ".xlsx",
+#         sep = ""
+#     )
+# )

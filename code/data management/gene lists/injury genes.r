@@ -89,7 +89,6 @@ K4502 <- simplefile %>%
     dplyr::select(Affy, corrInjPCA1, corrInjPCA2, corrInjPCA3) %>%
     dplyr::rename(AffyID = Affy)
 
-
 join <- injury_markers %>%
     left_join(K4502, by = "AffyID") %>%
     distinct(Symb, .keep_all = TRUE) %>%
@@ -102,7 +101,7 @@ join <- injury_markers %>%
 # save(genes_injury, file = paste(saveDir, "injury_genes.RData", sep = ""))
 
 
-# EXPLORE THE DATA ####
+# MAKE A FLEXTABLE OF THE DATA ####
 flextable <- join %>%
     flextable::flextable() %>%
     flextable::border(part = "header", border = fp_border()) %>%
@@ -116,6 +115,5 @@ flextable <- join %>%
     flextable::bold(part = "header") %>%
     flextable::bg(bg = "white", part = "all") %>%
     flextable::padding(padding = 0, part = "all")
-
 
 flextable  %>% print(preview = "pptx")

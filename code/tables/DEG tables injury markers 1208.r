@@ -44,14 +44,15 @@ cell_states <- c(
 
 
 # WRANGLE THE INJURY MARKER DATA ####
-# genes_injury_markers %>%
-#     unnest(data) %>%
-#     nest(.by = c(celltypename, cluster)) %>%
-#     print(n = "all")
+genes_injury_markers %>%
+    unnest(data) %>%
+    nest(.by = c(celltypename, cluster)) %>%
+    print(n = "all")
 
 injury_markers <- genes_injury_markers %>%
     unnest(data) %>%
-    dplyr::filter(cluster %in% cell_states) %>%
+    # dplyr::filter(cluster %in% cell_states) %>%
+    dplyr::filter(cluster  %>%  str_detect("New")) %>%
     dplyr::select(celltypename:AffyID) %>%
     nest(.by = AffyID) %>%
     mutate(
@@ -65,7 +66,7 @@ injury_markers <- genes_injury_markers %>%
         )
     ) %>%
     unnest(data) %>%
-    dplyr::select(AffyID, `cellular expression`) 
+    dplyr::select(AffyID, `cellular expression`)
 
 # injury_markers <- genes_injury_markers %>%
 #     unnest(data) %>%
@@ -96,21 +97,21 @@ tables <- data %>%
         gene_tables = pmap(
             list(injury_genes, table, direction),
             function(injury_genes, table, direction) {
-                genes <- injury_genes  %>% pull(AffyID)
+                genes <- injury_genes %>% pull(AffyID)
                 colnames(table) <- table %>%
                     colnames() %>%
                     str_remove_all("\u394 |\u394")
-                if(direction == "increased"){
-                    table <- table  %>% dplyr::filter(logFC > 0)
-                } else if(direction == "decreased"){
-                    table <- table  %>% dplyr::filter(logFC < 0)
+                if (direction == "increased") {
+                    table <- table %>% dplyr::filter(logFC > 0)
+                } else if (direction == "decreased") {
+                    table <- table %>% dplyr::filter(logFC < 0)
                 }
                 df <- table %>%
                     dplyr::filter(AffyID %in% genes) %>%
                     left_join(injury_genes, by = "AffyID") %>%
                     arrange(p) %>%
                     distinct(Symb, .keep_all = TRUE) %>%
-                    # left_join(K4502, by = "AffyID")  %>% 
+                    # left_join(K4502, by = "AffyID")  %>%
                     dplyr::slice_min(p, n = 20) %>%
                     dplyr::select(
                         -AffyID, -cortex,
@@ -131,7 +132,7 @@ tables <- data %>%
                         )
                     ) %>%
                     relocate(
-                        c('cellular expression',"logFC", "FC", "p", "FDR"),
+                        c("cellular expression", "logFC", "FC", "p", "FDR"),
                         .after = PBT
                     )
             }
@@ -144,7 +145,7 @@ tables$gene_tables
 header1 <- c(
     # "AffyID",
     "Gene\nsymbol", "Gene", "PBT", "Cellular expression\nin AKI",
-     "\u394\u394 logFC", "\u394\u394 FC", "\u394\u394 P", "\u394\u394 FDR",
+    "\u394\u394 logFC", "\u394\u394 FC", "\u394\u394 P", "\u394\u394 FDR",
     rep("Mean expression by group", 4)
 )
 header2 <- c(
@@ -177,7 +178,7 @@ flextables <- tables %>%
                         sep = ""
                     )
                     header3 <- c(
-                        "Gene\nsymbol", "Gene", "PBT", "Cellular expression\nin AKI","\u394\u394 logFC", "\u394\u394 FC", "\u394\u394 P", "\u394\u394 FDR",
+                        "Gene\nsymbol", "Gene", "PBT", "Cellular expression\nin AKI", "\u394\u394 logFC", "\u394\u394 FC", "\u394\u394 P", "\u394\u394 FDR",
                         "Baseline\n(N=10)", "Week24\n(N=10)", "Baseline\n(N=10)", "Week24\n(N=10)"
                     )
                 } else if (design == "Week24_vs_Week52") {
@@ -188,7 +189,7 @@ flextables <- tables %>%
                     )
 
                     header3 <- c(
-                        "Gene\nsymbol", "Gene", "PBT", "Cellular expression\nin AKI","\u394\u394 logFC", "\u394\u394 FC", "\u394\u394 P", "\u394\u394 FDR",
+                        "Gene\nsymbol", "Gene", "PBT", "Cellular expression\nin AKI", "\u394\u394 logFC", "\u394\u394 FC", "\u394\u394 P", "\u394\u394 FDR",
                         "Week24\n(N=10)", "Week52\n(N=10)", "Week24\n(N=10)", "Week52\n(N=10)"
                     )
                 } else if (design == "Baseline_vs_Week52") {
@@ -198,7 +199,7 @@ flextables <- tables %>%
                         sep = ""
                     )
                     header3 <- c(
-                        "Gene\nsymbol", "Gene", "PBT", "Cellular expression\nin AKI","\u394\u394 logFC", "\u394\u394 FC", "\u394\u394 P", "\u394\u394 FDR",
+                        "Gene\nsymbol", "Gene", "PBT", "Cellular expression\nin AKI", "\u394\u394 logFC", "\u394\u394 FC", "\u394\u394 P", "\u394\u394 FDR",
                         "Baseline\n(N=10)", "Week52\n(N=10)", "Baseline\n(N=10)", "Week52\n(N=10)"
                     )
                 }
@@ -237,14 +238,12 @@ flextables <- tables %>%
 flextables %>%
     dplyr::filter(design == "Baseline_vs_Week52", direction == "decreased") %>%
     pull(flextables) %>%
-    pluck(1) %>%
-    print(preview = "pptx")
+    pluck(1)
+    #  %>%
+    # print(preview = "pptx")
 
 
 flextables %>%
     dplyr::filter(design == "Baseline_vs_Week24", direction == "decreased") %>%
     pull(flextables) %>%
     pluck(1)
-
-
-
