@@ -24,19 +24,27 @@ simplefile_path <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/0000 simp
 simplefile <- read_excel(path = simplefile_path)
 # load mean expression in K1208
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/mean_expression_by_probe_1208.RData")
-
+# load mean expression in K5086
+load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/mean_expression_by_probe_5086.RData")
 
 
 # WRANGLE THE MEAN EXPRESSION DATA ####
 means_1208 <- mean_exprs_1208 %>%
     slice_max(mean_expression, by = "Symb")
 
+means_K5086 <- mean_exprs_5086 %>%
+    slice_max(mean_expression, by = "Symb")
+
 
 # WRANGLE THE SIMPLE FILE DATA ####
 K5086 <- simplefile %>%
-    dplyr::select(Affy, SYMB, Name, PBT, `corrRej7AA4-EABMR`, `pvalRej7AA4-EABMR`) %>%
+    dplyr::select(
+        Affy, SYMB, Name, PBT,
+        `corrRej7AA4-EABMR`, `pvalRej7AA4-EABMR`,
+        `corrRej7AA5-FABMR`, `pvalRej7AA5-FABMR`
+    ) %>%
     dplyr::rename(AffyID = Affy, Symb = SYMB, Gene = Name) %>%
-    dplyr::filter(AffyID %in% means_1208$AffyID)
+    dplyr::filter(AffyID %in% means_K5086$AffyID)
 
 
 # WRANGLE THE CELL PANEL DATA ####
