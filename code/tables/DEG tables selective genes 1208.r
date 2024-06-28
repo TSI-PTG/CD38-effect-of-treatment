@@ -10,13 +10,13 @@ library(readxl) # install.packages("readxl")
 # load affymap
 load("Z:/DATA/Datalocks/Other data/affymap219_21Oct2019_1306_JR.RData")
 # load limma results
-# load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/all_probes_limma_1208.RData")
+load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/all_probes_limma_1208.RData")
 # load gene lists
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/genes_NK_GEP.RData")
-load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/NK_genes_TBB896.RData")
+load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/ABMR_NK_genes.RData")
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/ABMR_endothelial_genes.RData")
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/ABMR_activity_genes.RData")
-load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/IFNG_genes.RData")
+load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/ABMR_IFNG_genes.RData")
 # load in house cell panel
 atagc <- read_excel("Z:/MISC/Patrick Gauthier/R/affymap219-CELL-PANEL/backup/UPDATED 2017 ANNOTATIONS - MASTERFILE - U133 HUMAN CELL PANEL - ALL PROBESETS (nonIQR) pfhptg.xlsx")
 # load SCC data
@@ -85,30 +85,31 @@ genes_NK_LM22_U133 <- genes_NK_GEP %>%
 
 
 # FILTER THE GENE TABLES ####
-gene_tables <- expand_grid(
-    geneset = c(
-        "ABMR_activity",
-        "NK_ATAGC_U133", "NK_KTB18_RNAseq", "NK_LM22_U133", "NK_L765",
-        "Endothelial", "IFNG"
-    )
-) %>%
+gene_tables <- limma_tables %>%
+    expand_grid(
+        geneset = c(
+            "ABMR_activity",
+            "NK_ATAGC_U133", "NK_KTB18_RNAseq", "NK_LM22_U133", "ABMR_NK",
+            "ABMR_endothelial", "ABMR_IFNG"
+        )
+    ) %>%
     mutate(
         genes = case_when(
-            geneset == "ABMR_activity" ~ genes_ABMR_activity$Symb %>% list(),
-            geneset == "NK_ATAGC_U133" ~ genes_NK_ATAGC_U133$Symb %>% list(),
-            geneset == "NK_KTB18_RNAseq" ~ genes_NK_KTB18_RNAseq$Symb %>% list(),
-            geneset == "NK_LM22_U133" ~ genes_NK_LM22_U133$Symb %>% list(),
-            geneset == "NK_L765" ~ genes_NK_TBB896$Symb %>% list(),
-            geneset == "Endothelial" ~ genes_ABMR_endothelial$Symb %>% list(),
-            geneset == "IFNG" ~ genes_IFNG$Symb %>% list()
+            geneset == "ABMR_activity" ~ genes_ABMR_activity$AffyID %>% list(),
+            geneset == "NK_ATAGC_U133" ~ genes_NK_ATAGC_U133$AffyID %>% list(),
+            geneset == "NK_KTB18_RNAseq" ~ genes_NK_KTB18_RNAseq$AffyID %>% list(),
+            geneset == "NK_LM22_U133" ~ genes_NK_LM22_U133$AffyID %>% list(),
+            geneset == "ABMR_NK" ~ genes_ABMR_NK$AffyID %>% list(),
+            geneset == "ABMR_endothelial" ~ genes_ABMR_endothelial$AffyID %>% list(),
+            geneset == "ABMR_IFNG" ~ genes_ABMR_IFNG$AffyID %>% list()
         )
     ) %>%
     mutate(
         gene_tables = pmap(
-            list(genes),
-            function(genes) {
-                pheno %>%
-                    dplyr::filter(Symb %in% genes)
+            list(genes, table),
+            function(genes, table) {
+                table %>%
+                    dplyr::filter(AffyID %in% genes)
             }
         )
     )
@@ -204,22 +205,22 @@ gene_flextables <- gene_flextables00 %>%
             list(geneset, data),
             function(geneset, data) {
                 colnames(data) <- LETTERS[1:ncol(data)]
-                title <- paste("Table i. Fold change expression in", geneset, "genes in biopsies from Felzartamab vs placebo patients")
+                title <- paste("Table i. Fold change expression in", geneset, "genes in biopsies from felzartamab vs placebo patients")
                 data %>%
                     flextable::flextable() %>%
                     flextable::delete_part("header") %>%
                     flextable::add_header_row(top = TRUE, values = header3) %>%
                     flextable::add_header_row(top = TRUE, values = header2) %>%
-                    flextable::add_header_row(top = TRUE, values = rep(title, ncol_keys(.))) %>%
+                    flextable::add_header_row(top = TRUE, values = rep(title, flextable::ncol_keys(.))) %>%
                     # # flextable::add_footer_row(values = footnoteText[[1]], colwidths = ncol_keys(.)) %>%
                     # flextable::merge_v(j = 1:2) %>%
                     flextable::merge_v(part = "header") %>%
                     flextable::merge_h(part = "header") %>%
                     flextable::border_remove() %>%
-                    flextable::border(part = "header", border = fp_border()) %>%
-                    flextable::border(part = "body", border = fp_border()) %>%
-                    flextable::border(part = "footer", border.left = fp_border(), border.right = fp_border()) %>%
-                    flextable::border(i = 1, part = "footer", border.bottom = fp_border()) %>%
+                    flextable::border(part = "header", border = officer::fp_border()) %>%
+                    flextable::border(part = "body", border = officer::fp_border()) %>%
+                    flextable::border(part = "footer", border.left = officer::fp_border(), border.right = officer::fp_border()) %>%
+                    flextable::border(i = 1, part = "footer", border.bottom = officer::fp_border()) %>%
                     flextable::align(align = "center") %>%
                     flextable::align(align = "center", part = "header") %>%
                     flextable::valign(i = 3, j = c(-1, -2, -7, -12, -17), valign = "bottom", part = "header") %>%
@@ -233,7 +234,7 @@ gene_flextables <- gene_flextables00 %>%
                     # flextable::bg(i = ~ as.numeric(`<U+0394><U+0394> p`) < 0.05, j = 2:ncol_keys(.), bg = "grey90", part = "body") %>%
                     flextable::padding(padding = 0, part = "all") %>%
                     flextable::width(width = cellWidths, unit = "cm") %>%
-                    flextable::width(., width = dim(.)$widths * 33 / (flextable_dim(.)$widths), unit = "cm")
+                    flextable::width(., width = dim(.)$widths * 33 / (flextable::flextable_dim(.)$widths), unit = "cm")
             }
         )
     )
@@ -241,15 +242,35 @@ gene_flextables <- gene_flextables00 %>%
 gene_flextables$gene_flextables[[1]]
 
 
-
-# PRINT THE DATA TO POWERPOINT ####
-# gene_flextables$gene_flextables %>% print(preview = "pptx")
-
-
-
 # EXPORT THE DATA AS .RData FILE ####
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/"
-# save(gene_tables, file = paste(saveDir, "gene_tables_limma_1208.RData", sep = ""))
+save(gene_tables, file = paste(saveDir, "gene_tables_limma_1208.RData", sep = ""))
+
+
+# PRINT THE DATA TO POWERPOINT ####
+gene_flextables %>%
+    dplyr::filter(geneset == "ABMR_activity") %>%
+    pull(gene_flextables) %>%
+    pluck(1)  %>% print(preview ="pptx")
+
+gene_flextables %>%
+    dplyr::filter(geneset == "ABMR_IFNG") %>%
+    pull(gene_flextables) %>%
+    pluck(1) %>%
+    print(preview = "pptx")
+
+gene_flextables %>%
+    dplyr::filter(geneset == "ABMR_NK") %>%
+    pull(gene_flextables) %>%
+    pluck(1) %>%
+    print(preview = "pptx")
+
+gene_flextables %>%
+    dplyr::filter(geneset == "ABMR_endothelial") %>%
+    pull(gene_flextables) %>%
+    pluck(1) %>%
+    print(preview = "pptx")
+
 
 
 
@@ -258,9 +279,9 @@ gene_tables_ABMR_activity <- gene_tables %>% dplyr::filter(geneset == "ABMR_acti
 gene_tables_NK_ATAGC_U133 <- gene_tables %>% dplyr::filter(geneset == "NK_ATAGC_U133")
 gene_tables_NK_KTB18_RNAseq <- gene_tables %>% dplyr::filter(geneset == "NK_KTB18_RNAseq")
 gene_tables_NK_LM22_U133 <- gene_tables %>% dplyr::filter(geneset == "NK_LM22_U133")
-gene_tables_NK_L765 <- gene_tables %>% dplyr::filter(geneset == "NK_L765")
-gene_tables_Endothelial <- gene_tables %>% dplyr::filter(geneset == "Endothelial")
-gene_tables_IFNG <- gene_tables %>% dplyr::filter(geneset == "IFNG")
+gene_tables_ABMR_NK <- gene_tables %>% dplyr::filter(geneset == "ABMR_NK")
+gene_tables_ABMR_Endothelial <- gene_tables %>% dplyr::filter(geneset == "ABMR_endothelial")
+gene_tables_ABMR_IFNG <- gene_tables %>% dplyr::filter(geneset == "ABMR_IFNG")
 
 
 # EXPORT THE DATA AS AN EXCEL SHEET ####

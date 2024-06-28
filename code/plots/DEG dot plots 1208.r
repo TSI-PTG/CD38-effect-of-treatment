@@ -30,15 +30,17 @@ DEG_plots00 <- gene_tables %>%
             factor(
                 levels = c(
                     "ABMR_activity",
-                    "IFNG",
-                    "NK_ATAGC_U133", "NK_KTB18_RNAseq", "NK_LM22_U133", "NK_L765",
-                    "Endothelial"
+                    "ABMR_IFNG",
+                    "ABMR_NK",
+                    "ABMR_endothelial",
+                    "NK_ATAGC_U133", "NK_KTB18_RNAseq", "NK_LM22_U133"
                 ),
                 labels = c(
                     "ABMR_activity genes",
                     "IFNG-inducible ABMR activity genes",
-                    "NK_ATAGC_U133 genes", "NK_KTB18_RNAseq genes", "NK_LM22_U133 genes", "NK cell expressed ABMR activity genes",
-                    "ABMR-associated endothelial genes"
+                    "NK cell-expressed ABMR activity genes",
+                    "ABMR-associated endothelial genes",
+                    "NK_ATAGC_U133 genes", "NK_KTB18_RNAseq genes", "NK_LM22_U133 genes"
                 )
             ),
         data = map(data, unnest, everything())

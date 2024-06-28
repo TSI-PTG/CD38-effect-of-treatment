@@ -26,7 +26,7 @@ size_title <- 15
 df_DEG_plot <- DEG_plots %>%
     dplyr::filter(geneset %in% c(
         "IFNG-inducible ABMR activity genes",
-        "NK cell expressed ABMR activity genes",
+        "NK cell-expressed ABMR activity genes",
         "ABMR-associated endothelial genes"
     ))
 
