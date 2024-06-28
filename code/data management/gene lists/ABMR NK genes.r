@@ -10,17 +10,17 @@ library(officer) # install.packages("officer")
 load("Z:/DATA/Datalocks/Other data/affymap219_21Oct2019_1306_JR.RData")
 # load SCC data
 simplefile_path <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/0000 simple XL files/Kidney 5086/MASTER COPY K5086 SimpleCorrAAInjRej 5AAInjNR 7AARej.xlsx"
-simplefile <- read_excel(path = simplefile_path)
+simplefile <- readxl::read_excel(path = simplefile_path)
 # load mean expression in K5086
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/mean_expression_by_probe_5086.RData")
 # load in house cell panel
-atagc <- read_excel("Z:/MISC/Patrick Gauthier/R/affymap219-CELL-PANEL/backup/UPDATED 2017 ANNOTATIONS - MASTERFILE - U133 HUMAN CELL PANEL - ALL PROBESETS (nonIQR) pfhptg.xlsx")
+atagc <- readxl::read_excel("Z:/MISC/Patrick Gauthier/R/affymap219-CELL-PANEL/backup/UPDATED 2017 ANNOTATIONS - MASTERFILE - U133 HUMAN CELL PANEL - ALL PROBESETS (nonIQR) pfhptg.xlsx")
 
 
 
 # WRANGLE THE MEAN EXPRESSION DATA ####
 means_K5086 <- mean_exprs_5086 %>%
-    slice_max(mean_expression, by = "Symb")
+    dplyr::slice_max(mean_expression, by = "Symb")
 
 
 # WRANGLE THE SIMPLE FILE DATA ####
@@ -44,32 +44,32 @@ cell_panel <- atagc %>%
         `HUVEC (unstimulated)` = `Unstim HUVEC`,
         `HUVEC (IFNg stimulated)` = `HUVEC + IFNg`
     ) %>%
-    slice_max(NK, by = "Symb", with_ties = FALSE)
+    dplyr::slice_max(NK, by = "Symb", with_ties = FALSE)
 
 
 
 # JOIN K5086 AND CELL PANEL DATA ####
 data <- K5086 %>%
-    left_join(cell_panel, by = "Symb")
+    dplyr::left_join(cell_panel, by = "Symb")
 
 
 # DEFINE THE ABMR ACTIVITY GENES BY MEAN EXPRESSION ####
 genes_EABMR <- data %>%
-    slice_min(`pvalRej7AA4-EABMR`, n = 100)
+    dplyr::slice_min(`pvalRej7AA4-EABMR`, n = 100)
 
 genes_ABMR_NK <- genes_EABMR %>%
     dplyr::filter(
         `HUVEC (unstimulated)` < quantile(`HUVEC (unstimulated)`, 0.5, na.rm = TRUE),
         `HUVEC (IFNg stimulated)` < quantile(`HUVEC (IFNg stimulated)`, 0.5, na.rm = TRUE),
     ) %>%
-    slice_max(NK, n = 20) %>%
-    relocate(AffyID_U133, .after = AffyID) %>%
-    relocate(`corrRej7AA4-EABMR`, `pvalRej7AA4-EABMR`, `corrRej7AA5-FABMR`, `pvalRej7AA5-FABMR`,
+    dplyr::slice_max(NK, n = 20) %>%
+    dplyr::relocate(AffyID_U133, .after = AffyID) %>%
+    dplyr::relocate(`corrRej7AA4-EABMR`, `pvalRej7AA4-EABMR`, `corrRej7AA5-FABMR`, `pvalRej7AA5-FABMR`,
         .after = last_col()
     ) %>%
-    mutate_at(vars(contains("corrRej")), ~ round(., 2)) %>%
-    mutate_at(vars(contains("pvalRej")), ~ formatC(., digits = 0, format = "e")) %>%
-    mutate(
+    dplyr::mutate_at(dplyr::vars(dplyr::contains("corrRej")), ~ round(., 2)) %>%
+    dplyr::mutate_at(dplyr::vars(dplyr::contains("pvalRej")), ~ formatC(., digits = 0, format = "e")) %>%
+    dplyr::mutate(
         Gene = Gene %>% stringr::str_remove("///.*"),
     )
 
@@ -99,8 +99,8 @@ cellWidths <- c(1.5, 10, 4.6, 1, 1, 1, 2, 2, rep(1.3, 4))
 
 # MAKE FLEXTABLE ####
 flextable <- genes_ABMR_NK %>%
-    dplyr::select(!contains("AffyID")) %>%
-    mutate(
+    dplyr::select(!dplyr::contains("AffyID")) %>%
+    dplyr::mutate(
         PBT = PBT %>%
             stringr::str_remove("RAT") %>%
             stringr::str_remove("Rej-RAT") %>%
@@ -110,12 +110,12 @@ flextable <- genes_ABMR_NK %>%
     flextable::delete_part("header") %>%
     flextable::add_header_row(top = TRUE, values = header2) %>%
     flextable::add_header_row(top = TRUE, values = header1) %>%
-    flextable::add_header_row(top = TRUE, values = rep(title, ncol_keys(.))) %>%
+    flextable::add_header_row(top = TRUE, values = rep(title, flextable::ncol_keys(.))) %>%
     flextable::merge_v(part = "header") %>%
     flextable::merge_h(part = "header") %>%
     flextable::border_remove() %>%
-    flextable::border(part = "header", border = fp_border()) %>%
-    flextable::border(part = "body", border = fp_border()) %>%
+    flextable::border(part = "header", border = officer::fp_border()) %>%
+    flextable::border(part = "body", border = officer::fp_border()) %>%
     flextable::align(align = "center") %>%
     flextable::align(align = "center", part = "header") %>%
     flextable::font(fontname = "Arial", part = "all") %>%

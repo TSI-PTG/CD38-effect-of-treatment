@@ -20,7 +20,7 @@ atagc <- read_excel("Z:/MISC/Patrick Gauthier/R/affymap219-CELL-PANEL/backup/UPD
 
 # WRANGLE THE MEAN EXPRESSION DATA ####
 means_K5086 <- mean_exprs_5086 %>%
-    slice_max(mean_expression, by = "Symb")
+    dplyr::slice_max(mean_expression, by = "Symb")
 
 
 # WRANGLE THE SIMPLE FILE DATA ####
@@ -44,19 +44,19 @@ cell_panel <- atagc %>%
         `HUVEC (unstimulated)` = `Unstim HUVEC`,
         `HUVEC (IFNg stimulated)` = `HUVEC + IFNg`
     ) %>%
-    slice_max(`HUVEC (IFNg stimulated)`, by = "Symb", with_ties = FALSE)
+    dplyr::slice_max(`HUVEC (IFNg stimulated)`, by = "Symb", with_ties = FALSE)
 
 
 
 # JOIN K5086 AND CELL PANEL DATA ####
 data <- K5086 %>%
-    left_join(cell_panel, by = "Symb")
+    dplyr::left_join(cell_panel, by = "Symb")
 
 
 # DEFINE THE ABMR ACTIVITY GENES BY MEAN EXPRESSION ####
 genes_EABMR <- data %>%
     dplyr::filter(`corrRej7AA4-EABMR` > 0) %>%
-    slice_min(`pvalRej7AA4-EABMR`, n = 100)
+    dplyr::slice_min(`pvalRej7AA4-EABMR`, n = 100)
 
 genes_ABMR_IFNG <- genes_EABMR %>%
     dplyr::filter(
@@ -64,14 +64,14 @@ genes_ABMR_IFNG <- genes_EABMR %>%
         NK < quantile(NK, 0.5, na.rm = TRUE),
         `HUVEC (IFNg stimulated)` > quantile(`HUVEC (unstimulated)`, 0.90, na.rm = TRUE),
     ) %>%
-    slice_max(`HUVEC (IFNg stimulated)`, n = 20) %>%
-    relocate(AffyID_U133, .after = AffyID) %>%
-    relocate(`corrRej7AA4-EABMR`, `pvalRej7AA4-EABMR`, `corrRej7AA5-FABMR`, `pvalRej7AA5-FABMR`,
-        .after = last_col()
+    dplyr::slice_max(`HUVEC (IFNg stimulated)`, n = 20) %>%
+    dplyr::relocate(AffyID_U133, .after = AffyID) %>%
+    dplyr::relocate(`corrRej7AA4-EABMR`, `pvalRej7AA4-EABMR`, `corrRej7AA5-FABMR`, `pvalRej7AA5-FABMR`,
+        .after = dplyr::last_col()
     ) %>%
-    mutate_at(vars(contains("corrRej")), ~ round(., 2)) %>%
-    mutate_at(vars(contains("pvalRej")), ~ formatC(., digits = 0, format = "e")) %>%
-    mutate(
+    dplyr::mutate_at(dplyr::vars(dplyr::contains("corrRej")), ~ round(., 2)) %>%
+    dplyr::mutate_at(dplyr::vars(dplyr::contains("pvalRej")), ~ formatC(., digits = 0, format = "e")) %>%
+    dplyr::mutate(
         Gene = Gene %>% stringr::str_remove("///.*"),
         PBT = PBT %>%
             stringr::str_remove("RAT") %>%
@@ -106,17 +106,17 @@ cellWidths <- c(1.5, 10, 4.6, 1, 1, 1, 2, 2, rep(1.3, 4))
 
 # MAKE FLEXTABLE ####
 flextable <- genes_ABMR_IFNG %>%
-    dplyr::select(!contains("AffyID")) %>%
+    dplyr::select(!dplyr::contains("AffyID")) %>%
     flextable::flextable() %>%
     flextable::delete_part("header") %>%
     flextable::add_header_row(top = TRUE, values = header2) %>%
     flextable::add_header_row(top = TRUE, values = header1) %>%
-    flextable::add_header_row(top = TRUE, values = rep(title, ncol_keys(.))) %>%
+    flextable::add_header_row(top = TRUE, values = rep(title, flextable::ncol_keys(.))) %>%
     flextable::merge_v(part = "header") %>%
     flextable::merge_h(part = "header") %>%
     flextable::border_remove() %>%
-    flextable::border(part = "header", border = fp_border()) %>%
-    flextable::border(part = "body", border = fp_border()) %>%
+    flextable::border(part = "header", border = officer::fp_border()) %>%
+    flextable::border(part = "body", border = officer::fp_border()) %>%
     flextable::align(align = "center") %>%
     flextable::align(align = "center", part = "header") %>%
     flextable::font(fontname = "Arial", part = "all") %>%
@@ -128,4 +128,4 @@ flextable <- genes_ABMR_IFNG %>%
 #   %>%
 # flextable::width(., width = dim(.)$widths * 33 / (flextable::flextable_dim(.)$widths), unit = "cm")
 
-flextable %>% print(preview = "pptx")
+# flextable %>% print(preview = "pptx")
