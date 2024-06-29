@@ -90,7 +90,7 @@ gsea_aki <- data %>%
                 clusterProfiler::GSEA(
                     gene = genes_gsea, TERM2GENE = map_aki,
                     minGSSize = 5, maxGSSize = Inf,
-                    pvalueCutoff = 0.5, pAdjustMethod = "fdr", seed = TRUE
+                    pvalueCutoff = 0.05, pAdjustMethod = "fdr", seed = TRUE
                 ) %>% clusterProfiler::setReadable(OrgDb = org.Hs.eg.db, keyType = "ENTREZID")
             }
         )

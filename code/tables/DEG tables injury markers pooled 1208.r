@@ -44,23 +44,38 @@ cell_states <- c(
 
 
 # WRANGLE THE INJURY MARKER DATA ####
+genes_injury_markers %>%
+    unnest(data) %>%
+    nest(.by = c(celltypename, cluster)) %>%
+    print(n = "all")
+
 injury_markers <- genes_injury_markers %>%
     unnest(data) %>%
-    nest(.by = c(celltypename, cluster), injury_genes = c(-"celltypename", -"cluster")) %>%
+    dplyr::filter(
+        cluster %>% str_detect("New"),
+        abs(log2FC) > 1
+    ) %>%
+    dplyr::select(celltypename:AffyID) %>%
+    nest(.by = AffyID) %>%
     mutate(
-        injury_genes = map(
-            injury_genes,
-            function(injury_genes) {
-                injury_genes %>%
-                    drop_na(AffyID) %>% 
-                    arrange(p, log2FC %>% desc()) %>%
-                    dplyr::slice(1:20) %>%
-                    dplyr::select(AffyID)
+        "cellular expression" = map_chr(
+            data,
+            function(data) {
+                data %>%
+                    pull(cluster) %>%
+                    paste(collapse = ",")
             }
         )
-    )
-injury_markers$injury_genes[[1]]
+    ) %>%
+    unnest(data) %>%
+    dplyr::select(AffyID, `cellular expression`)
 
+# injury_markers <- genes_injury_markers %>%
+#     unnest(data) %>%
+#     dplyr::filter(cluster %in% cell_states) %>%
+#     dplyr::select(celltypename:AffyID) %>%
+#     nest(.by = c(celltypename, celltype), injury_genes = AffyID) %>%
+#     mutate(injury_genes = map(injury_genes, pull, AffyID))
 
 
 # WRANGLE THE SIMPLE FILE DATA ####
@@ -72,6 +87,7 @@ K4502 <- simplefile %>%
 # JOIN DE AND INJURY MARKER DATA ####
 data <- injury_markers %>%
     expand_grid(design = limma_tables$design) %>%
+    nest(.by = design, injury_genes = -design) %>%
     left_join(limma_tables, by = "design") %>%
     dplyr::select(-toptable) %>%
     expand_grid(direction = c("increased", "decreased"))
@@ -94,7 +110,7 @@ tables <- data %>%
                 }
                 df <- table %>%
                     dplyr::filter(AffyID %in% genes) %>%
-                    # left_join(injury_genes, by = "AffyID") %>%
+                    left_join(injury_genes, by = "AffyID") %>%
                     arrange(p) %>%
                     distinct(Symb, .keep_all = TRUE) %>%
                     # left_join(K4502, by = "AffyID")  %>%
@@ -116,9 +132,9 @@ tables <- data %>%
                             FDR < 0.0001 ~ FDR %>% formatC(digits = 0, format = "e"),
                             TRUE ~ FDR %>% formatC(digits = 4, format = "f")
                         )
-                    )  %>%
+                    ) %>%
                     relocate(
-                        c("logFC", "FC", "p", "FDR"),
+                        c("cellular expression", "logFC", "FC", "p", "FDR"),
                         .after = PBT
                     )
             }
@@ -130,18 +146,18 @@ tables$gene_tables
 # GLOBAL PARAMETERS FOR FLEXTABLES ####
 header1 <- c(
     # "AffyID",
-    "Gene\nsymbol", "Gene", "PBT", 
+    "Gene\nsymbol", "Gene", "PBT", "Cellular expression\nin AKI",
     "\u394\u394 logFC", "\u394\u394 FC", "\u394\u394 P", "\u394\u394 FDR",
     rep("Mean expression by group", 4)
 )
 header2 <- c(
     # "AffyID",
-    "Gene\nsymbol", "Gene", "PBT", 
+    "Gene\nsymbol", "Gene", "PBT", "Cellular expression\nin AKI",
     "\u394\u394 logFC", "\u394\u394 FC", "\u394\u394 P", "\u394\u394 FDR",
     rep("Placebo", 2), rep("Felzartamab", 2)
 )
 
-cellWidths <- c(1.5, 5, 3, 1, 1, 1, 1, rep(1, 4)) # for individual tables up or down
+cellWidths <- c(1.5, 5, 3, 3, 1, 1, 1, 1, rep(1, 4)) # for individual tables up or down
 cellWidths %>% length()
 
 # limma_tables$gene_tables[[1]] %>%
@@ -164,7 +180,7 @@ flextables <- tables %>%
                         sep = ""
                     )
                     header3 <- c(
-                        "Gene\nsymbol", "Gene", "PBT",  "\u394\u394 logFC", "\u394\u394 FC", "\u394\u394 P", "\u394\u394 FDR",
+                        "Gene\nsymbol", "Gene", "PBT", "Cellular expression\nin AKI", "\u394\u394 logFC", "\u394\u394 FC", "\u394\u394 P", "\u394\u394 FDR",
                         "Baseline\n(N=10)", "Week24\n(N=10)", "Baseline\n(N=10)", "Week24\n(N=10)"
                     )
                 } else if (design == "Week24_vs_Week52") {
@@ -175,7 +191,7 @@ flextables <- tables %>%
                     )
 
                     header3 <- c(
-                        "Gene\nsymbol", "Gene", "PBT", "\u394\u394 logFC", "\u394\u394 FC", "\u394\u394 P", "\u394\u394 FDR",
+                        "Gene\nsymbol", "Gene", "PBT", "Cellular expression\nin AKI", "\u394\u394 logFC", "\u394\u394 FC", "\u394\u394 P", "\u394\u394 FDR",
                         "Week24\n(N=10)", "Week52\n(N=10)", "Week24\n(N=10)", "Week52\n(N=10)"
                     )
                 } else if (design == "Baseline_vs_Week52") {
@@ -185,7 +201,7 @@ flextables <- tables %>%
                         sep = ""
                     )
                     header3 <- c(
-                        "Gene\nsymbol", "Gene", "PBT",  "\u394\u394 logFC", "\u394\u394 FC", "\u394\u394 P", "\u394\u394 FDR",
+                        "Gene\nsymbol", "Gene", "PBT", "Cellular expression\nin AKI", "\u394\u394 logFC", "\u394\u394 FC", "\u394\u394 P", "\u394\u394 FDR",
                         "Baseline\n(N=10)", "Week52\n(N=10)", "Baseline\n(N=10)", "Week52\n(N=10)"
                     )
                 }
@@ -216,20 +232,13 @@ flextables <- tables %>%
         )
     )
 
-flextables %>%
-    dplyr::filter(
-        direction == "decreased",
-        design == "Baseline_vs_Week52",
-        cluster == "TAL-New4"
-    ) %>%
-    pull(flextables)
-    
+# flextables$flextables[[6]]
 
 
 # EXPORT THE DATA AS .RData FILE ####
 gene_tables <- tables
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/"
-save(gene_tables, file = paste(saveDir, "injury_gene_tables_limma_1208.RData", sep = ""))
+save(gene_tables, file = paste(saveDir, "injury_pooled_gene_tables_limma_1208.RData", sep = ""))
 
 
 
