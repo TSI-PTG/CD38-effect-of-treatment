@@ -47,7 +47,7 @@ data <- limma_tables %>%
 set.seed(42)
 gsea_go <- data %>%
     mutate(
-        gsea_go = map(
+        gsea = map(
             genes_gsea,
             function(genes_gsea) {
                 clusterProfiler::gseGO(
@@ -63,17 +63,17 @@ gsea_go <- data %>%
 # SIMPLIFY GO TERMS ####
 set.seed(42)
 gsea_go_simplified <- gsea_go %>%
-    mutate(gsea_go_simplified = map(gsea_go, clusterProfiler::simplify))
+    mutate(gsea_simplified = map(gsea, clusterProfiler::simplify))
 
 
 
 # FORMAT TABLES FOR GENESET ENRICHMENT ANALYSES (GSEA) ####
 gsea_go_simplified_formatted <- gsea_go_simplified %>%
     mutate(
-        gsea_go_tables = map(
-            gsea_go_simplified,
-            function(gsea_go_simplified) {
-                gsea_go_simplified %>%
+        gsea_tables = map(
+            gsea_simplified,
+            function(gsea_simplified) {
+                gsea_simplified %>%
                     as_tibble() %>%
                     arrange(pvalue) %>%
                     mutate(
@@ -97,10 +97,10 @@ gsea_go_simplified_formatted <- gsea_go_simplified %>%
 # FORMAT TABLES FOR GENESET ENRICHMENT ANALYSES (GSEA) ####
 gsea_go_tables <- gsea_go_simplified_formatted %>%
     mutate(
-        gsea_go_flextables = map(
-            gsea_go_tables,
-            function(gsea_go_tables) {
-                gsea_go_tables %>%
+        gsea_flextables = map(
+            gsea_tables,
+            function(gsea_tables) {
+                gsea_tables %>%
                     slice_min(pvalue, n = 20) %>%
                     mutate(
                         NES = NES %>% round(2),
@@ -127,29 +127,30 @@ gsea_go_tables <- gsea_go_simplified_formatted %>%
 
 
 # gsea_go_tables$gsea_go_tables[[1]]
-gsea_go_tables$gsea_go_flextables[[3]]
+gsea_go_tables$gsea_flextables[[3]]
 
 
 # PREPARE THE RESULTS FOR EXPORT ####
-felzartamab_gsea_k1208 <- gsea_go_tables
-names(felzartamab_gsea_k1208$gsea_go_flextables) <- felzartamab_gsea_k1208$design
+felzartamab_gsea_k1208 <- gsea_go_tables %>%
+    mutate(db = "GO", .before = 1)
+names(felzartamab_gsea_k1208$gsea_flextables) <- felzartamab_gsea_k1208$design
 
 
 
 # SAVE THE GSEA RESULTS ####
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/"
-# save(felzartamab_gsea_k1208, file = paste(saveDir, "felzartamab_gsea_baseline_corrected_cortex_corrected_k1208.RData", sep = ""))
+save(felzartamab_gsea_k1208, file = paste(saveDir, "felzartamab_gsea_go_baseline_corrected_cortex_corrected_k1208.RData", sep = ""))
 
 
 
 # EXPORT THE GSEA RESULTS TO EXCEL FILE ####
 saveDir1 <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/output/"
-# openxlsx::write.xlsx(felzartamab_gsea_k1208$gsea_go_tables,
-#     asTable = TRUE,
-#     file = paste(saveDir1, "Pathways_IQR_filtered_probes_unique_genes_baseline_corrected_cortex_corrected_limma_1208_13June24",
-#         # Sys.Date(),
-#         # format(Sys.time(), "_%I%M%p"),
-#         ".xlsx",
-#         sep = ""
-#     )
-# )
+openxlsx::write.xlsx(felzartamab_gsea_k1208$gsea_tables,
+    asTable = TRUE,
+    file = paste(saveDir1, "GO_Pathways_IQR_filtered_probes_unique_genes_baseline_corrected_cortex_corrected_limma_1208_13June24",
+        # Sys.Date(),
+        # format(Sys.time(), "_%I%M%p"),
+        ".xlsx",
+        sep = ""
+    )
+)

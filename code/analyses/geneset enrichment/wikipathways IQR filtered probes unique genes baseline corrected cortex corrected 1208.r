@@ -55,7 +55,7 @@ data <- limma_tables %>%
 set.seed(42)
 gsea_wiki <- data %>%
     mutate(
-        gsea_wiki = map(
+        gsea = map(
             genes_gsea,
             function(genes_gsea) {
                 clusterProfiler::gseWP(
@@ -66,16 +66,16 @@ gsea_wiki <- data %>%
             }
         )
     )
-gsea_wiki$gsea_wiki[[3]]
+gsea_wiki$gsea[[3]]
 
 
 # FORMAT TABLES FOR GENESET ENRICHMENT ANALYSES (GSEA) ####
 gsea_wiki_formatted <- gsea_wiki %>%
     mutate(
-        gsea_wiki_tables = map(
-            gsea_wiki,
-            function(gsea_wiki) {
-                gsea_wiki %>%
+        gsea_tables = map(
+            gsea,
+            function(gsea) {
+                gsea %>%
                     as_tibble() %>%
                     arrange(pvalue) %>%
                     mutate(
@@ -85,16 +85,16 @@ gsea_wiki_formatted <- gsea_wiki %>%
             }
         )
     )
-gsea_wiki_formatted$gsea_wiki_tables
+gsea_wiki_formatted$gsea_tables
 
 
 # FORMAT TABLES FOR GENESET ENRICHMENT ANALYSES (GSEA) ####
 gsea_wiki_tables <- gsea_wiki_formatted %>%
     mutate(
-        gsea_wiki_flextables = map(
-            gsea_wiki_tables,
-            function(gsea_wiki_tables) {
-                gsea_wiki_tables %>%
+        gsea_flextables = map(
+            gsea_tables,
+            function(gsea_tables) {
+                gsea_tables %>%
                     # slice_min(pvalue, n = 20) %>%
                     mutate(
                         NES = NES %>% round(2),
@@ -121,12 +121,13 @@ gsea_wiki_tables <- gsea_wiki_formatted %>%
 
 
 # gsea_wiki_tables$gsea_wiki_tables[[1]]
-gsea_wiki_tables$gsea_wiki_flextables[[3]]
+gsea_wiki_tables$gsea_flextables[[3]]
 
 
 # PREPARE THE RESULTS FOR EXPORT ####
-felzartamab_gsea_wiki_k1208 <- gsea_wiki_tables
-names(felzartamab_gsea_wiki_k1208$gsea_wiki_flextables) <- felzartamab_gsea_wiki_k1208$design
+felzartamab_gsea_wiki_k1208 <- gsea_wiki_tables %>%
+    mutate(db = "wiki", .before = 1)
+names(felzartamab_gsea_wiki_k1208$gsea_flextables) <- felzartamab_gsea_wiki_k1208$design
 
 
 
@@ -140,7 +141,7 @@ save(felzartamab_gsea_wiki_k1208, file = paste(saveDir, "felzartamab_gsea_wiki_b
 saveDir1 <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/output/"
 openxlsx::write.xlsx(felzartamab_gsea_wiki_k1208$gsea_wiki_tables,
     asTable = TRUE,
-    file = paste(saveDir1, "Wiki_pathways_IQR_filtered_probes_unique_genes_baseline_corrected_cortex_corrected_limma_1208_13June24",
+    file = paste(saveDir1, "wiki_pathways_IQR_filtered_probes_unique_genes_baseline_corrected_cortex_corrected_limma_1208_13June24",
         # Sys.Date(),
         # format(Sys.time(), "_%I%M%p"),
         ".xlsx",

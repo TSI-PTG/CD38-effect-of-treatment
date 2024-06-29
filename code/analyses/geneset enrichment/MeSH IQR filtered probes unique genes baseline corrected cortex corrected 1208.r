@@ -2,7 +2,6 @@
 # CRAN libraries
 library(tidyverse) # install.packages("tidyverse")
 library(flextable) # install.packages("flextable") #for simple table outputs
-library(dbplyr) # pak::pak("tidyverse/dbplyr")
 library(officer) # install.packages("officer")
 library(clusterProfiler) # pak::pak("YuLab-SMU/clusterProfiler")
 library(circlize) # install.packages("circlize") pak::pak("jokergoo/circlize")
@@ -14,7 +13,7 @@ library(org.Hs.eg.db) # BiocManager::install("org.Hs.eg.db")
 library(pRoloc) # BiocManager::install("pRoloc")
 library(AnnotationHub) # BiocManager::install("AnnotationHub")
 library(MeSHDbi) # BiocManager::install("MeSHDbi")
-library(BiocFileCache) # BiocManager::install("BiocFileCache")
+# library(BiocFileCache) # BiocManager::install("BiocFileCache")
 "%nin%" <- function(a, b) match(a, b, nomatch = 0) == 0
 # load affymap
 load("Z:/DATA/Datalocks/Other data/affymap219_21Oct2019_1306_JR.RData")
@@ -49,24 +48,22 @@ data <- limma_tables %>%
 
 
 # DEFINE MeSH PATHWAYS ####
-ah <- AnnotationHub::AnnotationHub(localHub = TRUE)
-
-hsa <- query(ah, c("MeSHDb", "Homo sapiens"))
+ah <- AnnotationHub::AnnotationHub(localHub = FALSE)
+hsa <- AnnotationHub::query(ah, c("MeSHDb", "Homo sapiens"))
 file_hsa <- hsa[[1]]
 db <- MeSHDbi::MeSHDb(file_hsa)
 
-"MeSH.Hsa.eg.db"
 
 # GENESET ENRICHMENT ANALYSES (GSEA) ####
 set.seed(42)
-gsea_do <- data %>%
+gsea_mesh <- data %>%
     mutate(
-        gsea_do = map(
+        gsea = map(
             genes_gsea,
             function(genes_gsea) {
                 meshes::gseMeSH(
                     gene = genes_gsea,
-                    MeSHDb = db, database = 'gene2pubmed',
+                    MeSHDb = db, database = 'gendoo',
                     minGSSize = 10, maxGSSize = 200,
                     pvalueCutoff = 0.05, pAdjustMethod = "fdr", seed = TRUE
                 ) %>% clusterProfiler::setReadable(OrgDb = org.Hs.eg.db, keyType = "ENTREZID")
@@ -76,12 +73,12 @@ gsea_do <- data %>%
 
 
 # FORMAT TABLES FOR GENESET ENRICHMENT ANALYSES (GSEA) ####
-gsea_do_formatted <- gsea_do %>%
+gsea_mesh_formatted <- gsea_mesh %>%
     mutate(
-        gsea_do_tables = map(
-            gsea_do,
-            function(gsea_do) {
-                gsea_do %>%
+        gsea_tables = map(
+            gsea,
+            function(gsea) {
+                gsea %>%
                     as_tibble() %>%
                     arrange(pvalue) %>%
                     mutate(
@@ -95,13 +92,13 @@ gsea_do_formatted <- gsea_do %>%
 
 
 # FORMAT TABLES FOR GENESET ENRICHMENT ANALYSES (GSEA) ####
-gsea_do_tables <- gsea_do_formatted %>%
+gsea_mesh_tables <- gsea_mesh_formatted %>%
     mutate(
-        gsea_do_flextables = map(
-            gsea_do_tables,
-            function(gsea_do_tables) {
-                gsea_do_tables %>%
-                    slice_min(pvalue, n = 20) %>%
+        gsea_flextables = map(
+            gsea_tables,
+            function(gsea_tables) {
+                gsea_tables %>%
+                    # slice_min(pvalue, n = 20) %>%
                     mutate(
                         NES = NES %>% round(2),
                         pvalue = case_when(
@@ -126,27 +123,28 @@ gsea_do_tables <- gsea_do_formatted %>%
     )
 
 
-# gsea_do_tables$gsea_do_tables[[1]]
-gsea_do_tables$gsea_do_flextables[[3]]
+# gsea_mesh_tables$gsea_mesh_tables[[1]]
+gsea_mesh_tables$gsea_flextables[[3]]
 
 
 # PREPARE THE RESULTS FOR EXPORT ####
-felzartamab_gsea_do_k1208 <- gsea_do_tables
-names(felzartamab_gsea_do_k1208$gsea_do_flextables) <- felzartamab_gsea_do_k1208$design
+felzartamab_gsea_mesh_k1208 <- gsea_mesh_tables %>%
+    mutate(db = "mesh", .before = 1)
+names(felzartamab_gsea_mesh_k1208$gsea_flextables) <- felzartamab_gsea_mesh_k1208$design
 
 
 
 # SAVE THE GSEA RESULTS ####
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/"
-save(felzartamab_gsea_do_k1208, file = paste(saveDir, "felzartamab_gsea_DO_baseline_corrected_cortex_corrected_k1208.RData", sep = ""))
+save(felzartamab_gsea_mesh_k1208, file = paste(saveDir, "felzartamab_gsea_mesh_baseline_corrected_cortex_corrected_k1208.RData", sep = ""))
 
 
 
 # EXPORT THE GSEA RESULTS TO EXCEL FILE ####
 saveDir1 <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/output/"
-openxlsx::write.xlsx(felzartamab_gsea_do_k1208$gsea_do_tables,
+openxlsx::write.xlsx(felzartamab_gsea_mesh_k1208$gsea_tables,
     asTable = TRUE,
-    file = paste(saveDir1, "DOSE_pathways_IQR_filtered_probes_unique_genes_baseline_corrected_cortex_corrected_limma_1208_13June24",
+    file = paste(saveDir1, "mesh_pathways_IQR_filtered_probes_unique_genes_baseline_corrected_cortex_corrected_limma_1208_13June24",
         # Sys.Date(),
         # format(Sys.time(), "_%I%M%p"),
         ".xlsx",

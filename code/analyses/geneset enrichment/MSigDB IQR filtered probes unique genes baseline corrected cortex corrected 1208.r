@@ -55,7 +55,7 @@ map$entrez_gene <- as.character(map$entrez_gene)
 set.seed(42)
 gsea_msigdb <- data %>%
     mutate(
-        gsea_msigdb = map(
+        gsea = map(
             genes_gsea,
             function(genes_gsea) {
                 clusterProfiler::GSEA(
@@ -66,16 +66,16 @@ gsea_msigdb <- data %>%
             }
         )
     )
-gsea_msigdb$gsea_msigdb[[1]]
+gsea_msigdb$gsea[[1]]
 
 
 # FORMAT TABLES FOR GENESET ENRICHMENT ANALYSES (GSEA) ####
 gsea_msigdb_formatted <- gsea_msigdb %>%
     mutate(
-        gsea_msigdb_tables = map(
-            gsea_msigdb,
-            function(gsea_msigdb) {
-                gsea_msigdb %>%
+        gsea_tables = map(
+            gsea,
+            function(gsea) {
+                gsea %>%
                     as_tibble() %>%
                     arrange(pvalue) %>%
                     mutate(
@@ -85,16 +85,16 @@ gsea_msigdb_formatted <- gsea_msigdb %>%
             }
         )
     )
-gsea_msigdb_formatted$gsea_msigdb_tables
+gsea_msigdb_formatted$gsea_tables
 
 
 # FORMAT TABLES FOR GENESET ENRICHMENT ANALYSES (GSEA) ####
 gsea_msigdb_tables <- gsea_msigdb_formatted %>%
     mutate(
-        gsea_msigdb_flextables = map(
-            gsea_msigdb_tables,
-            function(gsea_msigdb_tables) {
-                gsea_msigdb_tables %>%
+        gsea_flextables = map(
+            gsea_tables,
+            function(gsea_tables) {
+                gsea_tables %>%
                     # slice_min(pvalue, n = 20) %>%
                     mutate(
                         NES = NES %>% round(2),
@@ -120,13 +120,14 @@ gsea_msigdb_tables <- gsea_msigdb_formatted %>%
     )
 
 
-# gsea_msigdb_tables$gsea_msigdb_tables[[1]]
-gsea_msigdb_tables$gsea_msigdb_flextables[[3]]
+# gsea_tables$gsea_tables[[1]]
+gsea_msigdb_tables$gsea_flextables[[3]]
 
 
 # PREPARE THE RESULTS FOR EXPORT ####
-felzartamab_gsea_msigdb_k1208 <- gsea_msigdb_tables
-names(felzartamab_gsea_msigdb_k1208$gsea_msigdb_flextables) <- felzartamab_gsea_msigdb_k1208$design
+felzartamab_gsea_msigdb_k1208 <- gsea_msigdb_tables %>%
+    mutate(db = "msigdb", .before = 1)
+names(felzartamab_gsea_msigdb_k1208$gsea_flextables) <- felzartamab_gsea_msigdb_k1208$design
 
 
 
@@ -138,7 +139,7 @@ save(felzartamab_gsea_msigdb_k1208, file = paste(saveDir, "felzartamab_gsea_msig
 
 # EXPORT THE GSEA RESULTS TO EXCEL FILE ####
 saveDir1 <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/output/"
-openxlsx::write.xlsx(felzartamab_gsea_msigdb_k1208$gsea_msigdb_tables,
+openxlsx::write.xlsx(felzartamab_gsea_msigdb_k1208$gsea_tables,
     asTable = TRUE,
     file = paste(saveDir1, "MSigDB_pathways_IQR_filtered_probes_unique_genes_baseline_corrected_cortex_corrected_limma_1208_13June24",
         # Sys.Date(),

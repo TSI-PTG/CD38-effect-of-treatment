@@ -48,7 +48,7 @@ data <- limma_tables %>%
 set.seed(42)
 gsea_do <- data %>%
     mutate(
-        gsea_do = map(
+        gsea = map(
             genes_gsea,
             function(genes_gsea) {
                 DOSE::gseDO(
@@ -64,10 +64,10 @@ gsea_do <- data %>%
 # FORMAT TABLES FOR GENESET ENRICHMENT ANALYSES (GSEA) ####
 gsea_do_formatted <- gsea_do %>%
     mutate(
-        gsea_do_tables = map(
-            gsea_do,
-            function(gsea_do) {
-                gsea_do %>%
+        gsea_tables = map(
+            gsea,
+            function(gsea) {
+                gsea %>%
                     as_tibble() %>%
                     arrange(pvalue) %>%
                     mutate(
@@ -83,10 +83,10 @@ gsea_do_formatted <- gsea_do %>%
 # FORMAT TABLES FOR GENESET ENRICHMENT ANALYSES (GSEA) ####
 gsea_do_tables <- gsea_do_formatted %>%
     mutate(
-        gsea_do_flextables = map(
-            gsea_do_tables,
-            function(gsea_do_tables) {
-                gsea_do_tables %>%
+        gsea_flextables = map(
+            gsea_tables,
+            function(gsea_tables) {
+                gsea_tables %>%
                     slice_min(pvalue, n = 20) %>%
                     mutate(
                         NES = NES %>% round(2),
@@ -113,26 +113,27 @@ gsea_do_tables <- gsea_do_formatted %>%
 
 
 # gsea_do_tables$gsea_do_tables[[1]]
-gsea_do_tables$gsea_do_flextables[[3]]
+gsea_do_tables$gsea_flextables[[1]]
 
 
 # PREPARE THE RESULTS FOR EXPORT ####
-felzartamab_gsea_do_k1208 <- gsea_do_tables
-names(felzartamab_gsea_do_k1208$gsea_do_flextables) <- felzartamab_gsea_do_k1208$design
+felzartamab_gsea_do_k1208 <- gsea_do_tables %>%
+    mutate(db = "dose", .before = 1)
+names(felzartamab_gsea_do_k1208$gsea_flextables) <- felzartamab_gsea_do_k1208$design
 
 
 
 # SAVE THE GSEA RESULTS ####
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/"
-save(felzartamab_gsea_do_k1208, file = paste(saveDir, "felzartamab_gsea_DO_baseline_corrected_cortex_corrected_k1208.RData", sep = ""))
+save(felzartamab_gsea_do_k1208, file = paste(saveDir, "felzartamab_gsea_dose_baseline_corrected_cortex_corrected_k1208.RData", sep = ""))
 
 
 
 # EXPORT THE GSEA RESULTS TO EXCEL FILE ####
 saveDir1 <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/output/"
-openxlsx::write.xlsx(felzartamab_gsea_do_k1208$gsea_do_tables,
+openxlsx::write.xlsx(felzartamab_gsea_do_k1208$gsea_tables,
     asTable = TRUE,
-    file = paste(saveDir1, "DOSE_pathways_IQR_filtered_probes_unique_genes_baseline_corrected_cortex_corrected_limma_1208_13June24",
+    file = paste(saveDir1, "dose_pathways_IQR_filtered_probes_unique_genes_baseline_corrected_cortex_corrected_limma_1208_13June24",
         # Sys.Date(),
         # format(Sys.time(), "_%I%M%p"),
         ".xlsx",

@@ -48,7 +48,7 @@ data <- limma_tables %>%
 set.seed(42)
 gsea_reactome <- data %>%
     mutate(
-        gsea_reactome = map(
+        gsea = map(
             genes_gsea,
             function(genes_gsea) {
                 ReactomePA::gsePathway(
@@ -64,10 +64,10 @@ gsea_reactome <- data %>%
 # FORMAT TABLES FOR GENESET ENRICHMENT ANALYSES (GSEA) ####
 gsea_reactome_formatted <- gsea_reactome %>%
     mutate(
-        gsea_reactome_tables = map(
-            gsea_reactome,
-            function(gsea_reactome) {
-                gsea_reactome %>%
+        gsea_tables = map(
+            gsea,
+            function(gsea) {
+                gsea %>%
                     as_tibble() %>%
                     arrange(pvalue) %>%
                     mutate(
@@ -83,10 +83,10 @@ gsea_reactome_formatted <- gsea_reactome %>%
 # FORMAT TABLES FOR GENESET ENRICHMENT ANALYSES (GSEA) ####
 gsea_reactome_tables <- gsea_reactome_formatted %>%
     mutate(
-        gsea_reactome_flextables = map(
-            gsea_reactome_tables,
-            function(gsea_reactome_tables) {
-                gsea_reactome_tables %>%
+        gsea_flextables = map(
+            gsea_tables,
+            function(gsea_tables) {
+                gsea_tables %>%
                     slice_min(pvalue, n = 20) %>%
                     mutate(
                         NES = NES %>% round(2),
@@ -113,12 +113,13 @@ gsea_reactome_tables <- gsea_reactome_formatted %>%
 
 
 # gsea_reactome_tables$gsea_reactome_tables[[1]]
-gsea_reactome_tables$gsea_reactome_flextables[[1]]
+gsea_reactome_tables$gsea_flextables[[3]]
 
 
 # PREPARE THE RESULTS FOR EXPORT ####
-felzartamab_gsea_reactome_k1208 <- gsea_reactome_tables
-names(felzartamab_gsea_reactome_k1208$gsea_reactome_flextables) <- felzartamab_gsea_reactome_k1208$design
+felzartamab_gsea_reactome_k1208 <- gsea_tables %>%
+    mutate(db = "reactome")
+names(felzartamab_gsea_reactome_k1208$gsea_flextables) <- felzartamab_gsea_reactome_k1208$design
 
 
 
@@ -130,7 +131,7 @@ save(felzartamab_gsea_reactome_k1208, file = paste(saveDir, "felzartamab_gsea_re
 
 # EXPORT THE GSEA RESULTS TO EXCEL FILE ####
 saveDir1 <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/output/"
-openxlsx::write.xlsx(felzartamab_gsea_reactome_k1208$gsea_reactome_tables,
+openxlsx::write.xlsx(felzartamab_gsea_reactome_k1208$gsea_tables,
     asTable = TRUE,
     file = paste(saveDir1, "REACTOME_pathways_IQR_filtered_probes_unique_genes_baseline_corrected_cortex_corrected_limma_1208_13June24",
         # Sys.Date(),
