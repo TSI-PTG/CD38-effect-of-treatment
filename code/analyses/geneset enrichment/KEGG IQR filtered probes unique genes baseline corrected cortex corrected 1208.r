@@ -4,7 +4,6 @@ library(tidyverse) # install.packages("tidyverse")
 library(flextable) # install.packages("flextable") #for simple table outputs
 library(officer) # install.packages("officer")
 library(clusterProfiler) # pak::pak("YuLab-SMU/clusterProfiler")
-library(ReactomePA) # pak::pak("YuLab-SMU/ReactomePA")
 library(circlize) # install.packages("circlize") pak::pak("jokergoo/circlize")
 # Bioconductor libraries
 library(Biobase) # BiocManager::install("Biobase")
@@ -46,13 +45,13 @@ data <- limma_tables %>%
 
 # GENESET ENRICHMENT ANALYSES (GSEA) ####
 set.seed(42)
-gsea_reactome <- data %>%
+gsea_kegg <- data %>%
     mutate(
         gsea = map(
             genes_gsea,
             function(genes_gsea) {
-                ReactomePA::gsePathway(
-                    gene = genes_gsea, organism = "human",
+                clusterProfiler::gseKEGG(
+                    gene = genes_gsea, organism = "hsa",
                     minGSSize = 10, maxGSSize = 200,
                     pvalueCutoff = 0.05, pAdjustMethod = "fdr", seed = TRUE
                 ) %>% clusterProfiler::setReadable(OrgDb = org.Hs.eg.db, keyType = "ENTREZID")
@@ -62,7 +61,7 @@ gsea_reactome <- data %>%
 
 
 # FORMAT TABLES FOR GENESET ENRICHMENT ANALYSES (GSEA) ####
-gsea_reactome_formatted <- gsea_reactome %>%
+gsea_kegg_formatted <- gsea_kegg %>%
     mutate(
         gsea_tables = map(
             gsea,
@@ -81,7 +80,7 @@ gsea_reactome_formatted <- gsea_reactome %>%
 
 
 # FORMAT TABLES FOR GENESET ENRICHMENT ANALYSES (GSEA) ####
-gsea_reactome_tables <- gsea_reactome_formatted %>%
+gsea_kegg_tables <- gsea_kegg_formatted %>%
     mutate(
         gsea_flextables = map(
             gsea_tables,
@@ -112,28 +111,28 @@ gsea_reactome_tables <- gsea_reactome_formatted %>%
     )
 
 
-# gsea_reactome_tables$gsea_reactome_tables[[1]]
-gsea_reactome_tables$gsea_flextables[[3]]
+# gsea_kegg_tables$gsea_kegg_tables[[1]]
+gsea_kegg_tables$gsea_flextables[[3]]
 
 
 # PREPARE THE RESULTS FOR EXPORT ####
-felzartamab_gsea_reactome_k1208 <- gsea_reactome_tables %>%
-    mutate(db = "reactome")
-names(felzartamab_gsea_reactome_k1208$gsea_flextables) <- felzartamab_gsea_reactome_k1208$design
+felzartamab_gsea_kegg_k1208 <- gsea_kegg_tables %>%
+    mutate(db = "kegg")
+names(felzartamab_gsea_kegg_k1208$gsea_flextables) <- felzartamab_gsea_kegg_k1208$design
 
 
 
 # SAVE THE GSEA RESULTS ####
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/"
-save(felzartamab_gsea_reactome_k1208, file = paste(saveDir, "felzartamab_gsea_reactome_baseline_corrected_cortex_corrected_k1208.RData", sep = ""))
+save(felzartamab_gsea_kegg_k1208, file = paste(saveDir, "felzartamab_gsea_kegg_baseline_corrected_cortex_corrected_k1208.RData", sep = ""))
 
 
 
 # EXPORT THE GSEA RESULTS TO EXCEL FILE ####
 saveDir1 <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/output/"
-openxlsx::write.xlsx(felzartamab_gsea_reactome_k1208$gsea_tables,
+openxlsx::write.xlsx(felzartamab_gsea_kegg_k1208$gsea_tables,
     asTable = TRUE,
-    file = paste(saveDir1, "REACTOME_pathways_IQR_filtered_probes_unique_genes_baseline_corrected_cortex_corrected_limma_1208_13June24",
+    file = paste(saveDir1, "kegg_pathways_IQR_filtered_probes_unique_genes_baseline_corrected_cortex_corrected_limma_1208_13June24",
         # Sys.Date(),
         # format(Sys.time(), "_%I%M%p"),
         ".xlsx",
