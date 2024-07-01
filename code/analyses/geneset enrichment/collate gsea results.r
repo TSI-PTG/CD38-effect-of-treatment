@@ -54,6 +54,7 @@ gsea_tables <- gsea %>%
     ) %>%
     unnest(gsea_tables) %>%
     arrange(p.adjust) %>%
+    dplyr::filter(p.adjust < 0.001) %>% 
     nest(.by = design, gsea_table = -design)
 
 
