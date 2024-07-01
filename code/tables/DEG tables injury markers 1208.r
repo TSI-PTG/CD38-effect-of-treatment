@@ -229,7 +229,7 @@ flextables %>%
 # EXPORT THE DATA AS .RData FILE ####
 gene_tables <- tables
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/"
-save(gene_tables, file = paste(saveDir, "injury_gene_tables_limma_1208.RData", sep = ""))
+# save(gene_tables, file = paste(saveDir, "injury_gene_tables_limma_1208.RData", sep = ""))
 
 
 

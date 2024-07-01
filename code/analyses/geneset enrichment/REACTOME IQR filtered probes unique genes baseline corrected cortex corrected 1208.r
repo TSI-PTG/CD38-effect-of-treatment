@@ -54,7 +54,7 @@ gsea_reactome <- data %>%
                 ReactomePA::gsePathway(
                     gene = genes_gsea, organism = "human",
                     minGSSize = 10, maxGSSize = 200,
-                    pvalueCutoff = 0.05, pAdjustMethod = "fdr", seed = TRUE
+                    pvalueCutoff = 0.001, pAdjustMethod = "fdr", seed = TRUE
                 ) %>% clusterProfiler::setReadable(OrgDb = org.Hs.eg.db, keyType = "ENTREZID")
             }
         )
@@ -118,7 +118,7 @@ gsea_reactome_tables$gsea_flextables[[3]]
 
 # PREPARE THE RESULTS FOR EXPORT ####
 felzartamab_gsea_reactome_k1208 <- gsea_reactome_tables %>%
-    mutate(db = "reactome")
+    mutate(db = "reactome", .before = 1)
 names(felzartamab_gsea_reactome_k1208$gsea_flextables) <- felzartamab_gsea_reactome_k1208$design
 
 

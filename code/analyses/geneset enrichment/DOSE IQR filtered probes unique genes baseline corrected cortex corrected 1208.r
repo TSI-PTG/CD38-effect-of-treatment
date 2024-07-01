@@ -54,7 +54,7 @@ gsea_do <- data %>%
                 DOSE::gseDO(
                     gene = genes_gsea,
                     minGSSize = 10, maxGSSize = 200,
-                    pvalueCutoff = 0.05, pAdjustMethod = "fdr", seed = TRUE
+                    pvalueCutoff = 0.001, pAdjustMethod = "fdr", seed = TRUE
                 ) %>% clusterProfiler::setReadable(OrgDb = org.Hs.eg.db, keyType = "ENTREZID")
             }
         )

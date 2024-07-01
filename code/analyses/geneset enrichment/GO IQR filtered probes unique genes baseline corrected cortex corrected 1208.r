@@ -53,7 +53,7 @@ gsea_go <- data %>%
                 clusterProfiler::gseGO(
                     gene = genes_gsea, ont = "BP", OrgDb = org.Hs.eg.db,
                     minGSSize = 10, maxGSSize = 200,
-                    pvalueCutoff = 0.05, pAdjustMethod = "fdr", seed = TRUE
+                    pvalueCutoff = 0.001, pAdjustMethod = "fdr", seed = TRUE
                 ) %>% clusterProfiler::setReadable(OrgDb = org.Hs.eg.db, keyType = "ENTREZID")
             }
         )
@@ -79,15 +79,16 @@ gsea_go_simplified_formatted <- gsea_go_simplified %>%
                     mutate(
                         sign = case_when(NES < 0 ~ "Down Regulated", NES > 0 ~ "Up Regulated"),
                         Description = factor(Description, levels = Description, ordered = TRUE)
-                    ) %>%
-                    mutate(
-                        ID_parent = GO.db::GOBPPARENTS[[ID]][[1]], .by = ID,
-                        .after = ID,
-                    ) %>%
-                    mutate(
-                        Description_parent = pRoloc::goIdToTerm(ID_parent),
-                        .after = Description,
-                    )
+                    ) 
+                    # %>%
+                    # mutate(
+                    #     ID_parent = GO.db::GOBPPARENTS[[ID]][[1]], .by = ID,
+                    #     .after = ID,
+                    # ) %>%
+                    # mutate(
+                    #     Description_parent = pRoloc::goIdToTerm(ID_parent),
+                    #     .after = Description,
+                    # )
             }
         )
     )
@@ -113,7 +114,7 @@ gsea_go_tables <- gsea_go_simplified_formatted %>%
                             TRUE ~ p.adjust %>% formatC(digits = 4, format = "f")
                         ),
                     ) %>%
-                    dplyr::select(Description, setSize, NES, pvalue, FDR, core_enrichment) %>%
+                    dplyr::select(Description, setSize, NES, pvalue, FDR, dplyr::any_of("core_enrichment")) %>%
                     flextable::flextable() %>%
                     flextable::border_remove() %>%
                     flextable::border(border = fp_border(), part = "all") %>%
@@ -127,25 +128,25 @@ gsea_go_tables <- gsea_go_simplified_formatted %>%
 
 
 # gsea_go_tables$gsea_go_tables[[1]]
-gsea_go_tables$gsea_flextables[[3]]
+gsea_go_tables$gsea_flextables[[1]]
 
 
 # PREPARE THE RESULTS FOR EXPORT ####
-felzartamab_gsea_k1208 <- gsea_go_tables %>%
+felzartamab_gsea_go_k1208 <- gsea_go_tables %>%
     mutate(db = "GO", .before = 1)
-names(felzartamab_gsea_k1208$gsea_flextables) <- felzartamab_gsea_k1208$design
+names(felzartamab_gsea_go_k1208$gsea_flextables) <- felzartamab_gsea_go_k1208$design
 
 
 
 # SAVE THE GSEA RESULTS ####
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/"
-save(felzartamab_gsea_k1208, file = paste(saveDir, "felzartamab_gsea_go_baseline_corrected_cortex_corrected_k1208.RData", sep = ""))
+save(felzartamab_gsea_go_k1208, file = paste(saveDir, "felzartamab_gsea_go_baseline_corrected_cortex_corrected_k1208.RData", sep = ""))
 
 
 
 # EXPORT THE GSEA RESULTS TO EXCEL FILE ####
 saveDir1 <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/output/"
-openxlsx::write.xlsx(felzartamab_gsea_k1208$gsea_tables,
+openxlsx::write.xlsx(felzartamab_gsea_go_k1208$gsea_tables,
     asTable = TRUE,
     file = paste(saveDir1, "GO_Pathways_IQR_filtered_probes_unique_genes_baseline_corrected_cortex_corrected_limma_1208_13June24",
         # Sys.Date(),

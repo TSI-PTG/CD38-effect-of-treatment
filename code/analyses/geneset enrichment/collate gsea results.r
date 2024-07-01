@@ -17,37 +17,44 @@ loadDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molec
 load(paste(loadDir, "felzartamab_gsea_msigdb_baseline_corrected_cortex_corrected_k1208.RData", sep = ""))
 load(paste(loadDir, "felzartamab_gsea_wiki_baseline_corrected_cortex_corrected_k1208.RData", sep = ""))
 load(paste(loadDir, "felzartamab_gsea_reactome_baseline_corrected_cortex_corrected_k1208.RData", sep = ""))
-load(paste(loadDir, "felzartamab_gsea_DO_baseline_corrected_cortex_corrected_k1208.RData", sep = ""))
-
-
-# WRANGLE THE GSEA RESULTS ####
-gsea_reactome <- felzartamab_gsea_reactome_k1208 %>%
-    mutate(db = "reactome", .before = 1) %>%
-    dplyr::rename(gsea = gsea_reactome, gsea_tables = gsea_reactome_tables) %>%
-    dplyr::select(db, design, gsea_tables)
-
-gsea_msigdb <- felzartamab_gsea_msigdb_k1208 %>%
-    mutate(db = "msigdb", .before = 1) %>%
-    dplyr::rename(gsea = gsea_msigdb, gsea_tables = gsea_msigdb_tables) %>%
-    dplyr::select(db, design, gsea_tables)
-
-gsea_wiki <- felzartamab_gsea_wiki_k1208 %>%
-    mutate(db = "wiki", .before = 1) %>%
-    dplyr::rename(gsea = gsea_wiki, gsea_tables = gsea_wiki_tables) %>%
-    dplyr::select(db, design, gsea_tables)
-
-gsea_dose <- felzartamab_gsea_do_k1208 %>%
-    mutate(db = "dose", .before = 1) %>%
-    dplyr::rename(gsea = gsea_do, gsea_tables = gsea_do_tables) %>%
-    dplyr::select(db, design, gsea_tables)
-
+load(paste(loadDir, "felzartamab_gsea_dose_baseline_corrected_cortex_corrected_k1208.RData", sep = ""))
+load(paste(loadDir, "felzartamab_gsea_kegg_baseline_corrected_cortex_corrected_k1208.RData", sep = ""))
+load(paste(loadDir, "felzartamab_gsea_go_baseline_corrected_cortex_corrected_k1208.RData", sep = ""))
 
 
 
 # JOIN THE GSEA RESULTS ####
+gsea <- reduce(
+    list(
+        felzartamab_gsea_go_k1208,
+        felzartamab_gsea_msigdb_k1208,
+        felzartamab_gsea_wiki_k1208,
+        felzartamab_gsea_do_k1208,
+        felzartamab_gsea_kegg_k1208,
+        felzartamab_gsea_reactome_k1208 
+    ), bind_rows
+) %>%
+    mutate(keep = map_dbl(gsea_tables, nrow)) %>%
+    dplyr::filter(keep > 0) %>%
+    dplyr::select(db, design, gsea_tables)
 
 
 
-gsea_reactome$gsea_tables[[1]]
+# WRANGLE THE GSEA TABLES ####
+gsea_tables <- gsea %>%
+    mutate(
+        gsea_tables = map(
+            gsea_tables,
+            function(gsea_tables) {
+                gsea_tables %>%
+                    mutate(Description = Description %>% as.character()) %>%
+                    dplyr::select(ID, Description, setSize, NES, p.adjust, core_enrichment)
+            }
+        )
+    ) %>%
+    unnest(gsea_tables) %>%
+    arrange(p.adjust) %>%
+    nest(.by = design, gsea_table = -design)
 
-gsea_msigdb$gsea_tables[[1]]
+
+gsea_tables$gsea_table

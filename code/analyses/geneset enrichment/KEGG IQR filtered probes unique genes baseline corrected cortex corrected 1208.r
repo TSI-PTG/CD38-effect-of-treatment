@@ -53,7 +53,7 @@ gsea_kegg <- data %>%
                 clusterProfiler::gseKEGG(
                     gene = genes_gsea, organism = "hsa",
                     minGSSize = 10, maxGSSize = 200,
-                    pvalueCutoff = 0.05, pAdjustMethod = "fdr", seed = TRUE
+                    pvalueCutoff = 0.001, pAdjustMethod = "fdr", seed = TRUE
                 ) %>% clusterProfiler::setReadable(OrgDb = org.Hs.eg.db, keyType = "ENTREZID")
             }
         )
@@ -117,7 +117,7 @@ gsea_kegg_tables$gsea_flextables[[3]]
 
 # PREPARE THE RESULTS FOR EXPORT ####
 felzartamab_gsea_kegg_k1208 <- gsea_kegg_tables %>%
-    mutate(db = "kegg")
+    mutate(db = "kegg", .before = 1)
 names(felzartamab_gsea_kegg_k1208$gsea_flextables) <- felzartamab_gsea_kegg_k1208$design
 
 
