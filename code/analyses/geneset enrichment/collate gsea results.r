@@ -22,7 +22,7 @@ load(paste(loadDir, "felzartamab_gsea_kegg_baseline_corrected_cortex_corrected_k
 load(paste(loadDir, "felzartamab_gsea_go_baseline_corrected_cortex_corrected_k1208.RData", sep = ""))
 load(paste(loadDir, "felzartamab_gsea_mesh_baseline_corrected_cortex_corrected_k1208.RData", sep = ""))
 
-felzartamab_gsea_mesh_k1208
+
 
 # JOIN THE GSEA RESULTS ####
 gsea <- reduce(
