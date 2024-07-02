@@ -118,7 +118,7 @@ gsea_reactome_tables$gsea_flextables[[3]]
 
 # PREPARE THE RESULTS FOR EXPORT ####
 felzartamab_gsea_reactome_k1208 <- gsea_reactome_tables %>%
-    mutate(db = "reactome", .before = 1)
+    mutate(db = "Reactome", .before = 1)
 names(felzartamab_gsea_reactome_k1208$gsea_flextables) <- felzartamab_gsea_reactome_k1208$design
 
 

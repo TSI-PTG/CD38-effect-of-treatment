@@ -129,7 +129,7 @@ gsea_mesh_tables$gsea_flextables[[3]]
 
 # PREPARE THE RESULTS FOR EXPORT ####
 felzartamab_gsea_mesh_k1208 <- gsea_mesh_tables %>%
-    mutate(db = "mesh", .before = 1)
+    mutate(db = "MeSH", .before = 1)
 names(felzartamab_gsea_mesh_k1208$gsea_flextables) <- felzartamab_gsea_mesh_k1208$design
 
 

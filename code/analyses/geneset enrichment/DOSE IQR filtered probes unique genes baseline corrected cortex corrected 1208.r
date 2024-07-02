@@ -118,7 +118,7 @@ gsea_do_tables$gsea_flextables[[1]]
 
 # PREPARE THE RESULTS FOR EXPORT ####
 felzartamab_gsea_do_k1208 <- gsea_do_tables %>%
-    mutate(db = "dose", .before = 1)
+    mutate(db = "DOSE", .before = 1)
 names(felzartamab_gsea_do_k1208$gsea_flextables) <- felzartamab_gsea_do_k1208$design
 
 
