@@ -45,11 +45,11 @@ gg_patient_pairs_interaction <- function(data, variable, score) {
                 group = Patient
             )
         ) +
-        ggplot2::geom_point(size = 5, alpha = 0.15, position = ggplot2::position_dodge(width = dodge)) +
+        ggplot2::geom_point(size = 6, alpha = 0.15, position = ggplot2::position_dodge(width = dodge)) +
         ggplot2::geom_line(
             linewidth = 0.25,
             # alpha = 0.75,
-            linetype = "dashed",
+            linetype = "solid",
             position = ggplot2::position_dodge(width = dodge),
             show.legend = FALSE
         ) +
