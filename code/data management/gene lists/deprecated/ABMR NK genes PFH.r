@@ -10,12 +10,37 @@ library(officer) # install.packages("officer")
 load("Z:/DATA/Datalocks/Other data/affymap219_21Oct2019_1306_JR.RData")
 # load SCC data
 simplefile_path <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/0000 simple XL files/Kidney 5086/MASTER COPY K5086 SimpleCorrAAInjRej 5AAInjNR 7AARej.xlsx"
-simplefile <- read_excel(path = simplefile_path)
+simplefile <- readxl::read_excel(path = simplefile_path)
 # load mean expression in K5086
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/mean_expression_by_probe_5086.RData")
 # load in house cell panel
-atagc <- read_excel("Z:/MISC/Patrick Gauthier/R/affymap219-CELL-PANEL/backup/UPDATED 2017 ANNOTATIONS - MASTERFILE - U133 HUMAN CELL PANEL - ALL PROBESETS (nonIQR) pfhptg.xlsx")
+atagc <- readxl::read_excel("Z:/MISC/Patrick Gauthier/R/affymap219-CELL-PANEL/backup/UPDATED 2017 ANNOTATIONS - MASTERFILE - U133 HUMAN CELL PANEL - ALL PROBESETS (nonIQR) pfhptg.xlsx")
 
+
+
+# DEFINE THE ABMR ACTIVITY GENES ####
+genes_NK <- Hmisc::.q(
+    FGFBP2,
+    GNLY,
+    S1PR5,
+    KLRD1,
+    NKG7,
+    PRF1,
+    GZMB,
+    CD160,
+    TBX21,
+    KLRF1,
+    TRDC,
+    SH2D1B,
+    GZMA,
+    SAMD3,
+    MYBL1,
+    CX3CR1,
+    IL2RB,
+    CD247,
+    PYHIN1,
+    NCR1
+)
 
 
 # WRANGLE THE MEAN EXPRESSION DATA ####
@@ -44,7 +69,7 @@ cell_panel <- atagc %>%
         `HUVEC (unstimulated)` = `Unstim HUVEC`,
         `HUVEC (IFNg stimulated)` = `HUVEC + IFNg`
     ) %>%
-    dplyr::slice_max(`HUVEC (IFNg stimulated)`, by = "Symb", with_ties = FALSE)
+    dplyr::slice_max(NK, by = "Symb", with_ties = FALSE)
 
 
 
@@ -54,20 +79,14 @@ data <- K5086 %>%
 
 
 # DEFINE THE ABMR ACTIVITY GENES BY MEAN EXPRESSION ####
-genes_EABMR <- data %>%
-    dplyr::filter(`corrRej7AA4-EABMR` > 0) %>%
-    dplyr::slice_min(`pvalRej7AA4-EABMR`, n = 100)
+genes_EABMR <- data
 
-genes_ABMR_IFNG <- genes_EABMR %>%
-    dplyr::filter(
-        `HUVEC (unstimulated)` < quantile(`HUVEC (unstimulated)`, 0.75, na.rm = TRUE),
-        NK < quantile(NK, 0.5, na.rm = TRUE),
-        `HUVEC (IFNg stimulated)` > quantile(`HUVEC (unstimulated)`, 0.90, na.rm = TRUE),
-    ) %>%
-    dplyr::slice_max(`HUVEC (IFNg stimulated)`, n = 20) %>%
+genes_ABMR_NK <- genes_EABMR %>%
+    dplyr::filter(Symb %in% genes_NK) %>%
+    # dplyr::slice_max(NK, n = 20) %>%
     dplyr::relocate(AffyID_U133, .after = AffyID) %>%
     dplyr::relocate(`corrRej7AA4-EABMR`, `pvalRej7AA4-EABMR`, `corrRej7AA5-FABMR`, `pvalRej7AA5-FABMR`,
-        .after = dplyr::last_col()
+        .after = last_col()
     ) %>%
     dplyr::mutate_at(dplyr::vars(dplyr::contains("corrRej")), ~ round(., 2)) %>%
     dplyr::mutate_at(dplyr::vars(dplyr::contains("pvalRej")), ~ formatC(., digits = 0, format = "e")) %>%
@@ -77,13 +96,13 @@ genes_ABMR_IFNG <- genes_EABMR %>%
             stringr::str_remove(",RAT") %>%
             stringr::str_remove("Rej-RAT") %>%
             stringr::str_replace(",,", ",")
-    )
+    ) %>%
+    arrange(`pvalRej7AA4-EABMR` %>% as.numeric())
 
 
 # SAVE THE DATA ####
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/"
-save(genes_ABMR_IFNG, file = paste(saveDir, "ABMR_IFNG_genes.RData", sep = ""))
-
+# save(genes_ABMR_NK, file = paste(saveDir, "ABMR_NK_genes_PFH.RData", sep = ""))
 
 
 # UNIVERSAL VARIABLES FOR FLEXTABLE ####
@@ -100,13 +119,19 @@ header2 <- c(
     "SCC\nFABMR\nK5086", "p\nFABMR\nK5086"
 )
 
-title <- c("Table Si. Definition of IFNG-inducible ABMR activity genes")
+title <- c("Table Si. Definition of NK cell-expressed ABMR activity genes")
 cellWidths <- c(1.5, 10, 4.6, 1, 1, 1, 2, 2, rep(1.3, 4))
 
 
 # MAKE FLEXTABLE ####
-flextable <- genes_ABMR_IFNG %>%
+flextable <- genes_ABMR_NK %>%
     dplyr::select(!dplyr::contains("AffyID")) %>%
+    # dplyr::mutate(
+    #     PBT = PBT %>%
+    #         stringr::str_remove("RAT") %>%
+    #         stringr::str_remove("Rej-RAT") %>%
+    #         stringr::str_replace(",,", ",")
+    # ) %>%
     flextable::flextable() %>%
     flextable::delete_part("header") %>%
     flextable::add_header_row(top = TRUE, values = header2) %>%
@@ -128,4 +153,4 @@ flextable <- genes_ABMR_IFNG %>%
 #   %>%
 # flextable::width(., width = dim(.)$widths * 33 / (flextable::flextable_dim(.)$widths), unit = "cm")
 
-# flextable %>% print(preview = "pptx")
+flextable %>% print(preview = "pptx")

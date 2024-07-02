@@ -18,6 +18,19 @@ atagc <- read_excel("Z:/MISC/Patrick Gauthier/R/affymap219-CELL-PANEL/backup/UPD
 
 
 
+# DEFINE THE ABMR ACTIVITY GENES ####
+genes_IFNG <- Hmisc::.q(
+    CXCL11,
+    PLA1A,
+    CXCL10,
+    CXCL9,
+    WARS,
+    GBP1,
+    GBP4,
+    IDO1,
+    RARRES3
+)
+
 # WRANGLE THE MEAN EXPRESSION DATA ####
 means_K5086 <- mean_exprs_5086 %>%
     dplyr::slice_max(mean_expression, by = "Symb")
@@ -54,17 +67,11 @@ data <- K5086 %>%
 
 
 # DEFINE THE ABMR ACTIVITY GENES BY MEAN EXPRESSION ####
-genes_EABMR <- data %>%
-    dplyr::filter(`corrRej7AA4-EABMR` > 0) %>%
-    dplyr::slice_min(`pvalRej7AA4-EABMR`, n = 100)
+genes_EABMR <- data 
 
 genes_ABMR_IFNG <- genes_EABMR %>%
-    dplyr::filter(
-        `HUVEC (unstimulated)` < quantile(`HUVEC (unstimulated)`, 0.75, na.rm = TRUE),
-        NK < quantile(NK, 0.5, na.rm = TRUE),
-        `HUVEC (IFNg stimulated)` > quantile(`HUVEC (unstimulated)`, 0.90, na.rm = TRUE),
-    ) %>%
-    dplyr::slice_max(`HUVEC (IFNg stimulated)`, n = 20) %>%
+    dplyr::filter(Symb %in% genes_IFNG) %>%
+    # dplyr::slice_max(`HUVEC (IFNg stimulated)`, n = 20) %>%
     dplyr::relocate(AffyID_U133, .after = AffyID) %>%
     dplyr::relocate(`corrRej7AA4-EABMR`, `pvalRej7AA4-EABMR`, `corrRej7AA5-FABMR`, `pvalRej7AA5-FABMR`,
         .after = dplyr::last_col()
@@ -82,7 +89,7 @@ genes_ABMR_IFNG <- genes_EABMR %>%
 
 # SAVE THE DATA ####
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/"
-save(genes_ABMR_IFNG, file = paste(saveDir, "ABMR_IFNG_genes.RData", sep = ""))
+# save(genes_ABMR_IFNG, file = paste(saveDir, "ABMR_IFNG_genes_PFH.RData", sep = ""))
 
 
 
@@ -128,4 +135,4 @@ flextable <- genes_ABMR_IFNG %>%
 #   %>%
 # flextable::width(., width = dim(.)$widths * 33 / (flextable::flextable_dim(.)$widths), unit = "cm")
 
-# flextable %>% print(preview = "pptx")
+flextable %>% print(preview = "pptx")
