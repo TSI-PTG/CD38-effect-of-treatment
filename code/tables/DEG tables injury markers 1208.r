@@ -52,9 +52,9 @@ injury_markers <- genes_injury_markers %>%
             injury_genes,
             function(injury_genes) {
                 injury_genes %>%
-                    drop_na(AffyID) %>% 
+                    drop_na(AffyID) %>%
                     arrange(p, log2FC %>% desc()) %>%
-                    dplyr::slice(1:20) %>%
+                    # dplyr::slice(1:20) %>%
                     dplyr::select(AffyID)
             }
         )
@@ -74,7 +74,7 @@ data <- injury_markers %>%
     expand_grid(design = limma_tables$design) %>%
     left_join(limma_tables, by = "design") %>%
     dplyr::select(-toptable) %>%
-    expand_grid(direction = c("increased", "decreased"))
+    expand_grid(direction = c("all", "increased", "decreased"))
 
 
 # FORMAT TABLES TO MAKE FLEXTABLES ####
@@ -87,7 +87,9 @@ tables <- data %>%
                 colnames(table) <- table %>%
                     colnames() %>%
                     str_remove_all("\u394 |\u394")
-                if (direction == "increased") {
+                if (direction == "inallreased") {
+                    table <- table
+                } else if (direction == "increased") {
                     table <- table %>% dplyr::filter(logFC > 0)
                 } else if (direction == "decreased") {
                     table <- table %>% dplyr::filter(logFC < 0)
@@ -98,7 +100,7 @@ tables <- data %>%
                     arrange(p) %>%
                     distinct(Symb, .keep_all = TRUE) %>%
                     # left_join(K4502, by = "AffyID")  %>%
-                    dplyr::slice_min(p, n = 20) %>%
+                    # dplyr::slice_min(p, n = 20) %>%
                     dplyr::select(
                         -AffyID, -cortex,
                         -contains("placebo FC"), -contains("felz FC"),
@@ -116,7 +118,7 @@ tables <- data %>%
                             FDR < 0.0001 ~ FDR %>% formatC(digits = 0, format = "e"),
                             TRUE ~ FDR %>% formatC(digits = 4, format = "f")
                         )
-                    )  %>%
+                    ) %>%
                     relocate(
                         c("logFC", "FC", "p", "FDR"),
                         .after = PBT
@@ -130,13 +132,13 @@ tables$gene_tables
 # GLOBAL PARAMETERS FOR FLEXTABLES ####
 header1 <- c(
     # "AffyID",
-    "Gene\nsymbol", "Gene", "PBT", 
+    "Gene\nsymbol", "Gene", "PBT",
     "\u394\u394 logFC", "\u394\u394 FC", "\u394\u394 P", "\u394\u394 FDR",
     rep("Mean expression by group", 4)
 )
 header2 <- c(
     # "AffyID",
-    "Gene\nsymbol", "Gene", "PBT", 
+    "Gene\nsymbol", "Gene", "PBT",
     "\u394\u394 logFC", "\u394\u394 FC", "\u394\u394 P", "\u394\u394 FDR",
     rep("Placebo", 2), rep("Felzartamab", 2)
 )
@@ -164,7 +166,7 @@ flextables <- tables %>%
                         sep = ""
                     )
                     header3 <- c(
-                        "Gene\nsymbol", "Gene", "PBT",  "\u394\u394 logFC", "\u394\u394 FC", "\u394\u394 P", "\u394\u394 FDR",
+                        "Gene\nsymbol", "Gene", "PBT", "\u394\u394 logFC", "\u394\u394 FC", "\u394\u394 P", "\u394\u394 FDR",
                         "Baseline\n(N=10)", "Week24\n(N=10)", "Baseline\n(N=10)", "Week24\n(N=10)"
                     )
                 } else if (design == "Week24_vs_Week52") {
@@ -185,11 +187,12 @@ flextables <- tables %>%
                         sep = ""
                     )
                     header3 <- c(
-                        "Gene\nsymbol", "Gene", "PBT",  "\u394\u394 logFC", "\u394\u394 FC", "\u394\u394 P", "\u394\u394 FDR",
+                        "Gene\nsymbol", "Gene", "PBT", "\u394\u394 logFC", "\u394\u394 FC", "\u394\u394 P", "\u394\u394 FDR",
                         "Baseline\n(N=10)", "Week52\n(N=10)", "Baseline\n(N=10)", "Week52\n(N=10)"
                     )
                 }
                 gene_tables %>%
+                    dplyr::slice_min(p, n = 20) %>%
                     flextable::flextable() %>%
                     flextable::delete_part("header") %>%
                     flextable::add_header_row(top = TRUE, values = header3) %>%
@@ -223,13 +226,15 @@ flextables %>%
         cluster == "TAL-New4"
     ) %>%
     pull(flextables)
-    
+
 
 
 # EXPORT THE DATA AS .RData FILE ####
+tables$gene_tables[[1]]
+
 gene_tables <- tables
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/"
-# save(gene_tables, file = paste(saveDir, "injury_gene_tables_limma_1208.RData", sep = ""))
+save(gene_tables, file = paste(saveDir, "injury_gene_tables_limma_1208.RData", sep = ""))
 
 
 
