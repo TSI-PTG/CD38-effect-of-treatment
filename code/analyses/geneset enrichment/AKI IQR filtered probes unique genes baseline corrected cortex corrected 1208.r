@@ -32,7 +32,7 @@ load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular e
 injury_markers <- genes_injury_markers %>%
     unnest(data) %>%
     dplyr::filter(cluster %>% str_detect("New")) %>%
-    drop_na(AffyID) %>% 
+    drop_na(AffyID) %>%
     dplyr::select(celltypename, cluster, AffyID, Symb) %>%
     dplyr::mutate(
         entrez_gene = bitr(Symb,
@@ -43,7 +43,6 @@ injury_markers <- genes_injury_markers %>%
         ) %>% pull(ENTREZID), .by = "cluster"
     ) %>%
     dplyr::rename(gs_name = cluster)
-
 
 
 # DEFINE INJURY PATHWAYS ####
@@ -93,7 +92,17 @@ gsea_aki <- data %>%
                     pvalueCutoff = 0.05, pAdjustMethod = "fdr", seed = TRUE
                 ) %>% clusterProfiler::setReadable(OrgDb = org.Hs.eg.db, keyType = "ENTREZID")
             }
-        )
+        ),
+                # OR = map(
+                #     genes_gsea,
+                #     function(genes_gsea) {
+                #         clusterProfiler::enricher(
+                #             gene = genes_gsea, TERM2GENE = map_aki,
+                #             minGSSize = 5, maxGSSize = Inf,
+                #             pvalueCutoff = 0.05, pAdjustMethod = "fdr"
+                #         )
+                #     }
+                # )
     )
 gsea_aki$gsea[[1]]
 
@@ -162,18 +171,18 @@ names(felzartamab_gsea_aki_k1208$gsea_flextables) <- felzartamab_gsea_aki_k1208$
 
 # SAVE THE GSEA RESULTS ####
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/"
-save(felzartamab_gsea_aki_k1208, file = paste(saveDir, "felzartamab_gsea_aki_baseline_corrected_cortex_corrected_k1208.RData", sep = ""))
+# save(felzartamab_gsea_aki_k1208, file = paste(saveDir, "felzartamab_gsea_aki_baseline_corrected_cortex_corrected_k1208.RData", sep = ""))
 
 
 
 # EXPORT THE GSEA RESULTS TO EXCEL FILE ####
 saveDir1 <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/output/"
-openxlsx::write.xlsx(felzartamab_gsea_aki_k1208$gsea_tables,
-    asTable = TRUE,
-    file = paste(saveDir1, "aki_pathways_IQR_filtered_probes_unique_genes_baseline_corrected_cortex_corrected_limma_1208_13June24",
-        # Sys.Date(),
-        # format(Sys.time(), "_%I%M%p"),
-        ".xlsx",
-        sep = ""
-    )
-)
+# openxlsx::write.xlsx(felzartamab_gsea_aki_k1208$gsea_tables,
+#     asTable = TRUE,
+#     file = paste(saveDir1, "aki_pathways_IQR_filtered_probes_unique_genes_baseline_corrected_cortex_corrected_limma_1208_13June24",
+#         # Sys.Date(),
+#         # format(Sys.time(), "_%I%M%p"),
+#         ".xlsx",
+#         sep = ""
+#     )
+# )
