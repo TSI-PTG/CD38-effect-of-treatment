@@ -110,7 +110,6 @@ gsea_flextables <- gsea_tables %>%
 gsea_flextables$flextable
 
 
-
 # PRINT FLETABLES TO POWERPOINT ####
 gsea_flextables %>%
     dplyr::filter(design == "Baseline_vs_Week24") %>%
