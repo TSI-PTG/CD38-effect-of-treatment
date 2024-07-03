@@ -252,6 +252,14 @@ limma_tables <- tibble(
                 "\u394\u394 p" = P.Value,
                 "\u394\u394 FDR" = adj.P.Val
             )
+    ), 
+    table_raw = list(
+        table_block_1 %>%
+            relocate(logFC, .before = "FC") ,
+        table_block_2 %>%
+            relocate(logFC, .before = "FC") ,
+        table_block_3 %>%
+            relocate(logFC, .before = "FC") 
     )
 )
 # limma_tables$table[[1]]
@@ -261,7 +269,7 @@ limma_tables <- tibble(
 # EXPORT THE DATA AS .RData FILE ####
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/"
 names(limma_tables$table) <- limma_tables$design
-# save(limma_tables, file = paste(saveDir, "IQR_filtered_probes_unique_genes_baseline_corrected_cortex_corrected_limma_1208.RData", sep = ""))
+save(limma_tables, file = paste(saveDir, "IQR_filtered_probes_unique_genes_baseline_corrected_cortex_corrected_limma_1208.RData", sep = ""))
 
 
 # EXPORT THE DATA AS AN EXCEL SHEET ####

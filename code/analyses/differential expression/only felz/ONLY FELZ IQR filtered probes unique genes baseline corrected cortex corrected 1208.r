@@ -228,6 +228,14 @@ limma_tables <- tibble(
                 "\u394 p" = P.Value,
                 "\u394 FDR" = adj.P.Val
             )
+    ),
+    table_raw = list(
+        table_block_1 %>%
+            relocate(logFC, .before = "FC"),
+        table_block_2 %>%
+            relocate(logFC, .before = "FC"),
+        table_block_3 %>%
+            relocate(logFC, .before = "FC")
     )
 )
 limma_tables$table[[3]]
@@ -244,7 +252,7 @@ save(limma_tables, file = paste(saveDir, "ONLY_FELZ_IQR_filtered_probes_unique_g
 saveDir1 <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/output/"
 # openxlsx::write.xlsx(limma_tables$table,
 #     asTable = TRUE,
-#     file = paste(saveDir1, "IQR_filtered_probes_unique_genes_baseline_corrected_cortex_corrected_limma_1208_14Jun24",
+#     file = paste(saveDir1, "ONLY_FELZ_IQR_filtered_probes_unique_genes_baseline_corrected_cortex_corrected_limma_1208_2jUL24",
 #         # Sys.Date(),
 #         # format(Sys.time(), "_%I%M%p"),
 #         ".xlsx",
