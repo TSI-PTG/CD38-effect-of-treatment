@@ -57,7 +57,7 @@ genes_FABMR <- data %>%
 
 genes_ABMR_endothelial <- genes_FABMR %>%
     dplyr::filter(
-        `HUVEC (unstimulated)` > NK,
+        `HUVEC (unstimulated)` > (NK*4),
         `HUVEC (unstimulated)` > `HUVEC (IFNg stimulated)`,
         # `HUVEC (unstimulated)` > quantile(`HUVEC (unstimulated)`, 0.5, na.rm = TRUE),
         # `HUVEC (IFNg stimulated)` < quantile(`HUVEC (IFNg stimulated)`, 0.90, na.rm = TRUE),

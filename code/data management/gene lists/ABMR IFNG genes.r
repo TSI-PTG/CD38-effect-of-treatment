@@ -55,14 +55,16 @@ data <- K5086 %>%
 
 # DEFINE THE ABMR ACTIVITY GENES BY MEAN EXPRESSION ####
 genes_EABMR <- data %>%
-    dplyr::filter(`corrRej7AA4-EABMR` > 0) %>%
+    dplyr::filter(`corrRej7AA4-EABMR` >= 0.2) %>%
     dplyr::slice_min(`pvalRej7AA4-EABMR`, n = 100)
 
 genes_ABMR_IFNG <- genes_EABMR %>%
     dplyr::filter(
-        `HUVEC (unstimulated)` < quantile(`HUVEC (unstimulated)`, 0.75, na.rm = TRUE),
-        NK < quantile(NK, 0.5, na.rm = TRUE),
-        `HUVEC (IFNg stimulated)` > quantile(`HUVEC (unstimulated)`, 0.90, na.rm = TRUE),
+        # `HUVEC (unstimulated)` < quantile(`HUVEC (unstimulated)`, 0.5, na.rm = TRUE),
+        # NK < quantile(NK, 0.5, na.rm = TRUE),
+        `HUVEC (IFNg stimulated)` > (NK * 5),
+        # `HUVEC (IFNg stimulated)` > quantile(`HUVEC (unstimulated)`, 0.75, na.rm = TRUE),
+        `HUVEC (IFNg stimulated)` > (`HUVEC (unstimulated)` *5),
     ) %>%
     dplyr::slice_max(`HUVEC (IFNg stimulated)`, n = 20) %>%
     dplyr::relocate(AffyID_U133, .after = AffyID) %>%
@@ -125,7 +127,6 @@ flextable <- genes_ABMR_IFNG %>%
     flextable::bg(bg = "white", part = "all") %>%
     flextable::padding(padding = 0, part = "all") %>%
     flextable::width(width = cellWidths, unit = "cm")
-#   %>%
-# flextable::width(., width = dim(.)$widths * 33 / (flextable::flextable_dim(.)$widths), unit = "cm")
 
-# flextable %>% print(preview = "pptx")
+# flextable %>% print()
+flextable %>% print(preview = "pptx")

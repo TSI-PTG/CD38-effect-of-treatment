@@ -25,7 +25,8 @@ injury_markers <- genes_injury_markers %>%
     unnest(data) %>%
     drop_na(AffyID) %>%
     dplyr::filter(
-        cluster %>% str_detect("New"),
+        celltypename %>% str_detect(c("leukocytes"), negate = TRUE),
+        cluster %>% str_detect(c("New"), negate = TRUE),
         # abs(log2FC) > 1
     ) %>%
     dplyr::select(celltypename:Symb) %>%

@@ -60,7 +60,7 @@ genes_EABMR <- data %>%
 genes_ABMR_NK <- genes_EABMR %>%
     dplyr::filter(
         `HUVEC (unstimulated)` < quantile(`HUVEC (unstimulated)`, 0.5, na.rm = TRUE),
-        `HUVEC (IFNg stimulated)` < quantile(`HUVEC (IFNg stimulated)`, 0.5, na.rm = TRUE),
+        `HUVEC (IFNg stimulated)` < quantile(`HUVEC (IFNg stimulated)`, 0.5, na.rm = TRUE)
     ) %>%
     dplyr::slice_max(NK, n = 20) %>%
     dplyr::relocate(AffyID_U133, .after = AffyID) %>%

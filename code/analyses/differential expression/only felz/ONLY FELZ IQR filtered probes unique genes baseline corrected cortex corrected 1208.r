@@ -230,15 +230,12 @@ limma_tables <- tibble(
             )
     ),
     table_raw = list(
-        table_block_1 %>%
-            relocate(logFC, .before = "FC"),
-        table_block_2 %>%
-            relocate(logFC, .before = "FC"),
-        table_block_3 %>%
-            relocate(logFC, .before = "FC")
+        table_block_1,
+        table_block_2,
+        table_block_3
     )
 )
-limma_tables$table[[3]]
+limma_tables$table_raw[[3]]
 # tab_block_1 %>% as_tibble(rownames = "AffyID")
 
 
