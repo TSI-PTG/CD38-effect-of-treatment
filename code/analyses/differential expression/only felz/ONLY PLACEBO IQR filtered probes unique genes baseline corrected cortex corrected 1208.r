@@ -30,7 +30,6 @@ load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular e
 set00 <- data_expressionset_k1208[, data_expressionset_k1208$Patient %nin% c(15, 18)]
 
 
-
 # IQR FILTER THE DATA ####
 f1 <- function(x) (IQR(x) > 0.5)
 ff <- filterfun(f1)
@@ -65,12 +64,25 @@ genes_baseline <- table_block_1 %>%
 #     pull(AffyID)
 
 genes <- mean_exprs_1208 %>%
-    dplyr::slice_max(mean_expression, by = "Symb") %>%
+    dplyr::slice_max(mean_expression, by = "Symb")  %>% 
     dplyr::filter(Symb != "", AffyID %in% genes_baseline) %>%
     distinct(Symb, .keep_all = TRUE) %>%
     pull(AffyID)
 
 set <- set01[featureNames(set01) %in% genes, ]
+
+
+# WRANGLE THE CELL PANEL DATA ####
+cell_panel <- atagc %>%
+    dplyr::select(`Affy Probeset ID`, `Index`, `NK cell`, CD4, CD8, `Unstim HUVEC`, `HUVEC + IFNg`) %>%
+    dplyr::rename(
+        AffyID_U133 = `Affy Probeset ID`,
+        Symb = Index,
+        NK = `NK cell`,
+        `HUVEC (unstimulated)` = `Unstim HUVEC`,
+        `HUVEC (IFNg stimulated)` = `HUVEC + IFNg`
+    ) %>%
+    dplyr::slice_max(`HUVEC (IFNg stimulated)`, by = "Symb", with_ties = FALSE)
 
 
 # DEFINE SEED ####
@@ -88,21 +100,21 @@ design <- model.matrix(~ 0 + Felzartamab_Followup + cortex)
 
 # CONTRAST DESIGN week24 - baseline ####
 contrast_block_01 <- makeContrasts(
-    "x =  (Felzartamab_FollowupWeek24_Felzartamab-Felzartamab_FollowupBaseline_Felzartamab)/2",
+    "x =  (Felzartamab_FollowupWeek24_Placebo-Felzartamab_FollowupBaseline_Placebo)/2",
     levels = design
 )
 
 
 # CONTRAST DESIGN week52 - week24 ####
 contrast_block_02 <- makeContrasts(
-    "x =  (Felzartamab_FollowupWeek52_Felzartamab-Felzartamab_FollowupWeek24_Felzartamab)/2",
+    "x =  (Felzartamab_FollowupWeek52_Placebo-Felzartamab_FollowupWeek24_Placebo)/2",
     levels = design
 )
 
 
 # CONTRAST DESIGN week52 - baseline####
 contrast_block_03 <- makeContrasts(
-    "x =  (Felzartamab_FollowupWeek52_Felzartamab-Felzartamab_FollowupBaseline_Felzartamab)/2",
+    "x =  (Felzartamab_FollowupWeek52_Placebo-Felzartamab_FollowupBaseline_Placebo)/2",
     levels = design
 )
 
@@ -138,8 +150,8 @@ means_baseline_week24 <- fit_block_1 %>%
     rownames_to_column("AffyID") %>%
     tibble() %>%
     mutate_if(is.numeric, ~ 2^. %>% round(0)) %>%
-    rename_at(vars(contains("Felz")), ~ str_remove(., "Felzartamab_Followup")) %>%
-    dplyr::select(-contains("Week52"), -contains("Week12"), -contains("Placebo"), -any_of(c("cortex")))
+    rename_at(vars(contains("Placebo")), ~ str_remove(., "Felzartamab_Followup")) %>%
+    dplyr::select(-contains("Week52"), -contains("Week12"), -contains("Felz"), -any_of(c("cortex")))
 
 means_week24_week52 <- fit_block_2 %>%
     avearrays() %>%
@@ -147,8 +159,8 @@ means_week24_week52 <- fit_block_2 %>%
     rownames_to_column("AffyID") %>%
     tibble() %>%
     mutate_if(is.numeric, ~ 2^. %>% round(0)) %>%
-    rename_at(vars(contains("Felz")), ~ str_remove(., "Felzartamab_Followup")) %>%
-    dplyr::select(-contains("Baseline"), -contains("Week12"), -contains("Placebo"), -any_of(c("cortex")))
+    rename_at(vars(contains("Placebo")), ~ str_remove(., "Felzartamab_Followup")) %>%
+    dplyr::select(-contains("Baseline"), -contains("Week12"), -contains("Felz"), -any_of(c("cortex")))
 
 means_week52_baseline <- fit_block_3 %>%
     avearrays() %>%
@@ -156,8 +168,8 @@ means_week52_baseline <- fit_block_3 %>%
     rownames_to_column("AffyID") %>%
     tibble() %>%
     mutate_if(is.numeric, ~ 2^. %>% round(0)) %>%
-    rename_at(vars(contains("Felz")), ~ str_remove(., "Felzartamab_Followup")) %>%
-    dplyr::select(-contains("Week24"), -contains("Week12"), -contains("Placebo"), -any_of(c("cortex")))
+    rename_at(vars(contains("Placebo")), ~ str_remove(., "Felzartamab_Followup")) %>%
+    dplyr::select(-contains("Week24"), -contains("Week12"), -contains("Felz"), -any_of(c("cortex")))
 
 
 # FORMAT TOPTABLES ####
@@ -224,21 +236,21 @@ limma_tables <- tibble(
     toptable = list(
         table_block_1 %>%
             dplyr::rename(
-                "\u394 felz logFC" = logFC,
-                "\u394 felz p" = p,
-                "\u394 felz FDR" = FDR
+                "\u394 placebo logFC" = logFC,
+                "\u394 placebo p" = p,
+                "\u394 placebo FDR" = FDR
             ),
         table_block_2 %>%
             dplyr::rename(
-                "\u394 felz logFC" = logFC,
-                "\u394 felz p" = p,
-                "\u394 felz FDR" = FDR
+                "\u394 placebo logFC" = logFC,
+                "\u394 placebo p" = p,
+                "\u394 placebo FDR" = FDR
             ),
         table_block_3 %>%
             dplyr::rename(
-                "\u394 felz logFC" = logFC,
-                "\u394 felz p" = p,
-                "\u394 felz FDR" = FDR
+                "\u394 placebo logFC" = logFC,
+                "\u394 placebo p" = p,
+                "\u394 placebo FDR" = FDR
             )
     ),
     table = list(
@@ -254,7 +266,7 @@ limma_tables$table[[3]]
 # EXPORT THE DATA AS .RData FILE ####
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/"
 names(limma_tables$table) <- limma_tables$design
-save(limma_tables, file = paste(saveDir, "ONLY_FELZ_IQR_filtered_probes_unique_genes_baseline_corrected_cortex_corrected_limma_1208.RData", sep = ""))
+save(limma_tables, file = paste(saveDir, "ONLY_PLACEBO_IQR_filtered_probes_unique_genes_baseline_corrected_cortex_corrected_limma_1208.RData", sep = ""))
 
 
 # EXPORT THE DATA AS AN EXCEL SHEET ####
@@ -262,7 +274,7 @@ names(limma_tables$toptable) <- limma_tables$design
 saveDir1 <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/output/"
 openxlsx::write.xlsx(limma_tables$toptable,
     asTable = TRUE,
-    file = paste(saveDir1, "ONLY_FELZ_IQR_filtered_probes_unique_genes_baseline_corrected_cortex_corrected_limma_1208_3July24",
+    file = paste(saveDir1, "ONLY_PLACEBO_IQR_filtered_probes_unique_genes_baseline_corrected_cortex_corrected_limma_1208_3July24",
         # Sys.Date(),
         # format(Sys.time(), "_%I%M%p"),
         ".xlsx",

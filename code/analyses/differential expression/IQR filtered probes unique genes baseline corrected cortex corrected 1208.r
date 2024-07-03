@@ -125,7 +125,7 @@ means_baseline_week24 <- fit_block_1 %>%
     tibble() %>%
     mutate_if(is.numeric, ~ 2^. %>% round(0)) %>%
     rename_at(vars(contains("Felz")), ~ str_remove(., "Felzartamab_Followup")) %>%
-    dplyr::select(-contains("Week52"), -contains("Week12"))
+    dplyr::select(-contains("Week52"), -contains("Week12"), -any_of(c("cortex")))
 
 means_week24_week52 <- fit_block_2 %>%
     avearrays() %>%
@@ -134,7 +134,7 @@ means_week24_week52 <- fit_block_2 %>%
     tibble() %>%
     mutate_if(is.numeric, ~ 2^. %>% round(0)) %>%
     rename_at(vars(contains("Felz")), ~ str_remove(., "Felzartamab_Followup")) %>%
-    dplyr::select(-contains("Baseline"), -contains("Week12"))
+    dplyr::select(-contains("Baseline"), -contains("Week12"), -any_of(c("cortex")))
 
 means_week52_baseline <- fit_block_3 %>%
     avearrays() %>%
@@ -143,7 +143,7 @@ means_week52_baseline <- fit_block_3 %>%
     tibble() %>%
     mutate_if(is.numeric, ~ 2^. %>% round(0)) %>%
     rename_at(vars(contains("Felz")), ~ str_remove(., "Felzartamab_Followup")) %>%
-    dplyr::select(-contains("Week24"), -contains("Week12"))
+    dplyr::select(-contains("Week24"), -contains("Week12"), -any_of(c("cortex")))
 
 
 # FORMAT TOPTABLES ####
@@ -162,10 +162,13 @@ table_block_1 <- tab_block_1 %>%
     mutate(
         pFC = 2^(log2(Week24_Placebo) - log2(Baseline_Placebo)) %>% round(2),
         fFC = 2^(log2(Week24_Felzartamab) - log2(Baseline_Felzartamab)) %>% round(2),
-        FC = 2^logFC,
-        .after = logFC
+        .before = logFC
     ) %>%
-    left_join(means_K1208 %>% dplyr::select(-Symb, -Gene, -PBT), by = "AffyID")
+    left_join(means_K1208 %>% dplyr::select(-Symb, -Gene, -PBT), by = "AffyID") %>%
+    dplyr::rename(
+        p = P.Value,
+        FDR = adj.P.Val
+    )
 
 table_block_2 <- tab_block_2 %>%
     as_tibble(rownames = "AffyID") %>%
@@ -182,10 +185,13 @@ table_block_2 <- tab_block_2 %>%
     mutate(
         pFC = 2^(log2(Week52_Placebo) - log2(Week24_Placebo)) %>% round(2),
         fFC = 2^(log2(Week52_Felzartamab) - log2(Week24_Felzartamab)) %>% round(2),
-        FC = 2^logFC,
-        .after = logFC
+        .before = logFC
     ) %>%
-    left_join(means_K1208 %>% dplyr::select(-Symb, -Gene, -PBT), by = "AffyID")
+    left_join(means_K1208 %>% dplyr::select(-Symb, -Gene, -PBT), by = "AffyID") %>%
+    dplyr::rename(
+        p = P.Value,
+        FDR = adj.P.Val
+    )
 
 table_block_3 <- tab_block_3 %>%
     as_tibble(rownames = "AffyID") %>%
@@ -202,10 +208,13 @@ table_block_3 <- tab_block_3 %>%
     mutate(
         pFC = 2^(log2(Week52_Placebo) - log2(Baseline_Placebo)) %>% round(2),
         fFC = 2^(log2(Week52_Felzartamab) - log2(Baseline_Felzartamab)) %>% round(2),
-        FC = 2^logFC,
-        .after = logFC
+        .before = logFC
     ) %>%
-    left_join(means_K1208 %>% dplyr::select(-Symb, -Gene, -PBT), by = "AffyID")
+    left_join(means_K1208 %>% dplyr::select(-Symb, -Gene, -PBT), by = "AffyID") %>%
+    dplyr::rename(
+        p = P.Value,
+        FDR = adj.P.Val
+    )
 
 limma_tables <- tibble(
     design = c(
@@ -214,55 +223,38 @@ limma_tables <- tibble(
         "Baseline_vs_Week52"
     ),
     toptable = list(
-        tab_block_1 %>%
-            as_tibble(rownames = "AffyID"),
-        tab_block_2 %>%
-            as_tibble(rownames = "AffyID"),
-        tab_block_3 %>%
-            as_tibble(rownames = "AffyID")
+        table_block_1 %>%
+            dplyr::rename(
+                "\u394 placebo FC" = pFC,
+                "\u394 felz FC" = fFC,
+                "\u394\u394 logFC" = logFC,
+                "\u394\u394 p" = p,
+                "\u394\u394 FDR" = FDR
+            ),
+        table_block_2 %>%
+            dplyr::rename(
+                "\u394 placebo FC" = pFC,
+                "\u394 felz FC" = fFC,
+                "\u394\u394 logFC" = logFC,
+                "\u394\u394 p" = p,
+                "\u394\u394 FDR" = FDR
+            ),
+        table_block_3 %>%
+            dplyr::rename(
+                "\u394 placebo FC" = pFC,
+                "\u394 felz FC" = fFC,
+                "\u394\u394 logFC" = logFC,
+                "\u394\u394 p" = p,
+                "\u394\u394 FDR" = FDR
+            )
     ),
     table = list(
-        table_block_1 %>%
-            relocate(logFC, .before = "FC") %>%
-            dplyr::rename(
-                "\u394 placebo FC" = pFC,
-                "\u394 felz FC" = fFC,
-                "\u394\u394 logFC" = logFC,
-                "\u394\u394 FC" = FC,
-                "\u394\u394 p" = P.Value,
-                "\u394\u394 FDR" = adj.P.Val
-            ),
-        table_block_2 %>%
-            relocate(logFC, .before = "FC") %>%
-            dplyr::rename(
-                "\u394 placebo FC" = pFC,
-                "\u394 felz FC" = fFC,
-                "\u394\u394 logFC" = logFC,
-                "\u394\u394 FC" = FC,
-                "\u394\u394 p" = P.Value,
-                "\u394\u394 FDR" = adj.P.Val
-            ),
-        table_block_3 %>%
-            relocate(logFC, .before = "FC") %>%
-            dplyr::rename(
-                "\u394 placebo FC" = pFC,
-                "\u394 felz FC" = fFC,
-                "\u394\u394 logFC" = logFC,
-                "\u394\u394 FC" = FC,
-                "\u394\u394 p" = P.Value,
-                "\u394\u394 FDR" = adj.P.Val
-            )
-    ), 
-    table_raw = list(
-        table_block_1 %>%
-            relocate(logFC, .before = "FC") ,
-        table_block_2 %>%
-            relocate(logFC, .before = "FC") ,
-        table_block_3 %>%
-            relocate(logFC, .before = "FC") 
+        table_block_1,
+        table_block_2,
+        table_block_3
     )
 )
-# limma_tables$table[[1]]
+limma_tables$toptable[[1]]
 # tab_block_1 %>% as_tibble(rownames = "AffyID")
 
 
@@ -273,38 +265,39 @@ save(limma_tables, file = paste(saveDir, "IQR_filtered_probes_unique_genes_basel
 
 
 # EXPORT THE DATA AS AN EXCEL SHEET ####
+names(limma_tables$toptable) <- limma_tables$design
 saveDir1 <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/output/"
-# openxlsx::write.xlsx(limma_tables$table,
-#     asTable = TRUE,
-#     file = paste(saveDir1, "IQR_filtered_probes_unique_genes_baseline_corrected_cortex_corrected_limma_1208_14Jun24",
-#         # Sys.Date(),
-#         # format(Sys.time(), "_%I%M%p"),
-#         ".xlsx",
-#         sep = ""
-#     )
-# )
+openxlsx::write.xlsx(limma_tables$toptable,
+    asTable = TRUE,
+    file = paste(saveDir1, "IQR_filtered_probes_unique_genes_baseline_corrected_cortex_corrected_limma_1208_3July24",
+        # Sys.Date(),
+        # format(Sys.time(), "_%I%M%p"),
+        ".xlsx",
+        sep = ""
+    )
+)
 
 
 limma_tables %>%
     dplyr::filter(design == "Baseline_vs_Week24") %>%
-    pull(toptable) %>%
+    pull(table) %>%
     pluck(1) %>%
-    dplyr::filter(P.Value < 0.05) %>%
+    dplyr::filter(p < 0.05) %>%
     mutate(direction = ifelse(logFC < 0, "down", "up")) %>%
     nest(.by = direction)
 
 limma_tables %>%
     dplyr::filter(design == "Week24_vs_Week52") %>%
-    pull(toptable) %>%
+    pull(table) %>%
     pluck(1) %>%
-    dplyr::filter(P.Value < 0.05) %>%
+    dplyr::filter(p < 0.05) %>%
     mutate(direction = ifelse(logFC < 0, "down", "up")) %>%
     nest(.by = direction)
 
 limma_tables %>%
     dplyr::filter(design == "Baseline_vs_Week52") %>%
-    pull(toptable) %>%
+    pull(table) %>%
     pluck(1) %>%
-    dplyr::filter(P.Value < 0.05) %>%
+    dplyr::filter(p < 0.05) %>%
     mutate(direction = ifelse(logFC < 0, "down", "up")) %>%
     nest(.by = direction)

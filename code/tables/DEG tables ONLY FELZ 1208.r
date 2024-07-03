@@ -25,7 +25,8 @@ injury_markers <- genes_injury_markers %>%
     unnest(data) %>%
     drop_na(AffyID) %>%
     dplyr::filter(
-        cluster %>% str_detect("New"),
+        celltypename %>% str_detect("leukocytes", negate = TRUE),
+        # cluster %>% str_detect("New"),
         # abs(log2FC) > 1
     ) %>%
     dplyr::select(celltypename:Symb) %>%
@@ -58,7 +59,7 @@ limma_tables <- limma_tables %>%
                     left_join(injury_markers, by = "AffyID") %>%
                     dplyr::select(
                         -contains("AffyID"),
-                        -contains("placebo FC"), -contains("felz FC"),
+                        -contains("placebo FC"), -contains("felzartamab FC"),
                         -contains("MMDx")
                     ) %>%
                     dplyr::slice(1:100) %>%
@@ -87,18 +88,20 @@ limma_tables$gene_tables[[3]] %>% colnames()
 # GLOBAL PARAMETERS FOR FLEXTABLES ####
 header1 <- c(
     # "AffyID",
-    "Gene\nsymbol", "Gene", "PBT", "Cellular expression\nin AKI",
-    "\u394 logFC", "\u394 P", "\u394 FDR",
+    "Gene\nsymbol", "Gene",
+    rep("annotation", 2),
+    "\u394 felzartamab\nlogFC", "\u394 felzartamab\nP-value", "\u394 felzartamab\nFDR",
     rep("Mean expression by group", 2)
 )
 header2 <- c(
     # "AffyID",
-    "Gene\nsymbol", "Gene", "PBT", "Cellular expression\nin AKI",
-    "\u394 logFC", "\u394 P", "\u394 FDR",
-    rep("Felzartamab", 2)
+    "Gene\nsymbol", "Gene",
+    rep("annotation", 2),
+    "\u394 felzartamab\nlogFC", "\u394 felzartamab\nP-value", "\u394 felzartamab\nFDR",
+    rep("felzartamab", 2)
 )
 
-cellWidths <- c(1.5, 5, 3, 1, 1, 1, 1, rep(1, 2)) # for individual tables up or down
+cellWidths <- c(1.5, 5, 3, 3, 1, 1, 1, rep(1, 2)) # for individual tables up or down
 cellWidths %>% length()
 
 # limma_tables$gene_tables[[1]] %>%
@@ -114,22 +117,25 @@ flextables <- limma_tables %>%
             function(design, gene_tables) {
                 # colnames(gene_tables) <- LETTERS[1:ncol(gene_tables)]
                 if (design == "Baseline_vs_Week24") {
-                    title <- paste("Table i. Top 20 differentially expressed genes between baseline and week24 in biopsies from placebo and Felzartamab treated patients (by P-value)", sep = "")
+                    title <- paste("Table i. Top 20 differentially expressed genes between baseline and week24 in biopsies from placebo and felzartamab treated patients (by P-value)", sep = "")
                     header3 <- c(
-                        "Gene\nsymbol", "Gene", "PBT", "Cellular expression\nin AKI", "\u394 logFC", "\u394 P", "\u394 FDR",
+                        "Gene\nsymbol", "Gene", "PBT", "kidney cell-specific\nAKI marker",
+                        "\u394 felzartamab\nlogFC", "\u394 felzartamab\nP-value", "\u394 felzartamab\nFDR",
                         "Baseline\n(N=10)", "Week24\n(N=10)"
                     )
                 } else if (design == "Week24_vs_Week52") {
-                    title <- paste("Table i. Top 20 differentially expressed genes between week24 and week52 in biopsies from placebo and Felzartamab treated patients (by P-value)", sep = "")
+                    title <- paste("Table i. Top 20 differentially expressed genes between week24 and week52 in biopsies from placebo and felzartamab treated patients (by P-value)", sep = "")
 
                     header3 <- c(
-                        "Gene\nsymbol", "Gene", "PBT", "Cellular expression\nin AKI", "\u394 logFC", "\u394 P", "\u394 FDR",
+                        "Gene\nsymbol", "Gene", "PBT", "kidney cell-specific\nAKI marker",
+                        "\u394 felzartamab\nlogFC", "\u394 felzartamab\nP-value", "\u394 felzartamab\nFDR",
                         "Week24\n(N=10)", "Week52\n(N=10)"
                     )
                 } else if (design == "Baseline_vs_Week52") {
-                    title <- paste("Table i. Top 20 differentially expressed genes between baseline and week52 in biopsies from placebo and Felzartamab treated patients (by P-value)", sep = "")
+                    title <- paste("Table i. Top 20 differentially expressed genes between baseline and week52 in biopsies from placebo and felzartamab treated patients (by P-value)", sep = "")
                     header3 <- c(
-                        "Gene\nsymbol", "Gene", "PBT", "Cellular expression\nin AKI", "\u394 logFC", "\u394 P", "\u394 FDR",
+                        "Gene\nsymbol", "Gene", "PBT", "kidney cell-specific\nAKI marker",
+                        "\u394 felzartamab\nlogFC", "\u394 felzartamab\nP-value", "\u394 felzartamab\nFDR",
                         "Baseline\n(N=10)", "Week52\n(N=10)"
                     )
                 }
