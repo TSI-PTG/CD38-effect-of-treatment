@@ -9,7 +9,7 @@ load("Z:/DATA/Datalocks/Other data/affymap219_21Oct2019_1306_JR.RData") # for la
 # load hinze single cell results normal vs AKI
 single_cell_path <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/Hinze single cell state injury markers.xlsx"
 sheetnames <- excel_sheets(single_cell_path)
-mylist <- lapply(sheetnames, read_excel, path = single_cell_path, col_types = c(rep("text", 4), rep("numeric", 5)))
+mylist <- lapply(sheetnames, read_excel, path = single_cell_path, col_types = c(rep("text", 5), rep("numeric", 5)))
 names(mylist) <- sheetnames
 hinze <- mylist %>% tibble(celltype = names(.), data = .)
 # load mean expression in K1208
@@ -51,28 +51,28 @@ genes_injury_markers <- hinze %>%
 
 # EXPORT THE GENE SET ####
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/"
-# save(genes_injury_markers, file = paste(saveDir, "Hinze_injury_markers.RData", sep = ""))
+save(genes_injury_markers, file = paste(saveDir, "Hinze_injury_markers.RData", sep = ""))
 
 
 # EXPORT THE DATA AS AN EXCEL SHEET ####
 saveDir1 <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/output/"
-# openxlsx::write.xlsx(genes_injury_markers$data,
-#     asTable = TRUE,
-#     file = paste(saveDir1, "Hinze_injury_markers_26Jun24",
-#         # Sys.Date(),
-#         # format(Sys.time(), "_%I%M%p"),
-#         ".xlsx",
-#         sep = ""
-#     )
-# )
+openxlsx::write.xlsx(genes_injury_markers$data,
+    asTable = TRUE,
+    file = paste(saveDir1, "Hinze_injury_markers_26Jun24",
+        # Sys.Date(),
+        # format(Sys.time(), "_%I%M%p"),
+        ".xlsx",
+        sep = ""
+    )
+)
 
 
 
 # PRINT A SUMMARY TABLE OF CELL TYPES AND STATES ####
 flextable <- genes_injury_markers %>%
     unnest(data) %>%
-    dplyr::select(celltypename, celltype, cluster) %>%
-    distinct(celltypename, celltype, cluster) %>%
+    dplyr::select(celltypename, celltype, clustername, cluster) %>%
+    distinct(celltypename, celltype,clustername, cluster) %>%
     flextable::flextable() %>%
     flextable::merge_v(part = "body") %>%
     flextable::border_remove() %>%

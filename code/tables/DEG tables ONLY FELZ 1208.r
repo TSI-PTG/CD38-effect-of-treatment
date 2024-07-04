@@ -205,4 +205,4 @@ flextables$flextables[[3]]
 
 
 # PRINT THE DATA TO POWERPOINT ####
-flextables$flextables[[2]] %>% print(preview = "pptx")
+flextables$flextables[[1]] %>% print(preview = "pptx")
