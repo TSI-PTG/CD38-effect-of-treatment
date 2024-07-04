@@ -113,7 +113,7 @@ gsea_mesh_tables <- gsea_mesh_formatted %>%
                     dplyr::select(Description, setSize, NES, pvalue, FDR,  dplyr::any_of("core_enrichment")) %>%
                     flextable::flextable() %>%
                     flextable::border_remove() %>%
-                    flextable::border(border = fp_border(), part = "all") %>%
+                    flextable::border(border = officer::fp_border(), part = "all") %>%
                     flextable::align(align = "center", part = "all") %>%
                     flextable::align(j = "core_enrichment", align = "left", part = "body") %>%
                     flextable::bg(bg = "white", part = "all") %>%

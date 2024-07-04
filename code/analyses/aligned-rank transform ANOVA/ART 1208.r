@@ -337,7 +337,7 @@ res_art_flextable <- data_03 %>%
     flextable::border_remove() %>%
     flextable::bold(part = "header") %>%
     flextable::padding(padding = 0, part = "all") %>%
-    flextable::border(border = fp_border(), part = "all") %>%
+    flextable::border(border = officer::fp_border(), part = "all") %>%
     flextable::autofit()
 
 

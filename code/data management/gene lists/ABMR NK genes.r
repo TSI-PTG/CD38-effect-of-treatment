@@ -102,7 +102,7 @@ flextable <- genes_ABMR_NK %>%
     dplyr::select(!dplyr::contains("AffyID")) %>%
     dplyr::mutate(
         PBT = PBT %>%
-            stringr::str_remove("RAT") %>%
+            stringr::str_remove(",RAT") %>%
             stringr::str_remove("Rej-RAT") %>%
             stringr::str_replace(",,", ",")
     ) %>%

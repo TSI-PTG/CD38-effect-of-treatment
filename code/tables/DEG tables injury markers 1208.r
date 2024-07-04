@@ -17,6 +17,8 @@ load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular e
 # load K4502 injury simple file
 simplefile_path <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/0000 simple XL files/Kidney 4502/MASTER COPY K4502 Injset SimpleCorrAAInjRej 5AAInj 7AARej.xlsx"
 simplefile <- read_excel(path = simplefile_path, sheet = "simpleCorrAAInjRejInjset")
+# load in house cell panel
+atagc <- readxl::read_excel("Z:/MISC/Patrick Gauthier/R/affymap219-CELL-PANEL/backup/UPDATED 2017 ANNOTATIONS - MASTERFILE - U133 HUMAN CELL PANEL - ALL PROBESETS (nonIQR) pfhptg.xlsx")
 
 
 # DEFINE CELL STATES OF INTEREST ####
@@ -202,8 +204,8 @@ flextables <- tables %>%
                     flextable::merge_v(part = "header") %>%
                     flextable::merge_h(part = "header") %>%
                     flextable::border_remove() %>%
-                    flextable::border(part = "header", border = fp_border()) %>%
-                    flextable::border(part = "body", border = fp_border()) %>%
+                    flextable::border(part = "header", border = officer::fp_border()) %>%
+                    flextable::border(part = "body", border = officer::fp_border()) %>%
                     flextable::align(align = "center") %>%
                     flextable::align(align = "center", part = "header") %>%
                     flextable::font(fontname = "Arial", part = "all") %>%

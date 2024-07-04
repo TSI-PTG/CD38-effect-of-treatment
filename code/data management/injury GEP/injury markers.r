@@ -2,7 +2,8 @@
 # CRAN libraries
 library(tidyverse) # install.packages("tidyverse")
 library(readxl) # install.packages("readxl")
-library(circlize) # install.packages("circlize")
+library(flextable) # install.packages("flextable")
+library(officer) # install.packages("officer")
 # load AFFYMAP
 load("Z:/DATA/Datalocks/Other data/affymap219_21Oct2019_1306_JR.RData") # for labeling genes
 # load hinze single cell results normal vs AKI
@@ -45,12 +46,12 @@ genes_injury_markers <- hinze %>%
         )
     ) %>%
     unnest(data) %>%
-    nest(.by = c(celltypename)) 
+    nest(.by = c(celltypename))
 
 
 # EXPORT THE GENE SET ####
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/"
-save(genes_injury_markers, file = paste(saveDir, "Hinze_injury_markers.RData", sep = ""))
+# save(genes_injury_markers, file = paste(saveDir, "Hinze_injury_markers.RData", sep = ""))
 
 
 # EXPORT THE DATA AS AN EXCEL SHEET ####
@@ -64,3 +65,29 @@ saveDir1 <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 mole
 #         sep = ""
 #     )
 # )
+
+
+
+# PRINT A SUMMARY TABLE OF CELL TYPES AND STATES ####
+flextable <- genes_injury_markers %>%
+    unnest(data) %>%
+    dplyr::select(celltypename, celltype, cluster) %>%
+    distinct(celltypename, celltype, cluster) %>%
+    flextable::flextable() %>%
+    flextable::merge_v(part = "body") %>%
+    flextable::border_remove() %>%
+    flextable::border(part = "header", border = officer::fp_border()) %>%
+    flextable::border(part = "body", border = officer::fp_border()) %>%
+    flextable::align(align = "center") %>%
+    flextable::align(align = "center", part = "header") %>%
+    flextable::font(fontname = "Arial", part = "all") %>%
+    flextable::fontsize(size = 8, part = "all") %>%
+    flextable::fontsize(size = 8, part = "footer") %>%
+    flextable::fontsize(i = 1, size = 12, part = "header") %>%
+    flextable::bold(part = "header") %>%
+    flextable::bg(bg = "white", part = "all") %>%
+    flextable::padding(padding = 0, part = "all") %>%
+    flextable::autofit()
+
+
+flextable  %>% print(preview = "pptx")

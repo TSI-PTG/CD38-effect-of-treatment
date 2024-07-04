@@ -145,8 +145,8 @@ flextables <- limma_tables %>%
                     flextable::merge_v(part = "header") %>%
                     flextable::merge_h(part = "header") %>%
                     flextable::border_remove() %>%
-                    flextable::border(part = "header", border = fp_border()) %>%
-                    flextable::border(part = "body", border = fp_border()) %>%
+                    flextable::border(part = "header", border = officer::fp_border()) %>%
+                    flextable::border(part = "body", border = officer::fp_border()) %>%
                     flextable::align(align = "center") %>%
                     flextable::align(align = "center", part = "header") %>%
                     flextable::font(fontname = "Arial", part = "all") %>%

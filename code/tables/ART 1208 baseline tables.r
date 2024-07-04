@@ -31,7 +31,7 @@ res_art_flextable <- felzartamab_ARTanova_baseline %>%
     flextable::border_remove() %>%
     flextable::bold(part = "header") %>%
     flextable::padding(padding = 0, part = "all") %>%
-    flextable::border(border = fp_border(), part = "all") %>%
+    flextable::border(border = officer::fp_border(), part = "all") %>%
     flextable::autofit()
 
 # res_art_flextable %>% print(preview = "pptx")
@@ -125,10 +125,10 @@ flextable_baseline <- data_formatted_medians %>%
     flextable::merge_v(part = "header") %>%
     flextable::merge_h(part = "header") %>%
     flextable::border_remove() %>%
-    flextable::border(part = "header", border = fp_border()) %>%
-    flextable::border(part = "body", border = fp_border()) %>%
-    flextable::border(part = "footer", border.left = fp_border(), border.right = fp_border()) %>%
-    flextable::border(i = 1, part = "footer", border.bottom = fp_border()) %>%
+    flextable::border(part = "header", border = officer::fp_border()) %>%
+    flextable::border(part = "body", border = officer::fp_border()) %>%
+    flextable::border(part = "footer", border.left = officer::fp_border(), border.right = officer::fp_border()) %>%
+    flextable::border(i = 1, part = "footer", border.bottom = officer::fp_border()) %>%
     flextable::align(align = "center") %>%
     flextable::align(align = "center", part = "header") %>%
     flextable::font(fontname = "Arial", part = "all") %>%

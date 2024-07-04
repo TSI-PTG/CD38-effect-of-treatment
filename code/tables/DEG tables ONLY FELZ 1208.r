@@ -12,6 +12,8 @@ load("Z:/DATA/Datalocks/Other data/affymap219_21Oct2019_1306_JR.RData")
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/ONLY_FELZ_IQR_filtered_probes_unique_genes_baseline_corrected_cortex_corrected_limma_1208.RData")
 # load gene lists
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/Hinze_injury_markers.RData")
+# load in house cell panel
+atagc <- readxl::read_excel("Z:/MISC/Patrick Gauthier/R/affymap219-CELL-PANEL/backup/UPDATED 2017 ANNOTATIONS - MASTERFILE - U133 HUMAN CELL PANEL - ALL PROBESETS (nonIQR) pfhptg.xlsx")
 
 
 
@@ -46,6 +48,20 @@ injury_markers <- genes_injury_markers %>%
     dplyr::select(AffyID, `cellular expression`)
 
 
+# WRANGLE THE CELL PANEL DATA ####
+cell_panel <- atagc %>%
+    dplyr::slice_max(`Control Nephr`, by = "Index", with_ties = FALSE) %>%
+    dplyr::rename(
+        AffyID_U133 = `Affy Probeset ID`,
+        Symb = Index,
+        NK = `NK cell`,
+        `HUVEC (unstimulated)` = `Unstim HUVEC`,
+        `HUVEC (IFNg stimulated)` = `HUVEC + IFNg`
+    ) %>%
+    dplyr::select(Symb, NK, CD4, CD8, `HUVEC (unstimulated)`, `HUVEC (IFNg stimulated)`)
+
+
+
 # FORMAT TABLES TO MAKE FLEXTABLES ####
 limma_tables <- limma_tables %>%
     mutate(
@@ -62,7 +78,8 @@ limma_tables <- limma_tables %>%
                         -contains("placebo FC"), -contains("felzartamab FC"),
                         -contains("MMDx")
                     ) %>%
-                    dplyr::slice(1:100) %>%
+                    left_join(cell_panel, by = "Symb") %>%
+                    # dplyr::slice(1:100) %>%
                     mutate(
                         Gene = Gene %>% str_remove("///.*"),
                         logFC = logFC %>% round(2),
@@ -89,19 +106,25 @@ limma_tables$gene_tables[[3]] %>% colnames()
 header1 <- c(
     # "AffyID",
     "Gene\nsymbol", "Gene",
-    rep("annotation", 2),
-    "\u394 felzartamab\nlogFC", "\u394 felzartamab\nP-value", "\u394 felzartamab\nFDR",
-    rep("Mean expression by group", 2)
+    # rep("annotation", 2),
+    "PBT", "AKI marker\nin kidney cells",
+    # "\u394 felzartamab\nlogFC", "\u394 felzartamab\nP-value", "\u394 felzartamab\nFDR",
+    rep("Temporal effect in felzartamab patients", 3),
+    rep("Mean expression in felzartamab patients", 2),
+    rep("Mean expression by cell type", 5)
 )
 header2 <- c(
     # "AffyID",
     "Gene\nsymbol", "Gene",
-    rep("annotation", 2),
-    "\u394 felzartamab\nlogFC", "\u394 felzartamab\nP-value", "\u394 felzartamab\nFDR",
-    rep("felzartamab", 2)
+    # rep("annotation", 2),
+    "PBT", "AKI marker\nin kidney cells",
+    # "\u394 felzartamab\nlogFC", "\u394 felzartamab\nP-value", "\u394 felzartamab\nFDR",
+    rep("Temporal effect in felzartamab patients", 3),
+    rep("Mean expression in felzartamab patients", 2),
+    rep("Mean expression by cell type", 5)
 )
 
-cellWidths <- c(1.5, 5, 3, 3, 1, 1, 1, rep(1, 2)) # for individual tables up or down
+cellWidths <- c(2.2, 7, 4, 4, rep(1.8, 3), rep(1.3, 2), rep(1.2, 3), rep(2, 2)) # for individual tables up or down
 cellWidths %>% length()
 
 # limma_tables$gene_tables[[1]] %>%
@@ -117,29 +140,39 @@ flextables <- limma_tables %>%
             function(design, gene_tables) {
                 # colnames(gene_tables) <- LETTERS[1:ncol(gene_tables)]
                 if (design == "Baseline_vs_Week24") {
-                    title <- paste("Table i. Top 20 differentially expressed genes between baseline and week24 in biopsies from placebo and felzartamab treated patients (by P-value)", sep = "")
+                    title <- paste("Table i. Top 30 differentially expressed genes between baseline and week24 in felzartamab treated patients (by P-value)", sep = "")
                     header3 <- c(
-                        "Gene\nsymbol", "Gene", "PBT", "kidney cell-specific\nAKI marker",
+                        "Gene\nsymbol", "Gene", "PBT", "AKI marker\nin kidney cells",
                         "\u394 felzartamab\nlogFC", "\u394 felzartamab\nP-value", "\u394 felzartamab\nFDR",
-                        "Baseline\n(N=10)", "Week24\n(N=10)"
+                        "Baseline\n(N=10)", "Week24\n(N=10)",
+                        "NK", "CD4", "CD8", "HUVEC\n(unstimulated)", "HUVEC\n(IFNg stimulated)"
                     )
                 } else if (design == "Week24_vs_Week52") {
                     title <- paste("Table i. Top 20 differentially expressed genes between week24 and week52 in biopsies from placebo and felzartamab treated patients (by P-value)", sep = "")
 
                     header3 <- c(
-                        "Gene\nsymbol", "Gene", "PBT", "kidney cell-specific\nAKI marker",
+                        "Gene\nsymbol", "Gene", "PBT", "AKI marker\nin kidney cells",
                         "\u394 felzartamab\nlogFC", "\u394 felzartamab\nP-value", "\u394 felzartamab\nFDR",
-                        "Week24\n(N=10)", "Week52\n(N=10)"
+                        "Week24\n(N=10)", "Week52\n(N=10)",
+                        "NK", "CD4", "CD8", "HUVEC\n(unstimulated)", "HUVEC\n(IFNg stimulated)"
                     )
                 } else if (design == "Baseline_vs_Week52") {
                     title <- paste("Table i. Top 20 differentially expressed genes between baseline and week52 in biopsies from placebo and felzartamab treated patients (by P-value)", sep = "")
                     header3 <- c(
-                        "Gene\nsymbol", "Gene", "PBT", "kidney cell-specific\nAKI marker",
+                        "Gene\nsymbol", "Gene", "PBT", "AKI marker\nin kidney cells",
                         "\u394 felzartamab\nlogFC", "\u394 felzartamab\nP-value", "\u394 felzartamab\nFDR",
-                        "Baseline\n(N=10)", "Week52\n(N=10)"
+                        "Baseline\n(N=10)", "Week52\n(N=10)",
+                        "NK", "CD4", "CD8", "HUVEC\n(unstimulated)", "HUVEC\n(IFNg stimulated)"
                     )
                 }
                 gene_tables %>%
+                    dplyr::mutate(
+                        PBT = PBT %>%
+                            stringr::str_remove(",RAT") %>%
+                            stringr::str_remove("Rej-RAT") %>%
+                            stringr::str_replace(",,", ",")
+                    ) %>%
+                    slice_min(p, n = 30, with_ties = FALSE) %>%
                     flextable::flextable() %>%
                     flextable::delete_part("header") %>%
                     flextable::add_header_row(top = TRUE, values = header3) %>%
@@ -149,8 +182,8 @@ flextables <- limma_tables %>%
                     flextable::merge_v(part = "header") %>%
                     flextable::merge_h(part = "header") %>%
                     flextable::border_remove() %>%
-                    flextable::border(part = "header", border = fp_border()) %>%
-                    flextable::border(part = "body", border = fp_border()) %>%
+                    flextable::border(part = "header", border = officer::fp_border()) %>%
+                    flextable::border(part = "body", border = officer::fp_border()) %>%
                     flextable::align(align = "center") %>%
                     flextable::align(align = "center", part = "header") %>%
                     flextable::font(fontname = "Arial", part = "all") %>%
@@ -160,8 +193,9 @@ flextables <- limma_tables %>%
                     flextable::bold(part = "header") %>%
                     flextable::bg(bg = "white", part = "all") %>%
                     flextable::padding(padding = 0, part = "all") %>%
-                    flextable::width(width = cellWidths, unit = "cm") %>%
-                    flextable::width(., width = dim(.)$widths * 33 / (flextable_dim(.)$widths), unit = "cm")
+                    flextable::width(width = cellWidths, unit = "cm")
+                # %>%
+                # flextable::width(., width = dim(.)$widths * 33 / (flextable_dim(.)$widths), unit = "cm")
             }
         )
     )
@@ -171,4 +205,4 @@ flextables$flextables[[3]]
 
 
 # PRINT THE DATA TO POWERPOINT ####
-flextables$flextables[[3]] %>% print(preview = "pptx")
+flextables$flextables[[2]] %>% print(preview = "pptx")

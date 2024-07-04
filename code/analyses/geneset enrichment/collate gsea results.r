@@ -94,7 +94,7 @@ gsea_flextables <- gsea_tables %>%
                     flextable::merge_v(part = "header") %>%
                     flextable::merge_h(part = "header") %>%
                     flextable::border_remove() %>%
-                    flextable::border(border = fp_border(), part = "all") %>%
+                    flextable::border(border = officer::fp_border(), part = "all") %>%
                     flextable::padding(padding = 0) %>%
                     flextable::padding(j = "core enrichment genes", padding.left = 5) %>%
                     flextable::align(align = "center", part = "all") %>%

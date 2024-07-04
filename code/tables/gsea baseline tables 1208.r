@@ -73,7 +73,7 @@ gsea_go_flextables <- gsea_go_tables %>%
                     flextable::add_header_row(values = rep(title, ncol_keys(.))) %>%
                     flextable::merge_h(part = "header") %>%
                     flextable::border_remove() %>%
-                    flextable::border(border = fp_border(), part = "all") %>%
+                    flextable::border(border = officer::fp_border(), part = "all") %>%
                     flextable::align(align = "center", part = "all") %>%
                     flextable::fontsize(size = 8, part = "all") %>%
                     flextable::fontsize(i = 1, size = 10, part = "header") %>%

@@ -103,7 +103,7 @@ patient_summary %>%
     flextable::border_remove() %>%
     flextable::bold(part = "header") %>%
     flextable::padding(padding = 0, part = "all") %>%
-    flextable::border(border = fp_border(), part = "all") %>%
+    flextable::border(border = officer::fp_border(), part = "all") %>%
     flextable::autofit()
 # %>%
 # print(preview = "pptx")
@@ -121,7 +121,7 @@ patient_summary %>%
     flextable::border_remove() %>%
     flextable::bold(part = "header") %>%
     flextable::padding(padding = 0, part = "all") %>%
-    flextable::border(border = fp_border(), part = "all") %>%
+    flextable::border(border = officer::fp_border(), part = "all") %>%
     flextable::autofit()
 
 
@@ -455,7 +455,7 @@ res_art_flextable <- df_univariate_02 %>%
     flextable::border_remove() %>%
     flextable::bold(part = "header") %>%
     flextable::padding(padding = 0, part = "all") %>%
-    flextable::border(border = fp_border(), part = "all") %>%
+    flextable::border(border = officer::fp_border(), part = "all") %>%
     flextable::autofit()
 
 # res_art_flextable %>% print(preview = "pptx")
@@ -654,10 +654,10 @@ flextable_pairwise <- data_pairwise_formatted %>%
     flextable::merge_v(part = "header") %>%
     flextable::merge_h(part = "header") %>%
     flextable::border_remove() %>%
-    flextable::border(part = "header", border = fp_border()) %>%
-    flextable::border(part = "body", border = fp_border()) %>%
-    flextable::border(part = "footer", border.left = fp_border(), border.right = fp_border()) %>%
-    flextable::border(i = 1, part = "footer", border.bottom = fp_border()) %>%
+    flextable::border(part = "header", border = officer::fp_border()) %>%
+    flextable::border(part = "body", border = officer::fp_border()) %>%
+    flextable::border(part = "footer", border.left = officer::fp_border(), border.right = officer::fp_border()) %>%
+    flextable::border(i = 1, part = "footer", border.bottom = officer::fp_border()) %>%
     flextable::align(align = "center") %>%
     flextable::align(align = "center", part = "header") %>%
     # flextable::valign(i = 3, j = ncol_keys(.), valign = "bottom", part = "header") %>%
