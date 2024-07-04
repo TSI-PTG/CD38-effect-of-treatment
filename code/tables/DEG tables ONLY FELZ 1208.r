@@ -27,8 +27,8 @@ injury_markers <- genes_injury_markers %>%
     unnest(data) %>%
     drop_na(AffyID) %>%
     dplyr::filter(
-        celltypename %>% str_detect("leukocytes", negate = TRUE),
-        # cluster %>% str_detect("New"),
+        # celltypename %>% str_detect("leukocytes", negate = TRUE),
+        cluster %>% str_detect("New"),
         # abs(log2FC) > 1
     ) %>%
     dplyr::select(celltypename:Symb) %>%
@@ -107,24 +107,24 @@ header1 <- c(
     # "AffyID",
     "Gene\nsymbol", "Gene",
     # rep("annotation", 2),
-    "PBT", "AKI marker\nin kidney cells",
+    "PBT", "Marker gene in\ninjured kidney cells",
     # "\u394 felzartamab\nlogFC", "\u394 felzartamab\nP-value", "\u394 felzartamab\nFDR",
     rep("Temporal effect in felzartamab patients", 3),
-    rep("Mean expression in felzartamab patients", 2),
+    rep("Mean expression in felzartamab patients", 3),
     rep("Mean expression by cell type", 5)
 )
 header2 <- c(
     # "AffyID",
     "Gene\nsymbol", "Gene",
     # rep("annotation", 2),
-    "PBT", "AKI marker\nin kidney cells",
+    "PBT", "Marker gene in\ninjured kidney cells",
     # "\u394 felzartamab\nlogFC", "\u394 felzartamab\nP-value", "\u394 felzartamab\nFDR",
     rep("Temporal effect in felzartamab patients", 3),
-    rep("Mean expression in felzartamab patients", 2),
+    rep("Mean expression in felzartamab patients", 3),
     rep("Mean expression by cell type", 5)
 )
 
-cellWidths <- c(2.2, 7, 4, 4, rep(1.8, 3), rep(1.3, 2), rep(1.2, 3), rep(2, 2)) # for individual tables up or down
+cellWidths <- c(2.2, 7, 4, 3.5, rep(1.8, 3), rep(1.3, 3), rep(1.2, 3), rep(2, 2)) # for individual tables up or down
 cellWidths %>% length()
 
 # limma_tables$gene_tables[[1]] %>%
@@ -142,26 +142,26 @@ flextables <- limma_tables %>%
                 if (design == "Baseline_vs_Week24") {
                     title <- paste("Table i. Top 30 differentially expressed genes between baseline and week24 in felzartamab treated patients (by P-value)", sep = "")
                     header3 <- c(
-                        "Gene\nsymbol", "Gene", "PBT", "AKI marker\nin kidney cells",
+                        "Gene\nsymbol", "Gene", "PBT", "Marker gene in\ninjured kidney cells",
                         "\u394 felzartamab\nlogFC", "\u394 felzartamab\nP-value", "\u394 felzartamab\nFDR",
-                        "Baseline\n(N=10)", "Week24\n(N=10)",
+                        "Baseline\n(N=10)", "Week24\n(N=10)","Week52\n(N=10)",
                         "NK", "CD4", "CD8", "HUVEC\n(unstimulated)", "HUVEC\n(IFNg stimulated)"
                     )
                 } else if (design == "Week24_vs_Week52") {
-                    title <- paste("Table i. Top 20 differentially expressed genes between week24 and week52 in biopsies from placebo and felzartamab treated patients (by P-value)", sep = "")
+                    title <- paste("Table i. Top 30 differentially expressed genes between week24 and week52 in biopsies from placebo and felzartamab treated patients (by P-value)", sep = "")
 
                     header3 <- c(
-                        "Gene\nsymbol", "Gene", "PBT", "AKI marker\nin kidney cells",
+                        "Gene\nsymbol", "Gene", "PBT", "Marker gene in\ninjured kidney cells",
                         "\u394 felzartamab\nlogFC", "\u394 felzartamab\nP-value", "\u394 felzartamab\nFDR",
-                        "Week24\n(N=10)", "Week52\n(N=10)",
+                        "Baseline\n(N=10)", "Week24\n(N=10)", "Week52\n(N=10)",
                         "NK", "CD4", "CD8", "HUVEC\n(unstimulated)", "HUVEC\n(IFNg stimulated)"
                     )
                 } else if (design == "Baseline_vs_Week52") {
-                    title <- paste("Table i. Top 20 differentially expressed genes between baseline and week52 in biopsies from placebo and felzartamab treated patients (by P-value)", sep = "")
+                    title <- paste("Table i. Top 30 differentially expressed genes between baseline and week52 in biopsies from placebo and felzartamab treated patients (by P-value)", sep = "")
                     header3 <- c(
-                        "Gene\nsymbol", "Gene", "PBT", "AKI marker\nin kidney cells",
+                        "Gene\nsymbol", "Gene", "PBT", "Marker gene in\ninjured kidney cells",
                         "\u394 felzartamab\nlogFC", "\u394 felzartamab\nP-value", "\u394 felzartamab\nFDR",
-                        "Baseline\n(N=10)", "Week52\n(N=10)",
+                        "Baseline\n(N=10)",  "Week24\n(N=10)", "Week52\n(N=10)",
                         "NK", "CD4", "CD8", "HUVEC\n(unstimulated)", "HUVEC\n(IFNg stimulated)"
                     )
                 }
@@ -205,4 +205,4 @@ flextables$flextables[[3]]
 
 
 # PRINT THE DATA TO POWERPOINT ####
-flextables$flextables[[1]] %>% print(preview = "pptx")
+flextables$flextables[[3]] %>% print(preview = "pptx")

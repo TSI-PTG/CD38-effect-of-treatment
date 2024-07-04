@@ -139,25 +139,42 @@ means_baseline_week24 <- fit_block_1 %>%
     tibble() %>%
     mutate_if(is.numeric, ~ 2^. %>% round(0)) %>%
     rename_at(vars(contains("Felz")), ~ str_remove(., "Felzartamab_Followup")) %>%
-    dplyr::select(-contains("Week52"), -contains("Week12"), -contains("Placebo"), -any_of(c("cortex")))
+    dplyr::select(-contains("Week12"), -contains("Placebo"), -any_of(c("cortex")))
+    # dplyr::select(-contains("Week52"), -contains("Week12"), -contains("Placebo"), -any_of(c("cortex")))
 
-means_week24_week52 <- fit_block_2 %>%
+
+# means_week24_week52 <- fit_block_2 %>%
+#     avearrays() %>%
+#     data.frame() %>%
+#     rownames_to_column("AffyID") %>%
+#     tibble() %>%
+#     mutate_if(is.numeric, ~ 2^. %>% round(0)) %>%
+#     rename_at(vars(contains("Felz")), ~ str_remove(., "Felzartamab_Followup")) %>%
+#     dplyr::select(-contains("Week12"), -contains("Placebo"), -any_of(c("cortex")))
+#     # dplyr::select(-contains("Baseline"), -contains("Week12"), -contains("Placebo"), -any_of(c("cortex")))
+
+
+# means_week52_baseline <- fit_block_3 %>%
+#     avearrays() %>%
+#     data.frame() %>%
+#     rownames_to_column("AffyID") %>%
+#     tibble() %>%
+#     mutate_if(is.numeric, ~ 2^. %>% round(0)) %>%
+#     rename_at(vars(contains("Felz")), ~ str_remove(., "Felzartamab_Followup")) %>%
+#     dplyr::select(-contains("Week12"), -contains("Placebo"), -any_of(c("cortex")))
+#     # dplyr::select(-contains("Baseline"), -contains("Week12"), -contains("Placebo"), -any_of(c("cortex")))
+
+
+means_felzartamab <- fit_block_1 %>%
     avearrays() %>%
     data.frame() %>%
     rownames_to_column("AffyID") %>%
     tibble() %>%
     mutate_if(is.numeric, ~ 2^. %>% round(0)) %>%
     rename_at(vars(contains("Felz")), ~ str_remove(., "Felzartamab_Followup")) %>%
-    dplyr::select(-contains("Baseline"), -contains("Week12"), -contains("Placebo"), -any_of(c("cortex")))
+    dplyr::select(-contains("Week12"), -contains("Placebo"), -any_of(c("cortex")))
 
-means_week52_baseline <- fit_block_3 %>%
-    avearrays() %>%
-    data.frame() %>%
-    rownames_to_column("AffyID") %>%
-    tibble() %>%
-    mutate_if(is.numeric, ~ 2^. %>% round(0)) %>%
-    rename_at(vars(contains("Felz")), ~ str_remove(., "Felzartamab_Followup")) %>%
-    dplyr::select(-contains("Week24"), -contains("Week12"), -contains("Placebo"), -any_of(c("cortex")))
+
 
 
 # FORMAT TOPTABLES ####
@@ -167,10 +184,10 @@ table_block_1 <- tab_block_1 %>%
     arrange(P.Value) %>%
     mutate_at(c("P.Value", "adj.P.Val"), as.numeric) %>%
     tibble() %>%
-    left_join(means_baseline_week24, by = "AffyID") %>%
+    left_join(means_felzartamab, by = "AffyID") %>%
     dplyr::select(
         AffyID, Symb, Gene, PBT,
-        all_of(colnames(means_baseline_week24)[-1]),
+        all_of(colnames(means_felzartamab)[-1]),
         logFC, P.Value, adj.P.Val,
     ) %>%
     left_join(means_K1208 %>% dplyr::select(-Symb, -Gene, -PBT), by = "AffyID") %>%
@@ -185,10 +202,10 @@ table_block_2 <- tab_block_2 %>%
     arrange(P.Value) %>%
     mutate_at(c("P.Value", "adj.P.Val"), as.numeric) %>%
     tibble() %>%
-    left_join(., means_week24_week52, by = "AffyID") %>%
+    left_join(., means_felzartamab, by = "AffyID") %>%
     dplyr::select(
         AffyID, Symb, Gene, PBT,
-        all_of(colnames(means_week24_week52)[-1]),
+        all_of(colnames(means_felzartamab)[-1]),
         logFC, P.Value, adj.P.Val,
     ) %>%
     left_join(means_K1208 %>% dplyr::select(-Symb, -Gene, -PBT), by = "AffyID") %>%
@@ -203,10 +220,10 @@ table_block_3 <- tab_block_3 %>%
     arrange(P.Value) %>%
     mutate_at(c("P.Value", "adj.P.Val"), as.numeric) %>%
     tibble() %>%
-    left_join(., means_week52_baseline, by = "AffyID") %>%
+    left_join(., means_felzartamab, by = "AffyID") %>%
     dplyr::select(
         AffyID, Symb, Gene, PBT,
-        all_of(colnames(means_week52_baseline)[-1]),
+        all_of(colnames(means_felzartamab)[-1]),
         logFC, P.Value, adj.P.Val,
     ) %>%
     left_join(means_K1208 %>% dplyr::select(-Symb, -Gene, -PBT), by = "AffyID") %>%

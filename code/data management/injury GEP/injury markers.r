@@ -16,6 +16,8 @@ hinze <- mylist %>% tibble(celltype = names(.), data = .)
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/mean_expression_K1208_MMDx.RData")
 
 
+
+
 # MEAN EXPRESSION BY PROBE ####
 mean_exprs_by_probe <- means_K1208 %>%
     mutate(
@@ -31,7 +33,16 @@ affy_genes <- mean_exprs_by_probe %>%
     dplyr::select(AffyID, Symb, Gene, PBT)
 
 
+
+
+
 # WRANGLE GENE EXPRESSION PROFILES ####
+celltype_factor <- hinze %>% pull(celltype)
+celltypename_factor <- hinze %>%
+    unnest(data, names_repair = tidyr_legacy) %>%
+    distinct(celltypename) %>%
+    pull(celltypename)
+
 genes_injury_markers <- hinze %>%
     mutate(
         data = map(
@@ -39,13 +50,18 @@ genes_injury_markers <- hinze %>%
             function(data) {
                 data %>%
                     left_join(affy_genes, by = "Symb") %>%
-                    mutate(contrast = "AKI vs control") %>%
+                    mutate(
+                        contrast = "AKI vs control",
+                        celltypename = celltypename %>% factor(levels = celltypename_factor)
+                    ) %>%
                     relocate(AffyID, Symb, Gene, PBT, contrast, .before = log2FC) %>%
-                    dplyr::select(-celltype)
+                    dplyr::select(-celltype) %>%
+                    arrange(cluster)
             }
         )
     ) %>%
     unnest(data) %>%
+    mutate(celltype = celltype %>% factor(levels = celltype_factor)) %>%
     nest(.by = c(celltypename))
 
 
@@ -72,7 +88,8 @@ openxlsx::write.xlsx(genes_injury_markers$data,
 flextable <- genes_injury_markers %>%
     unnest(data) %>%
     dplyr::select(celltypename, celltype, clustername, cluster) %>%
-    distinct(celltypename, celltype,clustername, cluster) %>%
+    distinct(celltypename, celltype, clustername, cluster) %>%
+    arrange(celltype, cluster)  %>% 
     flextable::flextable() %>%
     flextable::merge_v(part = "body") %>%
     flextable::border_remove() %>%
@@ -90,4 +107,4 @@ flextable <- genes_injury_markers %>%
     flextable::autofit()
 
 
-flextable  %>% print(preview = "pptx")
+flextable %>% print(preview = "pptx")
