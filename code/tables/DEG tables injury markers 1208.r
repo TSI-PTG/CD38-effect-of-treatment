@@ -21,47 +21,30 @@ simplefile <- read_excel(path = simplefile_path, sheet = "simpleCorrAAInjRejInjs
 atagc <- readxl::read_excel("Z:/MISC/Patrick Gauthier/R/affymap219-CELL-PANEL/backup/UPDATED 2017 ANNOTATIONS - MASTERFILE - U133 HUMAN CELL PANEL - ALL PROBESETS (nonIQR) pfhptg.xlsx")
 
 
-# DEFINE CELL STATES OF INTEREST ####
-cell_states <- c(
-    "PT-New1",
-    "PT-New2",
-    "PT-New3",
-    "PT-New4",
-    "TAL-New1",
-    "TAL-New2",
-    "TAL-New3",
-    "TAL-New4",
-    "DCT-New1",
-    "DCT-New2",
-    "DCT-New3",
-    "DCT-New4",
-    "CNT-New1",
-    "CNT-New2",
-    "CNT-New3",
-    "CD-PC-New1",
-    "CD-PC-New2",
-    "CD-IC-New1",
-    "CD-IC-New2"
-)
-
 
 # WRANGLE THE INJURY MARKER DATA ####
 injury_markers <- genes_injury_markers %>%
     unnest(data) %>%
-    nest(.by = c(celltypename, cluster), injury_genes = c(-"celltypename", -"cluster")) %>%
+    drop_na(AffyID) %>%
+    dplyr::filter(
+        cluster %>% str_detect("New"),
+        abs(log2FC) > 1
+    ) %>%
+    dplyr::select(celltypename:Symb) %>%
+    nest(.by = AffyID) %>%
     mutate(
-        injury_genes = map(
-            injury_genes,
-            function(injury_genes) {
-                injury_genes %>%
-                    drop_na(AffyID) %>%
-                    arrange(p, log2FC %>% desc()) %>%
-                    # dplyr::slice(1:20) %>%
-                    dplyr::select(AffyID)
+        "cellular expression" = map_chr(
+            data,
+            function(data) {
+                data %>%
+                    pull(cluster) %>%
+                    paste(collapse = ", ")
             }
         )
-    )
-injury_markers$injury_genes[[1]]
+    ) %>%
+    unnest(data) %>%
+    distinct(Symb, .keep_all = TRUE) %>%
+    dplyr::select(AffyID, `cellular expression`)
 
 
 

@@ -34,8 +34,6 @@ affy_genes <- mean_exprs_by_probe %>%
 
 
 
-
-
 # WRANGLE GENE EXPRESSION PROFILES ####
 celltype_factor <- hinze %>% pull(celltype)
 celltypename_factor <- hinze %>%
@@ -62,7 +60,8 @@ genes_injury_markers <- hinze %>%
     ) %>%
     unnest(data) %>%
     mutate(celltype = celltype %>% factor(levels = celltype_factor)) %>%
-    nest(.by = c(celltypename))
+    nest(.by = c(celltypename)) %>%
+    arrange(celltypename)
 
 
 # EXPORT THE GENE SET ####
@@ -71,16 +70,17 @@ save(genes_injury_markers, file = paste(saveDir, "Hinze_injury_markers.RData", s
 
 
 # EXPORT THE DATA AS AN EXCEL SHEET ####
-saveDir1 <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/output/"
-openxlsx::write.xlsx(genes_injury_markers$data,
-    asTable = TRUE,
-    file = paste(saveDir1, "Hinze_injury_markers_26Jun24",
-        # Sys.Date(),
-        # format(Sys.time(), "_%I%M%p"),
-        ".xlsx",
-        sep = ""
-    )
-)
+# names(genes_injury_markers$data) <- celltype_factor
+# saveDir1 <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/output/"
+# openxlsx::write.xlsx(genes_injury_markers$data,
+#     asTable = TRUE,
+#     file = paste(saveDir1, "Hinze_injury_markers_26Jun24",
+#         # Sys.Date(),
+#         # format(Sys.time(), "_%I%M%p"),
+#         ".xlsx",
+#         sep = ""
+#     )
+# )
 
 
 
@@ -108,3 +108,9 @@ flextable <- genes_injury_markers %>%
 
 
 flextable %>% print(preview = "pptx")
+
+
+genes_injury_markers %>%
+    unnest(data) %>%
+    dplyr::filter(Symb == "VIM") %>%
+    dplyr::select(Symb, cluster)

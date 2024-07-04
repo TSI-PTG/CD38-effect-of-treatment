@@ -16,83 +16,109 @@ simplefile_path <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/0000 simp
 simplefile <- read_excel(path = simplefile_path, sheet = "simpleCorrAAInjRejInjset")
 
 
-# DEFINE CELL STATES OF INTEREST ####
-cell_states <- c(
-    "PT-New1",
-    "PT-New2",
-    "PT-New3",
-    "PT-New4",
-    "TAL-New1",
-    "TAL-New2",
-    "TAL-New3",
-    "TAL-New4",
-    "DCT-New1",
-    "DCT-New2",
-    "DCT-New3",
-    "DCT-New4",
-    "CNT-New1",
-    "CNT-New2",
-    "CNT-New3",
-    "CD-PC-New1",
-    "CD-PC-New2",
-    "CD-IC-New1",
-    "CD-IC-New2"
-)
+
+genes_injury_markers %>%
+    mutate(data = map(data, filter, abs(log2FC) > 1)) %>%
+    unnest(data) %>%
+    drop_na(AffyID) %>%
+    filter(Symb == "VIM") %>%
+    dplyr::select(AffyID, Symb, cluster)
 
 
-# DEFINE INJURY SELECTIVE GENES ####
-genes_injury <- Hmisc::.q(
-    IFITM3,
-    LRP2,
-    MET,
-    MYO5B,
-    NQO1,
-    SLC2A1,
-    SLC12A1,
-    VCAM1,
-    IGFBP7,
-    ALDOB,
-    SERPINA1,
-    SPP1,
-    LCN2,
-    HAVCR1,
-    NRF2,
-    HIF1A,
-    MYC,
-    JUN
-)
 
 
 # WRANGLE THE INJURY MARKER DATA ####
 injury_markers <- genes_injury_markers %>%
+    mutate(data = map(data, filter, abs(log2FC) > 1)) %>%
     unnest(data) %>%
-    dplyr::filter(Symb %in% genes_injury) %>%
-    dplyr::select(cluster:PBT) %>%
+    drop_na(AffyID) %>%
+    dplyr::filter(cluster %>% str_detect("New")) %>%
+    dplyr::select(cluster, AffyID, Symb, Gene, PBT) %>%
     nest(.by = AffyID) %>%
-    mutate(
-        "cellular expression" = map_chr(
-            data,
-            function(data) {
-                data %>%
-                    pull(cluster) %>%
-                    paste(collapse = ",")
-            }
-        )
-    ) %>%
+    # mutate(
+    #     "cellular expression" = map_chr(
+    #         data,
+    #         function(data) {
+    #             data %>%
+    #                 pull(cluster) %>%
+    #                 paste(collapse = ",")
+    #         }
+    #     )
+    # ) %>%
     unnest(data) %>%
+    distinct(Symb, .keep_all = TRUE) %>%
     dplyr::select(-cluster)
+
+
+injury_markers %>%
+    left_join(K4502, by = "AffyID") %>%
+    dplyr::filter(Symb == "VIM") %>%
+    dplyr::select(AffyID, Symb, cluster)
 
 
 
 # WRANGLE THE SIMPLE FILE DATA ####
+simplefile %>%
+    dplyr::filter(SYMB == "VIM") %>%
+    dplyr::select(Affy, SYMB)
+
+
 K4502 <- simplefile %>%
-    dplyr::select(Affy, corrInjPCA1, corrInjPCA2, corrInjPCA3) %>%
-    dplyr::rename(AffyID = Affy)
+    dplyr::rename(
+        AffyID = Affy,
+        Symb = SYMB
+    ) %>%
+    # dplyr::slice_min(`pvalInjAA4-AKI2`, by = "SYMB") %>%
+    dplyr::select(
+        AffyID,
+        `corrInjAA3-AKI1`, `pvalInjAA3-AKI1`, `corrInjAA4-AKI2`, `pvalInjAA4-AKI2`,
+        corrInjPCA1, pvalInjPCA1, corrInjPCA2, pvalInjPCA2, corrInjPCA3, pvalInjPCA3,
+    )
+
+
+
+
+
+
+# JOIN THE INJURY MARKER DATA WITH THE SIMPLEFILE DATA ####
+injury_markers %>%
+    left_join(K4502, by = "AffyID") %>%
+        dplyr::filter(Symb == "VIM") %>%
+        dplyr::select(AffyID, Symb)
+
+
+
 
 join <- injury_markers %>%
     left_join(K4502, by = "AffyID") %>%
     distinct(Symb, .keep_all = TRUE) %>%
     dplyr::select(-AffyID)
+
+
+injury_markers %>%
+    dplyr::filter(Symb == "VIM") %>%
+    dplyr::select(AffyID, Symb)
+
+
+
+join %>%
+    dplyr::filter(Symb == "VIM") %>%
+    dplyr::select(AffyID, Symb)
+
+# DEFINE THE INJURY GENES BY AKI1 AND AKI2 ASSOCIATION ####
+genes_injury <- join %>%
+    dplyr::filter(`corrInjAA3-AKI1` < 0 & `corrInjAA4-AKI2` < 0)
+
+
+
+genes_injury %>% print(n = "all")
+
+
+genes_injury <- join %>%
+    # slice_min(`corrInjAA3-AKI1`, n = 100) %>%
+    slice_min(`pvalInjAA3-AKI1`, n = 20)
+
+
 
 
 
@@ -116,4 +142,4 @@ flextable <- join %>%
     flextable::bg(bg = "white", part = "all") %>%
     flextable::padding(padding = 0, part = "all")
 
-flextable  %>% print(preview = "pptx")
+flextable %>% print(preview = "pptx")
