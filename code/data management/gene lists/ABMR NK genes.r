@@ -8,9 +8,15 @@ library(officer) # install.packages("officer")
 "%nin%" <- function(a, b) match(a, b, nomatch = 0) == 0
 # load affymap
 load("Z:/DATA/Datalocks/Other data/affymap219_21Oct2019_1306_JR.RData")
-# load SCC data
+# load K5086 rejection simple file
 simplefile_path <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/0000 simple XL files/Kidney 5086/MASTER COPY K5086 SimpleCorrAAInjRej 5AAInjNR 7AARej.xlsx"
-simplefile <- readxl::read_excel(path = simplefile_path)
+simplefile_rejection <- readxl::read_excel(path = simplefile_path)
+# load K4502 injury simple file
+simplefile_path <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/0000 simple XL files/Kidney 4502/MASTER COPY K4502 Injset SimpleCorrAAInjRej 5AAInj 7AARej.xlsx"
+simplefile_injury <- read_excel(path = simplefile_path, sheet = "simpleCorrAAInjRejInjset")
+# load N604 cfdna simple file
+simplefile_path <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/0000 simple XL files/Kidney N604/MASTER COPY SimpleCorr 6AARej N604.xlsx"
+simplefile_cfdna <- read_excel(path = simplefile_path, sheet = "simpleCorrAARej")
 # load mean expression in K5086
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/mean_expression_by_probe_5086.RData")
 # load in house cell panel
@@ -23,8 +29,8 @@ means_K5086 <- mean_exprs_5086 %>%
     dplyr::slice_max(mean_expression, by = "Symb")
 
 
-# WRANGLE THE SIMPLE FILE DATA ####
-K5086 <- simplefile %>%
+# WRANGLE THE REJECTION SIMPLE FILE DATA ####
+scc_rejection <- simplefile_rejection %>%
     dplyr::select(
         Affy, SYMB, Name, PBT,
         `corrRej7AA4-EABMR`, `pvalRej7AA4-EABMR`,
@@ -32,6 +38,31 @@ K5086 <- simplefile %>%
     ) %>%
     dplyr::rename(AffyID = Affy, Symb = SYMB, Gene = Name) %>%
     dplyr::filter(AffyID %in% means_K5086$AffyID)
+
+
+# WRANGLE THE INJURY SIMPLE FILE DATA ####
+scc_injury <- simplefile_injury %>%
+    dplyr::select(
+        Affy, SYMB, Name, PBT,
+        `corrRej7AA4-EABMR`, `pvalRej7AA4-EABMR`,
+        `corrRej7AA5-FABMR`, `pvalRej7AA5-FABMR`
+    ) %>%
+    dplyr::rename(AffyID = Affy, Symb = SYMB, Gene = Name) %>%
+    dplyr::filter(AffyID %in% means_K5086$AffyID)
+
+# WRANGLE THE CFDNA  SIMPLE FILE DATA ####
+scc_cfdna <- simplefile_cfdna %>%
+    dplyr::select(
+        Affy, SYMB, Name, PBT,
+        "corrcfDNA", "pvalcfDNA",
+        "corrQuant", "pvalQuant"
+    ) %>%
+    dplyr::rename(AffyID = Affy, Symb = SYMB, Gene = Name) %>%
+    dplyr::filter(AffyID %in% means_K5086$AffyID)
+
+
+# JOIN THE SCC DATA ####
+scc <- left_join(scc_rejection, scc_cfdna, by = c("AffyID", "Symb", "Gene", "PBT"))
 
 
 # WRANGLE THE CELL PANEL DATA ####
@@ -48,9 +79,8 @@ cell_panel <- atagc %>%
 
 
 
-# JOIN K5086 AND CELL PANEL DATA ####
-data <- K5086 %>%
-    dplyr::left_join(cell_panel, by = "Symb")
+# JOIN SCC AND CELL PANEL DATA ####
+data <- scc %>% dplyr::left_join(cell_panel, by = "Symb")
 
 
 # DEFINE THE ABMR ACTIVITY GENES BY MEAN EXPRESSION ####
@@ -64,14 +94,14 @@ genes_ABMR_NK <- genes_EABMR %>%
     ) %>%
     dplyr::slice_max(NK, n = 20) %>%
     dplyr::relocate(AffyID_U133, .after = AffyID) %>%
-    dplyr::relocate(`corrRej7AA4-EABMR`, `pvalRej7AA4-EABMR`, `corrRej7AA5-FABMR`, `pvalRej7AA5-FABMR`,
-        .after = last_col()
+    dplyr::relocate(
+        `corrRej7AA4-EABMR`, `pvalRej7AA4-EABMR`, `corrRej7AA5-FABMR`, `pvalRej7AA5-FABMR`,
+        corrcfDNA, pvalcfDNA, corrQuant, pvalQuant,
+        .after = dplyr::last_col()
     ) %>%
-    dplyr::mutate_at(dplyr::vars(dplyr::contains("corrRej")), ~ round(., 2)) %>%
-    dplyr::mutate_at(dplyr::vars(dplyr::contains("pvalRej")), ~ formatC(., digits = 0, format = "e")) %>%
-    dplyr::mutate(
-        Gene = Gene %>% stringr::str_remove("///.*"),
-    )
+    dplyr::mutate_at(dplyr::vars(dplyr::contains("corr")), ~ round(., 2)) %>%
+    dplyr::mutate_at(dplyr::vars(dplyr::contains("pval")), ~ formatC(., digits = 0, format = "e")) %>%
+    dplyr::mutate(Gene = Gene %>% stringr::str_remove("///.*"))
 
 
 # SAVE THE DATA ####
@@ -83,18 +113,21 @@ save(genes_ABMR_NK, file = paste(saveDir, "ABMR_NK_genes.RData", sep = ""))
 header1 <- c(
     "Gene\nsymbol", "Gene", "PBT",
     rep("Cell panel expression", 5),
-    rep("Correlation with ABMR in K5086", 4)
+    rep("Correlation with ABMR in K5086", 4),
+    rep("Correlation with dd-cfDNA in N604", 4)
 )
 
 header2 <- c(
     "Gene\nsymbol", "Gene", "PBT",
     "NK", "CD4", "CD8", "HUVEC\n(unstimulated)", "HUVEC\n(IFNg stimulated)",
     "SCC\nEABMR\nK5086", "p\nEABMR\nK5086",
-    "SCC\nFABMR\nK5086", "p\nFABMR\nK5086"
+    "SCC\nFABMR\nK5086", "p\nFABMR\nK5086",
+    "SCC\ndd-cfDNA (%)\nN604", "p\ndd-cfDNA (%)\nN604",
+    "SCC\ndd-cfDNA (cp/mL)\nN604", "p\ndd-cfDNA (cp/mL)\nN604"
 )
 
 title <- c("Table Si. Definition of NK cell-expressed ABMR activity genes")
-cellWidths <- c(1.5, 10, 4.6, 1, 1, 1, 2, 2, rep(1.3, 4))
+cellWidths <- c(1.5, 9, 5.4, 1, 1, 1, 2, 2, rep(1.3, 8))
 
 
 # MAKE FLEXTABLE ####
@@ -103,7 +136,7 @@ flextable <- genes_ABMR_NK %>%
     dplyr::mutate(
         PBT = PBT %>%
             stringr::str_remove(",RAT") %>%
-            stringr::str_remove("Rej-RAT") %>%
+            stringr::str_remove(",Rej-RAT") %>%
             stringr::str_replace(",,", ",")
     ) %>%
     flextable::flextable() %>%

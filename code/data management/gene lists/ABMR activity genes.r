@@ -61,7 +61,6 @@ scc_cfdna <- simplefile_cfdna %>%
     dplyr::filter(AffyID %in% means_K5086$AffyID)
 
 
-
 # JOIN THE SCC DATA ####
 scc <- left_join(scc_rejection, scc_cfdna, by = c("AffyID", "Symb", "Gene", "PBT"))
 
@@ -80,20 +79,21 @@ cell_panel <- atagc %>%
     dplyr::slice_max(`HUVEC (unstimulated)`, by = "Symb", with_ties = FALSE)
 
 
-# JOIN K5086 AND CELL PANEL DATA ####
-data <- scc %>%
-    dplyr::left_join(cell_panel, by = "Symb")
+# JOIN SCC AND CELL PANEL DATA ####
+data <- scc %>% dplyr::left_join(cell_panel, by = "Symb")
 
 
 # DEFINE THE ABMR ACTIVITY GENES BY MEAN EXPRESSION ####
 genes_ABMR_activity <- data %>%
     dplyr::slice_min(`pvalRej7AA4-EABMR`, n = 20) %>%
     dplyr::relocate(AffyID_U133, .after = AffyID) %>%
-    dplyr::relocate(`corrRej7AA4-EABMR`, `pvalRej7AA4-EABMR`, `corrRej7AA5-FABMR`, `pvalRej7AA5-FABMR`,
+    dplyr::relocate(
+        `corrRej7AA4-EABMR`, `pvalRej7AA4-EABMR`, `corrRej7AA5-FABMR`, `pvalRej7AA5-FABMR`,
+        corrcfDNA, pvalcfDNA, corrQuant, pvalQuant,
         .after = dplyr::last_col()
     ) %>%
-    dplyr::mutate_at(dplyr::vars(dplyr::contains("corrRej")), ~ round(., 2)) %>%
-    dplyr::mutate_at(dplyr::vars(dplyr::contains("pvalRej")), ~ formatC(., digits = 0, format = "e")) %>%
+    dplyr::mutate_at(dplyr::vars(dplyr::contains("corr")), ~ round(., 2)) %>%
+    dplyr::mutate_at(dplyr::vars(dplyr::contains("pval")), ~ formatC(., digits = 0, format = "e")) %>%
     dplyr::mutate(
         Gene = Gene %>% stringr::str_remove("///.*"),
     )
@@ -108,18 +108,21 @@ save(genes_ABMR_activity, file = paste(saveDir, "ABMR_activity_genes.RData", sep
 header1 <- c(
     "Gene\nsymbol", "Gene", "PBT",
     rep("Cell panel expression", 5),
-    rep("Correlation with ABMR in K5086", 4)
+    rep("Correlation with ABMR in K5086", 4),
+    rep("Correlation with dd-cfDNA in N604", 4)
 )
 
 header2 <- c(
     "Gene\nsymbol", "Gene", "PBT",
     "NK", "CD4", "CD8", "HUVEC\n(unstimulated)", "HUVEC\n(IFNg stimulated)",
     "SCC\nEABMR\nK5086", "p\nEABMR\nK5086",
-    "SCC\nFABMR\nK5086", "p\nFABMR\nK5086"
+    "SCC\nFABMR\nK5086", "p\nFABMR\nK5086",
+        "SCC\ndd-cfDNA (%)\nN604", "p\ndd-cfDNA (%)\nN604",
+    "SCC\ndd-cfDNA (cp/mL)\nN604", "p\ndd-cfDNA (cp/mL)\nN604"
 )
 
 title <- c("Table Si. Definition of ABMR activity genes")
-cellWidths <- c(1.5, 9, 5.4, 1, 1, 1, 2, 2, rep(1.3, 4))
+cellWidths <- c(1.5, 9, 5.4, 1, 1, 1, 2, 2, rep(1.3, 8))
 
 
 # MAKE FLEXTABLE ####
