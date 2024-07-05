@@ -26,7 +26,7 @@ load(paste(loadDir, "felzartamab_gsea_aki_baseline_corrected_cortex_corrected_k1
 
 
 # JOIN THE GSEA RESULTS ####
-gsea <- reduce(
+gsea <- purrr::reduce(
     list(
         felzartamab_gsea_go_k1208,
         felzartamab_gsea_msigdb_k1208,
@@ -39,8 +39,49 @@ gsea <- reduce(
 ) %>%
     mutate(keep = map_dbl(gsea_tables, nrow)) %>%
     dplyr::filter(keep > 0) %>%
-    dplyr::select(db, design, gsea_tables)
+    dplyr::select(db, design, genes_gsea, gsea_tables) %>%
+    mutate(gsea_tables = map(gsea_tables, mutate, Description = Description %>% as.character()))
 
+
+# DEFINE INTERPREATION BASED ON PATHWAYS ####
+pathway_interpretation <- gsea %>%
+    dplyr::select(gsea_tables) %>%
+    unnest(everything()) %>%
+    dplyr::select(ID, Description) %>%
+    mutate(
+        interpretation = case_when(
+            ID %in% c(
+                "GO:0006952",
+                "GO:0009605",
+                "GO:0009607",
+                "GO:0043207",
+                "GO:0044419",
+                "GO:0051707",
+                "GO:0006955",
+                "GO:0002376",
+                "R-HSA-168256",
+                "DOID:2914",
+                "DOID:77",
+                "DOID:1579",
+                "R-HSA-168249",
+                "R-HSA-168256",
+                "R-HSA-1643685",
+                "R-HSA-5663205"
+            ) ~ "immune response",
+            ID == "AKI" ~ "AKI",
+            ID %in% c(
+                "R-HSA-9006934",
+                "R-HSA-597592",
+                "R-HSA-5653656",
+                "R-HSA-392499"
+            ) ~ "cellular metabolism",
+            ID %in% c(
+                "R-HSA-109582",
+                "R-HSA-2262752",
+                "R-HSA-8953897"
+            ) ~ "cellular stress response",
+        )
+    )
 
 
 # WRANGLE THE GSEA TABLES ####
@@ -51,15 +92,21 @@ gsea_tables <- gsea %>%
             function(gsea_tables) {
                 gsea_tables %>%
                     mutate(Description = Description %>% as.character()) %>%
-                    dplyr::select(ID, Description, setSize, NES, p.adjust, core_enrichment)
+                    left_join(pathway_interpretation) %>%
+                    dplyr::select(ID, Description, interpretation, setSize, NES, p.adjust, core_enrichment)
             }
         )
     ) %>%
     unnest(gsea_tables) %>%
     arrange(p.adjust) %>%
     dplyr::filter(p.adjust < 0.001) %>%
-    nest(.by = design, gsea_table = -design)
+    nest(.by = design, gsea_table = c(-design, -genes_gsea)) %>%
+    left_join(gsea %>% dplyr::select(design, genes_gsea) %>% distinct(design, .keep_all = TRUE),
+        by = "design"
+    )
+
 gsea_tables$gsea_table
+gsea_tables$genes_gsea
 
 
 
@@ -69,7 +116,7 @@ gsea_flextables <- gsea_tables %>%
         flextable = pmap(
             list(design, gsea_table),
             function(design, gsea_table) {
-                cellWidths <- c(2, 3, 7, 1.5, 1.5, 1.5, 17) # for individual tables up or down
+                cellWidths <- c(2, 3, 7, 4, 1.5, 1.5, 1.5, 13) # for individual tables up or down
                 if (design == "Baseline_vs_Week24") {
                     title <- paste("Table Si. Functional enrichment analysis of genes affects by felzartamab treatment between baseline and week24 (by FDR)", sep = "")
                 } else if (design == "Week24_vs_Week52") {
@@ -89,7 +136,7 @@ gsea_flextables <- gsea_tables %>%
                             TRUE ~ p.adjust %>% formatC(digits = 4, format = "f")
                         ),
                     ) %>%
-                    dplyr::select(library, ID, pathway, "n genes", NES, FDR, "core enrichment genes") %>%
+                    dplyr::select(library, ID, pathway, interpretation, "n genes", NES, FDR, "core enrichment genes") %>%
                     flextable::flextable() %>%
                     flextable::add_header_row(top = TRUE, values = rep(title, ncol_keys(.))) %>%
                     flextable::merge_v(part = "header") %>%
@@ -109,6 +156,18 @@ gsea_flextables <- gsea_tables %>%
         )
     )
 gsea_flextables$flextable
+
+
+
+# SAVE THE COLLATED GSEA RESULTS ####
+felzartamab_gsea_k1208 <- gsea_tables
+names(felzartamab_gsea_k1208$gsea_table) <- felzartamab_gsea_k1208$design
+saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/"
+save(felzartamab_gsea_k1208, file = paste(saveDir, "felzartamab_gsea_collated_k1208.RData", sep = ""))
+
+
+
+
 
 
 # PRINT FLETABLES TO POWERPOINT ####

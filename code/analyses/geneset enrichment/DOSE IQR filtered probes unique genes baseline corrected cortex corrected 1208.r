@@ -71,8 +71,7 @@ gsea_do_formatted <- gsea_do %>%
                     as_tibble() %>%
                     arrange(pvalue) %>%
                     mutate(
-                        sign = case_when(NES < 0 ~ "Down Regulated", NES > 0 ~ "Up Regulated"),
-                        Description = factor(Description, levels = Description, ordered = TRUE)
+                        sign = case_when(NES < 0 ~ "Down Regulated", NES > 0 ~ "Up Regulated")
                     ) 
             }
         )

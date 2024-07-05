@@ -21,7 +21,6 @@ load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular e
 size_title <- 15
 
 
-
 # MAKE PLOTS PANELS ####
 df_DEG_plot <- DEG_plots %>%
     dplyr::filter(geneset %in% c(

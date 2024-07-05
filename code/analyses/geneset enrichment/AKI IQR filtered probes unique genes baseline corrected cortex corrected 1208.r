@@ -114,7 +114,7 @@ gsea_aki_formatted <- gsea_aki %>%
                     arrange(pvalue) %>%
                     mutate(
                         sign = case_when(NES < 0 ~ "Down Regulated", NES > 0 ~ "Up Regulated"),
-                        Description = factor(Description, levels = Description, ordered = TRUE)
+                        Description = "Cellular response to acute kidney injury"
                     )
             }
         )
@@ -160,7 +160,7 @@ gsea_aki_tables$gsea_flextables[[3]]
 
 # PREPARE THE RESULTS FOR EXPORT ####
 felzartamab_gsea_aki_k1208 <- gsea_aki_tables %>%
-    mutate(db = "aki", .before = 1)
+    mutate(db = "Hinze", .before = 1)
 names(felzartamab_gsea_aki_k1208$gsea_flextables) <- felzartamab_gsea_aki_k1208$design
 
 
