@@ -10,14 +10,14 @@ gg_volcano <- function(
     require(tidyverse)
     probes_sig_up <- data %>%
         dplyr::filter(
-            `<U+0394><U+0394> p` < 0.05,
-            `<U+0394><U+0394> logFC` > 0
+            10^-p < 0.05,
+            logFC > 0
         ) %>%
         dplyr::pull(AffyID)
     probes_sig_dn <- data %>%
         dplyr::filter(
-            `<U+0394><U+0394> p` < 0.05,
-            `<U+0394><U+0394> logFC` < 0
+            10^-p < 0.05,
+            logFC < 0
         ) %>%
         dplyr::pull(AffyID)
     data <- data %>%
@@ -33,8 +33,8 @@ gg_volcano <- function(
     data_sig <- data %>%
         dplyr::filter(AffyID %in% c(probes_sig_up, probes_sig_dn))
     min_p <- data %>%
-        dplyr::slice_min(`<U+0394><U+0394> p`) %>%
-        dplyr::pull(`<U+0394><U+0394> p`) %>%
+        dplyr::slice_min(p) %>%
+        dplyr::pull(p) %>%
         log10() * -1
     plot <- data %>%
         ggplot2::ggplot(mapping = ggplot2::aes(x = p, y = logFC)) +

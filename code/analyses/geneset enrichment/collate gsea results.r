@@ -68,7 +68,7 @@ pathway_interpretation <- gsea %>%
                 "R-HSA-1643685",
                 "R-HSA-5663205"
             ) ~ "immune response",
-            ID == "AKI" ~ "AKI",
+            ID %in% c("AKI", "R-HSA-109582") ~ "injury response",
             ID %in% c(
                 "R-HSA-9006934",
                 "R-HSA-597592",
@@ -76,7 +76,6 @@ pathway_interpretation <- gsea %>%
                 "R-HSA-392499"
             ) ~ "cellular metabolism",
             ID %in% c(
-                "R-HSA-109582",
                 "R-HSA-2262752",
                 "R-HSA-8953897"
             ) ~ "cellular stress response",
@@ -164,9 +163,6 @@ felzartamab_gsea_k1208 <- gsea_tables
 names(felzartamab_gsea_k1208$gsea_table) <- felzartamab_gsea_k1208$design
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/"
 save(felzartamab_gsea_k1208, file = paste(saveDir, "felzartamab_gsea_collated_k1208.RData", sep = ""))
-
-
-
 
 
 

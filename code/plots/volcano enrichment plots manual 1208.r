@@ -9,23 +9,16 @@ library(readxl) # install.packages("readxl")
 library(clusterProfiler) # pak::pak("YuLab-SMU/clusterProfiler")
 # Custom operators, functions, and datasets
 "%nin%" <- function(a, b) match(a, b, nomatch = 0) == 0
-source("C:/R/CD38-effect-of-treatment/code/functions/plot.gg_volcano_enrichment.r")
+source("C:/R/CD38-effect-of-treatment/code/functions/plot.gg_volcano.r")
 # load reference data
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/IQR_filtered_probes_unique_genes_baseline_corrected_cortex_corrected_limma_1208.RData")
 # load enrichment results
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/felzartamab_gsea_collated_k1208.RData")
 # load simplified enrichment plots
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/simplified_enrichment_plots.RData")
-# load simplified Description annotations
-source("C:/R/CD38-effect-of-treatment/code/data management/functional enrichment annotation/very simplified Description annotation.r")
-
 
 
 # WRANGLE THE GSEA RESULTS ####
-gsea <- felzartamab_gsea_k1208 %>%
-    mutate(gsea_table = map(gsea_table, mutate, Symb = core_enrichment %>% strsplit("/"), .by = ID))
-
-
 gsea <- felzartamab_gsea_k1208 %>%
     mutate(
         gsea_table = map(
@@ -37,222 +30,120 @@ gsea <- felzartamab_gsea_k1208 %>%
                         Description = Description %>% as.character(),
                         col = "grey"
                     ) %>%
-                    dplyr::select(db, Description, Symb, NES) %>%
+                    dplyr::select(db, Description, interpretation, Symb, NES) %>%
                     unnest(Symb) %>%
                     relocate(Symb) %>%
-                    arrange(Symb) 
+                    arrange(Symb)
             }
         )
-    )
+    ) %>%
+    dplyr::select(-genes_gsea)
 
 
 
-# JOIN THE DE AND ENRICHMENT DATA ####
-gsea$gsea_table
-limma_tables$table
-
-data_joined_00 <- limma_tables %>%
-    left_join(gsea, by = "design") %>%
-    dplyr::select(design, table, genes_gsea, gsea_table)
-
-
-# WRANGLE THE DATA FOR PLOTTING ####
-
-
-
-data_joined_01 <- data_joined_00 %>%
-    dplyr::select(design, table, genes_gsea, gsea_table) %>%
-    # expand_grid(direction = c("increased", "decreased")) %>%
+# WRANGLE THE DATA FOR VOLCANO PLOTS ####
+data_volcano <- limma_tables %>%
+    dplyr::select(design, table) %>%
     mutate(
         data_plot = map(
             table,
             function(table) {
                 table %>%
                     mutate(p = -log10(p)) %>%
-                    suppressWarnings()
+                    suppressWarnings() %>%
+                    dplyr::select(AffyID, Symb, logFC, p)
             }
-        ),
-        data_enrichment = map(
-            gsea_table,
-            function(gsea_table) {
-                gsea_table %>%
-                    mutate(
-                        Description = Description %>% as.character(),
-                        col = "grey"
-                    ) %>%
-                    dplyr::select(library, Description, Symb, NES) %>%
-                    unnest(Symb) %>%
-                    relocate(Symb) %>%
-                    arrange(Symb)
-                # %>%
-                # mutate(
-                #     group = case_when(
-                #         Description %>% str_detect(immune_response) ~ "immune response",
-                #         Description %>% str_detect(infection_response) ~ "response to infection",
-                #         Description %>% str_detect(response_to_stimulus) ~ "response to exogenous/endogenous stimulus",
-                #         Description %>% str_detect(inflammation) ~ "inflammation",
-                #         Description %>% str_detect(injury) ~ "injury response",
-                #         Description %>% str_detect(cell_signalling_and_RNA_transcription) ~ "cell signalling and RNA transcription",
-                #         Description %>% str_detect(cellular_development_and_metabolism) ~ "cell development,\nmobilization,\nand metabolism",
-                #         TRUE ~ Description
-                #     ) %>% factor(levels = GO_annotation_levels_truncated),
-                #     col_group = case_when(
-                #         group == "immune response" ~ "#5d00ff",
-                #         group == "response to infection" ~ "#ff0000",
-                #         group == "response to exogenous/endogenous stimulus" ~ "#ff9900",
-                #         group == "inflammation" ~ "#ff9900",
-                #         group == "injury response" ~ "#5d00ff",
-                #         group == "cell signalling and RNA transcription" ~ "#ff00ee",
-                #         group == "cell development,\nmobilization,\nand metabolism" ~ "#4dff00"
-                #     )
-                # ) %>%
-                # mutate(
-                #     count = n(),
-                #     .by = Symb,
-                #     .after = "Symb"
-                # ) %>%
-                # mutate(
-                #     prop = count / max(count),
-                #     .by = Description,
-                #     .after = "count"
-                # )
-                # %>%
-                # mutate(
-                #     n_group = Description %>% unique() %>% length(),
-                #     groupID = Description %>% factor() %>% as.numeric(),
-                #     group_mult = groupID / n_group
-                # )
-            }
-        ),
-        # data_annotation = map2(
-        #     data_plot, data_enrichment,
-        #     function(data_plot, data_enrichment) {
-        #         data_plot %>%
-        #             mutate(p = -log10(p),) %>%
-        #             dplyr::select(AffyID, Symb, p, logFC) %>%
-        #             suppressWarnings() %>%
-        #             right_join(data_enrichment, by = "Symb")
-        #     }
-        # )
+        )
     )
-# %>%
-# dplyr::select(design, data_plot, data_enrichment, data_annotation)
+data_volcano$data_plot
 
 
-
-
-# MAKE ONE-OFF EDITS TO Description ANNOTATIONS ####
-data_joined_01 <- data_joined_01 %>%
+# WRANGLE THE DATA FOR ENRICHMENT DIAGRAMS ####
+data_enrichment <- gsea %>%
+    left_join(data_volcano, by = "design") %>%
     mutate(
         data_enrichment = pmap(
-            list(design, data_enrichment),
-            function(design, data_enrichment) {
-                data_enrichment %>%
-                    mutate(
-                        group = case_when(
-                            design == "Baseline_vs_Week24" ~ "immune response",
-                            TRUE ~ group
-                        ) %>% factor(levels = GO_annotation_levels_truncated),
-                        # n_group = group %>% unique() %>% length(),
-                        # groupID = group %>% as.numeric(),
-                        # group_mult = groupID / n_group
-                    )
+            list(gsea_table, data_plot),
+            function(gsea_table, data_plot) {
+                annotation <- gsea_table %>%
+                    dplyr::slice_max(abs(NES), by = c("interpretation", "Symb"), with_ties = FALSE) %>%
+                    dplyr::select(Symb, interpretation)
+                data_plot %>%
+                    dplyr::left_join(annotation, by = "Symb") %>%
+                    tidyr::drop_na(interpretation)
             }
+        )
+    ) %>%
+    dplyr::select(design, data_enrichment) %>%
+    unnest(everything()) %>%
+    nest(.by = c("design", "interpretation"))
+
+
+
+
+# UNIVERAL PARAMETERS FOR VOLCANO PLOTS ####
+ylim <- data_volcano %>%
+    dplyr::select(data_plot) %>%
+    unnest(data_plot) %>%
+    pull(logFC) %>%
+    range()
+xlim <- c(0, data_volcano %>%
+    dplyr::select(data_plot) %>%
+    unnest(data_plot) %>%
+    pull(p) %>%
+    max() * 1.4)
+
+
+# MAKE VOLCANO PLOTS ####
+plot_volcano <- data_volcano %>%
+    mutate(
+        plot_volcano = pmap(
+            list(data_plot, design),
+            gg_volcano,
+            ylim = ylim, xlim = xlim
+        )
+    )
+
+plot_volcano$plot_volcano[[1]]
+
+
+
+# ADD ENRICHMENT ANNOTATION TO VOLCANO PLOTS ####
+plot_volcano_baseline_vs_week24 <- plot_volcano %>%
+    dplyr::filter(design == "Baseline_vs_Week24") %>%
+    pull(plot_volcano) %>%
+    pluck(1) +
+    ggplot2::geom_curve(
+        data = data_enrichment %>%
+            dplyr::filter(
+                design == "Baseline_vs_Week24",
+                interpretation == "immune response"
+            ) %>%
+            pull(data) %>%
+            pluck(1),
+        mapping = ggplot2::aes(
+            x = p,
+            y = logFC,
+            xend = 4,
+            yend = 1,
         ),
-        data_annotation = pmap(
-            list(design, data_annotation),
-            function(design, data_annotation) {
-                data_annotation %>%
-                    mutate(
-                        group = case_when(
-                            design == "Baseline_vs_Week24" ~ "immune response",
-                            TRUE ~ group
-                        ) %>% factor(levels = GO_annotation_levels_truncated),
-                        # n_group = group %>% unique() %>% length(),
-                        # groupID = group %>% as.numeric(),
-                        # group_mult = groupID / n_group
-                    )
-            }
-        )
+        # col = GO_lines$col_group,
+        curvature = -1,
+        angle = 45,
+        linewidth = 0.1
     )
 
-data_joined_01$data_annotation[[3]] %>%
-    dplyr::select(Description, group, n_group, groupID, group_mult)
 
 
 
 
 
 
-# DEFINE THE Description ENRICHMENT LINES ####
-data_joined_02 <- data_joined_01 %>%
-    mutate(
-        GO_lines = pmap(
-            list(data_plot, data_annotation),
-            function(data_plot, data_annotation) {
-                xlim <- c(0, data_plot$p %>% max() * 1.4)
-                y_min <- data_plot %>%
-                    dplyr::pull(logFC) %>%
-                    min()
-                y_max <- data_plot %>%
-                    dplyr::pull(logFC) %>%
-                    max()
-                y_diff <- c(y_min, y_max) %>% diff()
-                x_end <- data_plot %>%
-                    dplyr::pull(p) %>%
-                    max() * 1.1
-                n_group <- data_annotation %>%
-                    pull(n_group) %>%
-                    unique()
-                interval <- y_diff / (n_group + 1)
-                interval_prop <- 1 / (n_group + 1)
-                # interval <- y_diff / (n_group)
-                # interval_prop <- 1 / (n_group)
-                data_annotation %>%
-                    dplyr::arrange(count %>% dplyr::desc()) %>%
-                    dplyr::distinct(Symb, group, .keep_all = TRUE) %>%
-                    dplyr::mutate(
-                        y_min = y_min,
-                        y_max = y_max,
-                        y_diff = y_diff,
-                        interval = interval,
-                        interval_prop = interval_prop,
-                        x_end = x_end,
-                        y_end = y_min + (groupID * interval),
-                        y_end_prop = groupID * interval_prop,
-                        x_end_prop = x_end / xlim[2],
-                        curvature = dplyr::case_when(
-                            groupID == 1 ~ -0.25,
-                            groupID == 2 ~ 0.25,
-                            groupID == 3 ~ -0.25,
-                            groupID == 4 ~ 0.25,
-                            TRUE ~ 0.25
-                        ),
-                        conflict = dplyr::case_when(
-                            logFC < 0 & NES > 0 ~ FALSE,
-                            logFC > 0 & NES < 0 ~ FALSE,
-                            TRUE ~ TRUE
-                        )
-                    ) %>%
-                    dplyr::filter(conflict) %>%
-                    dplyr::select(-AffyID)
-            }
-        )
-    )
-data_joined_02$GO_lines[[3]]
-# data_joined_02$GO_lines[[2]] %>%
-#     dplyr::select(Description, group)  %>% print(n="all")
+plot_volcano_baseline_vs_week52 <- plot_volcano %>%
+    dplyr::filter(design == "Baseline_vs_Week52") %>%
+    pull(plot_volcano) %>%
+    pluck(1)
 
-
-# MAKE PLOTS ####
-df_plot <- data_joined_02 %>%
-    mutate(
-        plot = pmap(
-            list(data_plot, data_annotation, GO_lines, design),
-            gg_volcano_enrichment
-        )
-    )
-# df_plot$plot[[1]]
 
 
 
