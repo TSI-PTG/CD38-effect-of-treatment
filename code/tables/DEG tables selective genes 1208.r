@@ -188,8 +188,8 @@ header3 <- c(
     "Gene\nsymbol", "Gene",
     rep(c(
         "\u394 FC\nPlacebo\n(N=10)", "\u394 FC\nFelzartamab\n(N=10)",
-        "\u394\u394 logFC\n(N=10)", "\u394\u394 FC\n(N=10)",
-        "\u394\u394 p"
+        "\u394\u394\nlogFC\n(N=20)", "\u394\u394\nFC\n(N=20)",
+        "\u394\u394\np"
         # , "\u394\u394 FDR"
     ), 3)
 )
