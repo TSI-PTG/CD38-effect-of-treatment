@@ -31,7 +31,10 @@ load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular e
 
 injury_markers <- genes_injury_markers %>%
     unnest(data) %>%
-    dplyr::filter(cluster %>% str_detect("New")) %>%
+    dplyr::filter(
+        cluster %>% str_detect("New"),
+        # log2FC > 0.5
+    ) %>%
     drop_na(AffyID) %>%
     dplyr::select(celltypename, cluster, AffyID, Symb) %>%
     dplyr::mutate(
@@ -42,14 +45,15 @@ injury_markers <- genes_injury_markers %>%
             drop = FALSE
         ) %>% pull(ENTREZID), .by = "cluster"
     ) %>%
-    dplyr::rename(gs_name = cluster)
+    dplyr::rename(gs_name = cluster) %>%
+    drop_na(entrez_gene)
 
 
 # DEFINE INJURY PATHWAYS ####
-# gene_sets <- msigdbr(category = "H")
-# map <- gene_sets[, c("gs_name", "entrez_gene")]
-# map$entrez_gene <- as.character(map$entrez_gene)
 map_aki <- injury_markers %>% dplyr::select(gs_name, entrez_gene)
+map_aki_joined <- injury_markers %>%
+    dplyr::select(gs_name, entrez_gene) %>%
+    mutate(gs_name = "AKI")
 
 
 
@@ -60,7 +64,8 @@ data <- limma_tables %>%
             toptable,
             function(toptable) {
                 toptable %>%
-                    dplyr::filter(P.Value < 0.05) %>%
+                    dplyr::select(AffyID, t, `<U+0394><U+0394> p`) %>%
+                    dplyr::filter(`<U+0394><U+0394> p` < 0.05) %>%
                     right_join(affymap219 %>% dplyr::select(AffyID, Symb) %>% tibble(), ., by = "AffyID") %>%
                     arrange(t %>% dplyr::desc()) %>%
                     dplyr::mutate(
@@ -87,24 +92,15 @@ gsea_aki <- data %>%
             genes_gsea,
             function(genes_gsea) {
                 clusterProfiler::GSEA(
-                    gene = genes_gsea, TERM2GENE = map_aki,
+                    gene = genes_gsea, TERM2GENE = map_aki_joined,
                     minGSSize = 5, maxGSSize = Inf,
-                    pvalueCutoff = 0.05, pAdjustMethod = "fdr", seed = TRUE
+                    pvalueCutoff = 0.001, pAdjustMethod = "fdr", seed = TRUE
                 ) %>% clusterProfiler::setReadable(OrgDb = org.Hs.eg.db, keyType = "ENTREZID")
             }
-        ),
-                # OR = map(
-                #     genes_gsea,
-                #     function(genes_gsea) {
-                #         clusterProfiler::enricher(
-                #             gene = genes_gsea, TERM2GENE = map_aki,
-                #             minGSSize = 5, maxGSSize = Inf,
-                #             pvalueCutoff = 0.05, pAdjustMethod = "fdr"
-                #         )
-                #     }
-                # )
+        )
     )
-gsea_aki$gsea[[1]]
+gsea_aki$gsea[[3]]
+
 
 
 # FORMAT TABLES FOR GENESET ENRICHMENT ANALYSES (GSEA) ####
@@ -119,7 +115,7 @@ gsea_aki_formatted <- gsea_aki %>%
                     mutate(
                         sign = case_when(NES < 0 ~ "Down Regulated", NES > 0 ~ "Up Regulated"),
                         Description = factor(Description, levels = Description, ordered = TRUE)
-                    ) 
+                    )
             }
         )
     )
@@ -171,18 +167,18 @@ names(felzartamab_gsea_aki_k1208$gsea_flextables) <- felzartamab_gsea_aki_k1208$
 
 # SAVE THE GSEA RESULTS ####
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/"
-# save(felzartamab_gsea_aki_k1208, file = paste(saveDir, "felzartamab_gsea_aki_baseline_corrected_cortex_corrected_k1208.RData", sep = ""))
+save(felzartamab_gsea_aki_k1208, file = paste(saveDir, "felzartamab_gsea_aki_baseline_corrected_cortex_corrected_k1208.RData", sep = ""))
 
 
 
 # EXPORT THE GSEA RESULTS TO EXCEL FILE ####
 saveDir1 <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/output/"
-# openxlsx::write.xlsx(felzartamab_gsea_aki_k1208$gsea_tables,
-#     asTable = TRUE,
-#     file = paste(saveDir1, "aki_pathways_IQR_filtered_probes_unique_genes_baseline_corrected_cortex_corrected_limma_1208_13June24",
-#         # Sys.Date(),
-#         # format(Sys.time(), "_%I%M%p"),
-#         ".xlsx",
-#         sep = ""
-#     )
-# )
+openxlsx::write.xlsx(felzartamab_gsea_aki_k1208$gsea_tables,
+    asTable = TRUE,
+    file = paste(saveDir1, "aki_pathways_IQR_filtered_probes_unique_genes_baseline_corrected_cortex_corrected_limma_1208_13June24",
+        # Sys.Date(),
+        # format(Sys.time(), "_%I%M%p"),
+        ".xlsx",
+        sep = ""
+    )
+)

@@ -21,6 +21,7 @@ load(paste(loadDir, "felzartamab_gsea_dose_baseline_corrected_cortex_corrected_k
 load(paste(loadDir, "felzartamab_gsea_kegg_baseline_corrected_cortex_corrected_k1208.RData", sep = ""))
 load(paste(loadDir, "felzartamab_gsea_go_baseline_corrected_cortex_corrected_k1208.RData", sep = ""))
 load(paste(loadDir, "felzartamab_gsea_mesh_baseline_corrected_cortex_corrected_k1208.RData", sep = ""))
+load(paste(loadDir, "felzartamab_gsea_aki_baseline_corrected_cortex_corrected_k1208.RData", sep = ""))
 
 
 
@@ -32,8 +33,8 @@ gsea <- reduce(
         felzartamab_gsea_wiki_k1208,
         felzartamab_gsea_do_k1208,
         felzartamab_gsea_kegg_k1208,
-        felzartamab_gsea_reactome_k1208
-        # felzartamab_gsea_mesh_k1208
+        felzartamab_gsea_reactome_k1208,
+        felzartamab_gsea_aki_k1208
     ), bind_rows
 ) %>%
     mutate(keep = map_dbl(gsea_tables, nrow)) %>%
@@ -80,7 +81,7 @@ gsea_flextables <- gsea_tables %>%
                     mutate(
                         library = db,
                         pathway = Description,
-                        "core enrichment genes" = core_enrichment %>% str_replace_all("/", ","),
+                        "core enrichment genes" = core_enrichment %>% str_replace_all("/", ", "),
                         "n genes" = setSize,
                         NES = NES %>% round(2),
                         FDR = case_when(

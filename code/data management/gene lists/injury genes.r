@@ -16,6 +16,20 @@ simplefile_path <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/0000 simp
 simplefile <- read_excel(path = simplefile_path, sheet = "simpleCorrAAInjRejInjset")
 
 
+# DEFINE GENES FROM FUNCTIONAL ENRICHMENT ####
+genes_injury <- Hmisc::.q(
+    SPTBN1, NRP1, KLF6, 'HLA-DRB1', DOCK11, DUSP1, CHSY1, LDHA,
+    CDC42SE2, TPM4, PTBP3, ARHGAP29, SYNE2, SERP1, CORO1C, LRRFIP1, PPFIBP1, CANX, JUN,
+    SCOC, RNF213, SPP1, PIK3AP1, VIM, SVIL, TPM3, RAN, ANXA5, ADAM10, HSPA1A, CEBPB,
+    SPARC, ACTB, HNRNPK, SLFN5, RHOA
+)
+
+
+
+
+
+
+
 genes_injury_markers %>%
     # mutate(data = map(data, filter, abs(log2FC) > 1)) %>%
     unnest(data) %>%

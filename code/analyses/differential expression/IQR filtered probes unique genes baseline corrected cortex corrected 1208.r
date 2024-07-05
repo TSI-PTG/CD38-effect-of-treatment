@@ -157,7 +157,7 @@ table_block_1 <- tab_block_1 %>%
     dplyr::select(
         AffyID, Symb, Gene, PBT,
         all_of(colnames(means_baseline_week24)[-1]),
-        logFC, P.Value, adj.P.Val,
+        t, logFC, P.Value, adj.P.Val,
     ) %>%
     mutate(
         pFC = 2^(log2(Week24_Placebo) - log2(Baseline_Placebo)) %>% round(2),
@@ -180,7 +180,7 @@ table_block_2 <- tab_block_2 %>%
     dplyr::select(
         AffyID, Symb, Gene, PBT,
         all_of(colnames(means_week24_week52)[-1]),
-        logFC, P.Value, adj.P.Val,
+        t, logFC, P.Value, adj.P.Val,
     ) %>%
     mutate(
         pFC = 2^(log2(Week52_Placebo) - log2(Week24_Placebo)) %>% round(2),
@@ -203,7 +203,7 @@ table_block_3 <- tab_block_3 %>%
     dplyr::select(
         AffyID, Symb, Gene, PBT,
         all_of(colnames(means_week52_baseline)[-1]),
-        logFC, P.Value, adj.P.Val,
+        t, logFC, P.Value, adj.P.Val,
     ) %>%
     mutate(
         pFC = 2^(log2(Week52_Placebo) - log2(Baseline_Placebo)) %>% round(2),
