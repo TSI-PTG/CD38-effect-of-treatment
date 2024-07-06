@@ -18,6 +18,46 @@ load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular e
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/simplified_enrichment_plots.RData")
 
 
+# SUMMARIZE THE GSEA DATA ####
+felzartamab_gsea_k1208 %>%
+    dplyr::select(design, gsea_table) %>%
+    unnest(everything()) %>%
+    mutate(Symb = core_enrichment %>% strsplit("/"), .by = ID) %>%
+    unnest(Symb) %>%
+    nest(.by = c("design", "interpretation")) %>%
+    mutate(data = map(data, dplyr::distinct, Symb))
+
+
+
+# FIND TOP GENES BY OVERLAP ####
+overlap <- felzartamab_gsea_k1208 %>%
+    dplyr::select(design, gsea_table) %>%
+    unnest(everything()) %>%
+    mutate(Symb = core_enrichment %>% strsplit("/"), .by = ID) %>%
+    unnest(Symb) %>%
+    dplyr::select(design, db, ID, interpretation, Symb) %>%
+    nest(.by = c("design")) %>%
+    mutate(
+        data = map(
+            data,
+            function(data) {
+                data %>%
+                    nest(.by = c(Symb, interpretation)) %>%
+                    mutate(count = map_dbl(data, nrow)) %>%
+                    mutate(prop = count / max(count), .by = interpretation) %>%
+                    dplyr::select(-data)
+            }
+        )
+    )
+
+# overlap %>%
+#     unnest(data) %>%
+#     slice_max(prop, n = 10, by = c("design", "interpretation"), with_ties = FALSE) %>%
+#     arrange(interpretation, prop %>% desc()) %>%
+#     print(n="all")
+
+
+
 # WRANGLE THE GSEA RESULTS ####
 gsea <- felzartamab_gsea_k1208 %>%
     mutate(
@@ -91,7 +131,7 @@ xlim <- c(0, data_volcano %>%
     dplyr::select(data_plot) %>%
     unnest(data_plot) %>%
     pull(p) %>%
-    max() * 1.4)
+    max() * 1.3)
 x_end <- 3.25
 
 
@@ -144,7 +184,7 @@ curves_baseline_vs_week24_immune_response <- ggplot2::geom_curve(
     mapping = ggplot2::aes(
         x = p,
         y = logFC,
-        xend = 3,
+        xend = 3.1,
         yend = 0.15,
     ),
     col = "#5d00ff",
@@ -165,11 +205,11 @@ curves_baseline_vs_week52_immune_response <- ggplot2::geom_curve(
     mapping = ggplot2::aes(
         x = p,
         y = logFC,
-        xend = 3,
-        yend = -0.15,
+        xend = 2.95,
+        yend = -0.75,
     ),
-    col = "#5d00ff",
-    curvature = -0.35,
+    col = "#d300ffff",
+    curvature = 0.65,
     angle = 45,
     linewidth = 0.1,
     ncp = 1
