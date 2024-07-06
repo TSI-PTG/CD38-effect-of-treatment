@@ -24,7 +24,6 @@ load(paste(loadDir, "felzartamab_gsea_mesh_baseline_corrected_cortex_corrected_k
 load(paste(loadDir, "felzartamab_gsea_aki_baseline_corrected_cortex_corrected_k1208.RData", sep = ""))
 
 
-
 # JOIN THE GSEA RESULTS ####
 gsea <- purrr::reduce(
     list(
@@ -45,9 +44,8 @@ gsea <- purrr::reduce(
 
 # DEFINE INTERPREATION BASED ON PATHWAYS ####
 pathway_interpretation <- gsea %>%
-    dplyr::select(gsea_tables) %>%
+    dplyr::select(design, gsea_tables) %>%
     unnest(everything()) %>%
-    dplyr::select(ID, Description) %>%
     mutate(
         interpretation = case_when(
             ID %in% c(
@@ -59,40 +57,48 @@ pathway_interpretation <- gsea %>%
                 "GO:0051707",
                 "GO:0006955",
                 "GO:0002376",
-                "R-HSA-168256",
                 "DOID:2914",
                 "DOID:77",
                 "DOID:1579",
-                "R-HSA-168249",
+                "R-HSA-168256"
+            ) & design == "Baseline_vs_Week24" ~ "immune response",
+            ID %in% c(
                 "R-HSA-168256",
+                "R-HSA-168249",
                 "R-HSA-1643685",
                 "R-HSA-5663205"
-            ) ~ "immune response",
-            ID %in% c("AKI", "R-HSA-109582") ~ "injury response",
+            ) & design == "Baseline_vs_Week52" ~ "immune-related response to injury",
+            ID %in% c("AKI", "R-HSA-109582") ~ "response to injury",
             ID %in% c(
                 "R-HSA-9006934",
                 "R-HSA-597592",
                 "R-HSA-5653656",
                 "R-HSA-392499"
-            ) ~ "cellular metabolism",
+            ) ~ "response to injury",
             ID %in% c(
                 "R-HSA-2262752",
                 "R-HSA-8953897"
-            ) ~ "cellular stress response",
+            ) ~ "response to injury",
         )
-    )
+    ) %>%
+    dplyr::select(design, ID, Description, interpretation)
+pathway_interpretation %>% print(n = "all")
 
 
 # WRANGLE THE GSEA TABLES ####
 gsea_tables <- gsea %>%
     mutate(
-        gsea_tables = map(
-            gsea_tables,
-            function(gsea_tables) {
+        gsea_tables = pmap(
+            list(design, gsea_tables),
+            function(design, gsea_tables) {
                 gsea_tables %>%
-                    mutate(Description = Description %>% as.character()) %>%
-                    left_join(pathway_interpretation) %>%
-                    dplyr::select(ID, Description, interpretation, setSize, NES, p.adjust, core_enrichment)
+                    mutate(
+                        design = design,
+                        Description = Description %>% as.character()
+                    ) %>%
+                    left_join(pathway_interpretation, by = c("ID", "Description", "design")) %>%
+                    dplyr::select(ID, Description, interpretation, setSize, NES, p.adjust, core_enrichment) %>%
+                    distinct(ID, setSize, interpretation, .keep_all = TRUE)
             }
         )
     ) %>%

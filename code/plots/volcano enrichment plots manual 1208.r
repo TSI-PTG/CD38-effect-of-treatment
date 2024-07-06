@@ -92,6 +92,7 @@ xlim <- c(0, data_volcano %>%
     unnest(data_plot) %>%
     pull(p) %>%
     max() * 1.4)
+x_end <- 3.25
 
 
 # MAKE VOLCANO PLOTS ####
@@ -103,8 +104,72 @@ plot_volcano <- data_volcano %>%
             ylim = ylim, xlim = xlim
         )
     )
+# plot_volcano$plot_volcano[[1]]
 
-plot_volcano$plot_volcano[[1]]
+
+# DEFINE CURVE LAYERS ####
+curves_baseline_vs_week24_immune_response <- ggplot2::geom_curve(
+    data = data_enrichment %>%
+        dplyr::filter(
+            design == "Baseline_vs_Week24",
+            interpretation == "immune response"
+        ) %>%
+        pull(data) %>%
+        pluck(1),
+    mapping = ggplot2::aes(
+        x = p,
+        y = logFC,
+        xend = x_end,
+        yend = 0.25,
+    ),
+    col = "#5d00ff",
+    curvature = 0.325,
+    angle = 45,
+    linewidth = 0.1, 
+    ncp = 1
+)
+
+curves_baseline_vs_week52_immune_response <- ggplot2::geom_curve(
+    data = data_enrichment %>%
+        dplyr::filter(
+            design == "Baseline_vs_Week52",
+            interpretation == "immune-related response to injury"
+        ) %>%
+        pull(data) %>%
+        pluck(1),
+    mapping = ggplot2::aes(
+        x = p,
+        y = logFC,
+        xend = x_end,
+        yend = -0.75,
+    ),
+    col = "#5d00ff",
+    curvature = 0.35,
+    angle = 45,
+    linewidth = 0.1, 
+    ncp = 1
+)
+
+curves_baseline_vs_week52_injury_response <- ggplot2::geom_curve(
+    data = data_enrichment %>%
+        dplyr::filter(
+            design == "Baseline_vs_Week52",
+            interpretation == "response to injury"
+        ) %>%
+        pull(data) %>%
+        pluck(1),
+    mapping = ggplot2::aes(
+        x = p,
+        y = logFC,
+        xend = x_end,
+        yend = 0.75,
+    ),
+    col = "#ff9900",
+    curvature = -0.15,
+    angle = 90,
+    linewidth = 0.1, 
+    ncp = 1
+)
 
 
 
@@ -112,37 +177,37 @@ plot_volcano$plot_volcano[[1]]
 plot_volcano_baseline_vs_week24 <- plot_volcano %>%
     dplyr::filter(design == "Baseline_vs_Week24") %>%
     pull(plot_volcano) %>%
-    pluck(1) +
-    ggplot2::geom_curve(
-        data = data_enrichment %>%
-            dplyr::filter(
-                design == "Baseline_vs_Week24",
-                interpretation == "immune response"
-            ) %>%
-            pull(data) %>%
-            pluck(1),
-        mapping = ggplot2::aes(
-            x = p,
-            y = logFC,
-            xend = 4,
-            yend = 1,
-        ),
-        # col = GO_lines$col_group,
-        curvature = -1,
-        angle = 45,
-        linewidth = 0.1
-    )
-
-
-
-
-
+    pluck(1)
 
 
 plot_volcano_baseline_vs_week52 <- plot_volcano %>%
     dplyr::filter(design == "Baseline_vs_Week52") %>%
     pull(plot_volcano) %>%
     pluck(1)
+
+
+# RE-ARRANGE LAYERS OF GGPLOT ####
+plot_volcano_baseline_vs_week24$layers <- c(
+    plot_volcano_baseline_vs_week24 %>% pluck("layers", 1),
+    plot_volcano_baseline_vs_week24 %>% pluck("layers", 2),
+    curves_baseline_vs_week24_immune_response,
+    plot_volcano_baseline_vs_week24 %>% pluck("layers", 3),
+    plot_volcano_baseline_vs_week24 %>% pluck("layers", 4),
+    plot_volcano_baseline_vs_week24 %>% pluck("layers", 5),
+    plot_volcano_baseline_vs_week24 %>% pluck("layers", 6)
+)
+
+plot_volcano_baseline_vs_week52$layers <- c(
+    plot_volcano_baseline_vs_week52 %>% pluck("layers", 1),
+    plot_volcano_baseline_vs_week52 %>% pluck("layers", 2),
+    curves_baseline_vs_week52_immune_response,
+    curves_baseline_vs_week52_injury_response,
+    plot_volcano_baseline_vs_week52 %>% pluck("layers", 3),
+    plot_volcano_baseline_vs_week52 %>% pluck("layers", 4),
+    plot_volcano_baseline_vs_week52 %>% pluck("layers", 5),
+    plot_volcano_baseline_vs_week52 %>% pluck("layers", 6)
+)
+
 
 
 

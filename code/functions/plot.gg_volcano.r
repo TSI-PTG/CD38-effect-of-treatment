@@ -38,6 +38,30 @@ gg_volcano <- function(
         log10() * -1
     plot <- data %>%
         ggplot2::ggplot(mapping = ggplot2::aes(x = p, y = logFC)) +
+        # ggplot2::geom_segment(
+        #     inherit.aes = FALSE,
+        #     data = dplyr::tibble(
+        #         x0 = seq(
+        #             -log10(0.05),
+        #             3.5 %>% max(),
+        #             length.out = 300
+        #         ),
+        #         xend = x0,
+        #         y0 = -Inf,
+        #         yend = Inf,
+        #         col = x0
+        #     ),
+        #     mapping = ggplot2::aes(
+        #         x = x0,
+        #         xend = xend,
+        #         y = y0,
+        #         yend = yend,
+        #         col = x0
+        #     ),
+        #     show.legend = FALSE
+        # ) +
+        # ggplot2::scale_colour_gradient(low = "#ffffff95", high = "#ffffff00") +
+        # ggnewscale::new_scale_colour() +
         ggplot2::geom_hline(yintercept = 0, linetype = "dashed") +
         ggplot2::geom_vline(xintercept = -log10(0.05), linetype = "dashed") +
         ggplot2::geom_point(
