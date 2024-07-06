@@ -111,7 +111,7 @@ gg_volcano <- function(
             axis.title = ggplot2::element_text(size = 12, face = "plain"),
             axis.text = ggplot2::element_text(colour = "black"),
             plot.margin = ggplot2::unit(c(0.25, 0.1, 0.1, 0.1), "cm"),
-            plot.background = ggplot2::element_rect(fill = "grey95", colour = " white")
+            # plot.background = ggplot2::element_rect(fill = "grey95", colour = " white")
         )
     if (show_labels) {
         labels_probes <- labels_probes %>% dplyr::bind_rows()

@@ -107,6 +107,31 @@ plot_volcano <- data_volcano %>%
 # plot_volcano$plot_volcano[[1]]
 
 
+# DEFINE CURVE GRADIENT LAYER ####
+plot_volcano_curve_gradient <- ggplot2::geom_segment(
+    inherit.aes = FALSE,
+    data = dplyr::tibble(
+        x0 = seq(
+            -log10(0.05),
+            x_end,
+            length.out = 400
+        ),
+        xend = x0,
+        y0 = -Inf,
+        yend = Inf,
+        col = x0
+    ),
+    mapping = ggplot2::aes(
+        x = x0,
+        xend = xend,
+        y = y0,
+        yend = yend,
+        col = x0
+    ),
+    show.legend = FALSE
+)
+
+
 # DEFINE CURVE LAYERS ####
 curves_baseline_vs_week24_immune_response <- ggplot2::geom_curve(
     data = data_enrichment %>%
@@ -119,13 +144,13 @@ curves_baseline_vs_week24_immune_response <- ggplot2::geom_curve(
     mapping = ggplot2::aes(
         x = p,
         y = logFC,
-        xend = x_end,
-        yend = 0.25,
+        xend = 3,
+        yend = 0.15,
     ),
     col = "#5d00ff",
     curvature = 0.325,
     angle = 45,
-    linewidth = 0.1, 
+    linewidth = 0.1,
     ncp = 1
 )
 
@@ -140,13 +165,13 @@ curves_baseline_vs_week52_immune_response <- ggplot2::geom_curve(
     mapping = ggplot2::aes(
         x = p,
         y = logFC,
-        xend = x_end,
-        yend = -0.75,
+        xend = 3,
+        yend = -0.15,
     ),
     col = "#5d00ff",
-    curvature = 0.35,
+    curvature = -0.35,
     angle = 45,
-    linewidth = 0.1, 
+    linewidth = 0.1,
     ncp = 1
 )
 
@@ -161,24 +186,28 @@ curves_baseline_vs_week52_injury_response <- ggplot2::geom_curve(
     mapping = ggplot2::aes(
         x = p,
         y = logFC,
-        xend = x_end,
-        yend = 0.75,
+        xend = 3,
+        yend = 0.45,
     ),
     col = "#ff9900",
     curvature = -0.15,
     angle = 90,
-    linewidth = 0.1, 
+    linewidth = 0.1,
     ncp = 1
 )
 
 
 
-# ADD ENRICHMENT ANNOTATION TO VOLCANO PLOTS ####
+# DEFINE VOLCANO PLOTS ####
 plot_volcano_baseline_vs_week24 <- plot_volcano %>%
     dplyr::filter(design == "Baseline_vs_Week24") %>%
     pull(plot_volcano) %>%
     pluck(1)
 
+plot_volcanoweek24_vs_week52 <- plot_volcano %>%
+    dplyr::filter(design == "Week24_vs_Week52") %>%
+    pull(plot_volcano) %>%
+    pluck(1)
 
 plot_volcano_baseline_vs_week52 <- plot_volcano %>%
     dplyr::filter(design == "Baseline_vs_Week52") %>%
@@ -188,9 +217,10 @@ plot_volcano_baseline_vs_week52 <- plot_volcano %>%
 
 # RE-ARRANGE LAYERS OF GGPLOT ####
 plot_volcano_baseline_vs_week24$layers <- c(
+    curves_baseline_vs_week24_immune_response,
+    plot_volcano_curve_gradient,
     plot_volcano_baseline_vs_week24 %>% pluck("layers", 1),
     plot_volcano_baseline_vs_week24 %>% pluck("layers", 2),
-    curves_baseline_vs_week24_immune_response,
     plot_volcano_baseline_vs_week24 %>% pluck("layers", 3),
     plot_volcano_baseline_vs_week24 %>% pluck("layers", 4),
     plot_volcano_baseline_vs_week24 %>% pluck("layers", 5),
@@ -198,10 +228,11 @@ plot_volcano_baseline_vs_week24$layers <- c(
 )
 
 plot_volcano_baseline_vs_week52$layers <- c(
-    plot_volcano_baseline_vs_week52 %>% pluck("layers", 1),
-    plot_volcano_baseline_vs_week52 %>% pluck("layers", 2),
     curves_baseline_vs_week52_immune_response,
     curves_baseline_vs_week52_injury_response,
+    plot_volcano_curve_gradient,
+    plot_volcano_baseline_vs_week52 %>% pluck("layers", 1),
+    plot_volcano_baseline_vs_week52 %>% pluck("layers", 2),
     plot_volcano_baseline_vs_week52 %>% pluck("layers", 3),
     plot_volcano_baseline_vs_week52 %>% pluck("layers", 4),
     plot_volcano_baseline_vs_week52 %>% pluck("layers", 5),
@@ -209,233 +240,27 @@ plot_volcano_baseline_vs_week52$layers <- c(
 )
 
 
+# FINALIZE PLOTS ####
+plot_volcano_baseline_vs_week24 <- plot_volcano_baseline_vs_week24 +
+    ggplot2::scale_colour_gradient(low = "#ffffff95", high = "#ffffff00")
 
+plot_volcano_baseline_vs_week52 <- plot_volcano_baseline_vs_week52 +
+    ggplot2::scale_colour_gradient(low = "#ffffff95", high = "#ffffff00")
 
-
-# ADD SIMPLIFIED ENRICHMENT ANNOTATION TO Baseline_vs_Week24 PLOTS ####
-plot_baseline_week24 <- df_plot %>%
-    dplyr::filter(design == "Baseline_vs_Week24") %>%
-    pull(plot) %>%
-    pluck(1)
-#  +
-# patchwork::inset_element(
-#     simplified_enrichment_plot %>%
-#         dplyr::filter(design == "Baseline_vs_Week24") %>%
-#         pull(plot_enrichment) %>%
-#         pluck(1) %>%
-#         pull(plot) %>%
-#         pluck(1),
-#     align_to = "plot",
-#     left = df_plot %>%
-#         dplyr::filter(design == "Baseline_vs_Week24") %>%
-#         pull(GO_lines) %>%
-#         pluck(1) %>%
-#         dplyr::filter(groupID == 1) %>%
-#         pull(x_end_prop) %>%
-#         unique(),
-#     right = 0.995,
-#     bottom = df_plot %>%
-#         dplyr::filter(design == "Baseline_vs_Week24") %>%
-#         pull(GO_lines) %>%
-#         pluck(1) %>%
-#         dplyr::filter(groupID == 1) %>%
-#         pull(y_end_prop) %>%
-#         unique() - 0.1,
-#     top = df_plot %>%
-#         dplyr::filter(design == "Baseline_vs_Week24") %>%
-#         pull(GO_lines) %>%
-#         pluck(1) %>%
-#         dplyr::filter(groupID == 1) %>%
-#         pull(y_end_prop) %>%
-#         unique() + 0.1
-# )
-
-
-
-# ADD SIMPLIFIED ENRICHMENT ANNOTATION TO Week24_vs_Week52 PLOTS ####
-plot_week24_week52 <- df_plot %>%
-    dplyr::filter(design == "Week24_vs_Week52") %>%
-    pull(plot) %>%
-    pluck(1)
-# +
-# patchwork::inset_element(
-#     simplified_enrichment_plot %>%
-#         dplyr::filter(design == "Week24_vs_Week52") %>%
-#         pull(plot_enrichment) %>%
-#         pluck(1) %>%
-#         pull(plot) %>%
-#         pluck(1),
-#     align_to = "plot",
-#     left = df_plot %>%
-#         dplyr::filter(design == "Week24_vs_Week52") %>%
-#         pull(GO_lines) %>%
-#         pluck(1) %>%
-#         dplyr::filter(groupID == 1) %>%
-#         pull(x_end_prop) %>%
-#         unique(),
-#     right = 0.995,
-#     bottom = df_plot %>%
-#         dplyr::filter(design == "Week24_vs_Week52") %>%
-#         pull(GO_lines) %>%
-#         pluck(1) %>%
-#         dplyr::filter(groupID == 1) %>%
-#         pull(y_end_prop) %>%
-#         unique() - 0.1,
-#     top = df_plot %>%
-#         dplyr::filter(design == "Week24_vs_Week52") %>%
-#         pull(GO_lines) %>%
-#         pluck(1) %>%
-#         dplyr::filter(groupID == 1) %>%
-#         pull(y_end_prop) %>%
-#         unique() + 0.1
-# )
-
-
-
-# ADD SIMPLIFIED ENRICHMENT ANNOTATION TO Baseline_vs_Week52 PLOTS ####
-plot_baseline_week52 <- df_plot %>%
-    dplyr::filter(design == "Baseline_vs_Week52") %>%
-    pull(plot) %>%
-    pluck(1)
-# +
-# patchwork::inset_element(
-#     simplified_enrichment_plot %>%
-#         dplyr::filter(design == "Baseline_vs_Week52") %>%
-#         pull(plot_enrichment) %>%
-#         pluck(1) %>%
-#         pull(plot) %>%
-#         pluck(1),
-#     align_to = "plot",
-#     left = df_plot %>%
-#         dplyr::filter(design == "Baseline_vs_Week52") %>%
-#         pull(GO_lines) %>%
-#         pluck(1) %>%
-#         dplyr::filter(groupID == 1) %>%
-#         pull(x_end_prop) %>%
-#         unique(),
-#     right = 0.995,
-#     bottom = df_plot %>%
-#         dplyr::filter(design == "Baseline_vs_Week52") %>%
-#         pull(GO_lines) %>%
-#         pluck(1) %>%
-#         dplyr::filter(groupID == 1) %>%
-#         pull(y_end_prop) %>%
-#         unique() - 0.1,
-#     top = df_plot %>%
-#         dplyr::filter(design == "Baseline_vs_Week52") %>%
-#         pull(GO_lines) %>%
-#         pluck(1) %>%
-#         dplyr::filter(groupID == 1) %>%
-#         pull(y_end_prop) %>%
-#         unique() + 0.1
-# ) +
-# patchwork::inset_element(
-#     simplified_enrichment_plot %>%
-#         dplyr::filter(design == "Baseline_vs_Week52") %>%
-#         pull(plot_enrichment) %>%
-#         pluck(1) %>%
-#         pull(plot) %>%
-#         pluck(2),
-#     align_to = "plot",
-#     left = df_plot %>%
-#         dplyr::filter(design == "Baseline_vs_Week52") %>%
-#         pull(GO_lines) %>%
-#         pluck(1) %>%
-#         dplyr::filter(groupID == 2) %>%
-#         pull(x_end_prop) %>%
-#         unique(),
-#     right = 0.995,
-#     bottom = df_plot %>%
-#         dplyr::filter(design == "Baseline_vs_Week52") %>%
-#         pull(GO_lines) %>%
-#         pluck(1) %>%
-#         dplyr::filter(groupID == 2) %>%
-#         pull(y_end_prop) %>%
-#         unique() - 0.1,
-#     top = df_plot %>%
-#         dplyr::filter(design == "Baseline_vs_Week52") %>%
-#         pull(GO_lines) %>%
-#         pluck(1) %>%
-#         dplyr::filter(groupID == 2) %>%
-#         pull(y_end_prop) %>%
-#         unique() + 0.1
-# ) +
-# patchwork::inset_element(
-#     simplified_enrichment_plot %>%
-#         dplyr::filter(design == "Baseline_vs_Week52") %>%
-#         pull(plot_enrichment) %>%
-#         pluck(1) %>%
-#         pull(plot) %>%
-#         pluck(3),
-#     align_to = "plot",
-#     left = df_plot %>%
-#         dplyr::filter(design == "Baseline_vs_Week52") %>%
-#         pull(GO_lines) %>%
-#         pluck(1) %>%
-#         dplyr::filter(groupID == 3) %>%
-#         pull(x_end_prop) %>%
-#         unique(),
-#     right = 0.995,
-#     bottom = df_plot %>%
-#         dplyr::filter(design == "Baseline_vs_Week52") %>%
-#         pull(GO_lines) %>%
-#         pluck(1) %>%
-#         dplyr::filter(groupID == 3) %>%
-#         pull(y_end_prop) %>%
-#         unique() - 0.1,
-#     top = df_plot %>%
-#         dplyr::filter(design == "Baseline_vs_Week52") %>%
-#         pull(GO_lines) %>%
-#         pluck(1) %>%
-#         dplyr::filter(groupID == 3) %>%
-#         pull(y_end_prop) %>%
-#         unique() + 0.1
-# ) +
-# patchwork::inset_element(
-#     simplified_enrichment_plot %>%
-#         dplyr::filter(design == "Baseline_vs_Week52") %>%
-#         pull(plot_enrichment) %>%
-#         pluck(1) %>%
-#         pull(plot) %>%
-#         pluck(4),
-#     align_to = "plot",
-#     left = df_plot %>%
-#         dplyr::filter(design == "Baseline_vs_Week52") %>%
-#         pull(GO_lines) %>%
-#         pluck(1) %>%
-#         dplyr::filter(groupID == 4) %>%
-#         pull(x_end_prop) %>%
-#         unique(),
-#     right = 0.995,
-#     bottom = df_plot %>%
-#         dplyr::filter(design == "Baseline_vs_Week52") %>%
-#         pull(GO_lines) %>%
-#         pluck(1) %>%
-#         dplyr::filter(groupID == 4) %>%
-#         pull(y_end_prop) %>%
-#         unique() - 0.1,
-#     top = df_plot %>%
-#         dplyr::filter(design == "Baseline_vs_Week52") %>%
-#         pull(GO_lines) %>%
-#         pluck(1) %>%
-#         dplyr::filter(groupID == 4) %>%
-#         pull(y_end_prop) %>%
-#         unique() + 0.1
-# )
 
 
 # MAKE PLOT PANELS ####
-plot_volcano_enrichment <- df_plot %>%
-    mutate(
-        plot_volcano_enrichment = list(
-            plot_baseline_week24 %>%
-                ggpubr::ggarrange(., NULL, ncol = 2, widths = c(1, 0)),
-            plot_week24_week52 %>%
-                ggpubr::ggarrange(., NULL, ncol = 2, widths = c(1, 0)),
-            plot_baseline_week52 %>%
-                ggpubr::ggarrange(., NULL, ncol = 2, widths = c(1, 0))
-        )
+plot_volcano_enrichment <- tibble(
+    plot_volcano_enrichment = list(
+        plot_volcano_baseline_vs_week24 %>%
+            ggpubr::ggarrange(., NULL, ncol = 2, widths = c(1, 0)),
+        plot_volcanoweek24_vs_week52 %>%
+            ggpubr::ggarrange(., NULL, ncol = 2, widths = c(1, 0)),
+        plot_volcano_baseline_vs_week52 %>%
+            ggpubr::ggarrange(., NULL, ncol = 2, widths = c(1, 0))
     )
+)
+
 
 
 # SAVE THE PLOT DATA ####
