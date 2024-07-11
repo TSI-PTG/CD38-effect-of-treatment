@@ -8,7 +8,7 @@ library(ggrepel) # install.packages("ggrepel")
 library(gghalves) # pak::pak("erocoar/gghalves")
 library(ggh4x) # install.packages("ggh4x")
 library(broom) # install.packages("broom") #for tabular model object transformations
-library(flextable) # install.packages("flextable") #for table outputs
+library(flextable) # install.packages("flextable")  
 library(officer) # install.packages("officer")
 library(emmeans) # install.packages("emmeans") #for post-hoc testing and CLD
 library(multcomp) # install.packages("multcomp") #for for CLD

@@ -1,7 +1,7 @@
 # HOUSEKEEPING ####
 # CRAN libraries
 library(tidyverse) # install.packages("tidyverse")
-library(flextable) # install.packages("flextable") #for table outputs
+library(flextable) # install.packages("flextable")  
 library(officer) # install.packages("officer")
 library(openxlsx) # install.packages("openxlsx")
 # Bioconductor libraries

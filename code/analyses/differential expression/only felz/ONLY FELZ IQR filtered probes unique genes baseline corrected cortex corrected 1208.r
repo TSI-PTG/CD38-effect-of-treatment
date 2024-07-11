@@ -1,7 +1,7 @@
 # HOUSEKEEPING ####
 # CRAN libraries
 library(tidyverse) # install.packages("tidyverse")
-library(flextable) # install.packages("flextable") #for table outputs
+library(flextable) # install.packages("flextable")  
 library(officer) # install.packages("officer")
 library(openxlsx) # install.packages("openxlsx")
 library(readxl) # install.packages("readxl")
@@ -16,19 +16,24 @@ library(genefilter) # BiocManager::install("genefilter")
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/data_expressionset_k1208.RData")
 # load affymap
 load("Z:/DATA/Datalocks/Other data/affymap219_21Oct2019_1306_JR.RData")
+affymap219 <- affymap219 %>% tibble()
 # load mean expression by probe in K1208
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/mean_expression_by_probe_1208.RData")
 # load in house cell panel
 atagc <- read_excel("Z:/MISC/Patrick Gauthier/R/affymap219-CELL-PANEL/backup/UPDATED 2017 ANNOTATIONS - MASTERFILE - U133 HUMAN CELL PANEL - ALL PROBESETS (nonIQR) pfhptg.xlsx")
-# load DEG at baseline ####
+# load DEG at baseline
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/DEG_at_baseline_limma_1208.RData")
 # load mean expression by MMDx in K1208
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/mean_expression_K1208_MMDx.RData")
 
 
+# DEFINE SEED ####
+seed <- 42
+set.seed(seed)
+
+
 # DEFINE THE SET ####
 set00 <- data_expressionset_k1208[, data_expressionset_k1208$Patient %nin% c(15, 18)]
-
 
 
 # IQR FILTER THE DATA ####
@@ -73,10 +78,6 @@ genes <- mean_exprs_1208 %>%
 set <- set01[featureNames(set01) %in% genes, ]
 
 
-# DEFINE SEED ####
-seed <- 42
-
-
 # DEFINE FACTOR FOR CONTRASTS ####
 Felzartamab_Followup <- set$Felzartamab_Followup %>% droplevels()
 cortex <- set$Cortexprob
@@ -111,36 +112,37 @@ contrast_block_03 <- makeContrasts(
 fit_block_1 <- limma::lmFit(set, design)
 cfit_block_1 <- limma::contrasts.fit(fit_block_1, contrast_block_01)
 ebayes_block_1 <- limma::eBayes(cfit_block_1)
-tab_block_1 <- limma::topTable(ebayes_block_1, adjust = "fdr", sort.by = "p", number = "all")
-ebayes_block_1 %>% limma::topTable()
-
+tab_block_1 <- limma::topTable(ebayes_block_1, adjust = "fdr", sort.by = "p", number = "all") %>%
+    as_tibble(rownames = "AffyID") %>%
+    right_join(affymap219 %>% dplyr::select(AffyID, Symb, Gene, PBT), ., by = "AffyID")
 
 # FIT BLOCK week52 - week24 LIMMA MODEL ####
 fit_block_2 <- limma::lmFit(set, design)
 cfit_block_2 <- limma::contrasts.fit(fit_block_2, contrast_block_02)
 ebayes_block_2 <- limma::eBayes(cfit_block_2)
-tab_block_2 <- limma::topTable(ebayes_block_2, adjust = "fdr", sort.by = "p", number = "all")
-ebayes_block_2 %>% limma::topTable()
-
+tab_block_2 <- limma::topTable(ebayes_block_2, adjust = "fdr", sort.by = "p", number = "all") %>%
+    as_tibble(rownames = "AffyID") %>%
+    right_join(affymap219 %>% dplyr::select(AffyID, Symb, Gene, PBT), ., by = "AffyID")
 
 # FIT BLOCK week52 - baseline LIMMA MODEL ####
 fit_block_3 <- limma::lmFit(set, design)
 cfit_block_3 <- limma::contrasts.fit(fit_block_3, contrast_block_03)
 ebayes_block_3 <- limma::eBayes(cfit_block_3)
-tab_block_3 <- limma::topTable(ebayes_block_3, adjust = "fdr", sort.by = "p", number = "all")
-ebayes_block_3 %>% limma::topTable()
+tab_block_3 <- limma::topTable(ebayes_block_3, adjust = "fdr", sort.by = "p", number = "all") %>%
+    as_tibble(rownames = "AffyID") %>%
+    right_join(affymap219 %>% dplyr::select(AffyID, Symb, Gene, PBT), ., by = "AffyID")
 
 
 # CALCULATE MEAN GENE EXPRESSION FOR EACH PROBE BETWEEN GROUPINGS ####
-means_baseline_week24 <- fit_block_1 %>%
-    avearrays() %>%
-    data.frame() %>%
-    rownames_to_column("AffyID") %>%
-    tibble() %>%
-    mutate_if(is.numeric, ~ 2^. %>% round(0)) %>%
-    rename_at(vars(contains("Felz")), ~ str_remove(., "Felzartamab_Followup")) %>%
-    dplyr::select(-contains("Week12"), -contains("Placebo"), -any_of(c("cortex")))
-    # dplyr::select(-contains("Week52"), -contains("Week12"), -contains("Placebo"), -any_of(c("cortex")))
+# means_baseline_week24 <- fit_block_1 %>%
+#     avearrays() %>%
+#     data.frame() %>%
+#     rownames_to_column("AffyID") %>%
+#     tibble() %>%
+#     mutate_if(is.numeric, ~ 2^. %>% round(0)) %>%
+#     rename_at(vars(contains("Felz")), ~ str_remove(., "Felzartamab_Followup")) %>%
+#     dplyr::select(-contains("Week12"), -contains("Placebo"), -any_of(c("cortex")))
+# dplyr::select(-contains("Week52"), -contains("Week12"), -contains("Placebo"), -any_of(c("cortex")))
 
 
 # means_week24_week52 <- fit_block_2 %>%
@@ -179,8 +181,6 @@ means_felzartamab <- fit_block_1 %>%
 
 # FORMAT TOPTABLES ####
 table_block_1 <- tab_block_1 %>%
-    as_tibble(rownames = "AffyID") %>%
-    right_join(affymap219 %>% dplyr::select(AffyID, Symb, Gene, PBT), ., by = "AffyID") %>%
     arrange(P.Value) %>%
     mutate_at(c("P.Value", "adj.P.Val"), as.numeric) %>%
     tibble() %>%
@@ -197,8 +197,6 @@ table_block_1 <- tab_block_1 %>%
     )
 
 table_block_2 <- tab_block_2 %>%
-    as_tibble(rownames = "AffyID") %>%
-    right_join(affymap219 %>% dplyr::select(AffyID, Symb, Gene, PBT), ., by = "AffyID") %>%
     arrange(P.Value) %>%
     mutate_at(c("P.Value", "adj.P.Val"), as.numeric) %>%
     tibble() %>%
@@ -215,8 +213,6 @@ table_block_2 <- tab_block_2 %>%
     )
 
 table_block_3 <- tab_block_3 %>%
-    as_tibble(rownames = "AffyID") %>%
-    right_join(affymap219 %>% dplyr::select(AffyID, Symb, Gene, PBT), ., by = "AffyID") %>%
     arrange(P.Value) %>%
     mutate_at(c("P.Value", "adj.P.Val"), as.numeric) %>%
     tibble() %>%
@@ -271,21 +267,21 @@ limma_tables$table[[3]]
 # EXPORT THE DATA AS .RData FILE ####
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/"
 names(limma_tables$table) <- limma_tables$design
-save(limma_tables, file = paste(saveDir, "ONLY_FELZ_IQR_filtered_probes_unique_genes_baseline_corrected_cortex_corrected_limma_1208.RData", sep = ""))
+# save(limma_tables, file = paste(saveDir, "ONLY_FELZ_IQR_filtered_probes_unique_genes_baseline_corrected_cortex_corrected_limma_1208.RData", sep = ""))
 
 
 # EXPORT THE DATA AS AN EXCEL SHEET ####
 names(limma_tables$toptable) <- limma_tables$design
 saveDir1 <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/output/"
-openxlsx::write.xlsx(limma_tables$toptable,
-    asTable = TRUE,
-    file = paste(saveDir1, "ONLY_FELZ_IQR_filtered_probes_unique_genes_baseline_corrected_cortex_corrected_limma_1208_3July24",
-        # Sys.Date(),
-        # format(Sys.time(), "_%I%M%p"),
-        ".xlsx",
-        sep = ""
-    )
-)
+# openxlsx::write.xlsx(limma_tables$toptable,
+#     asTable = TRUE,
+#     file = paste(saveDir1, "ONLY_FELZ_IQR_filtered_probes_unique_genes_baseline_corrected_cortex_corrected_limma_1208_3July24",
+#         # Sys.Date(),
+#         # format(Sys.time(), "_%I%M%p"),
+#         ".xlsx",
+#         sep = ""
+#     )
+# )
 
 
 limma_tables %>%

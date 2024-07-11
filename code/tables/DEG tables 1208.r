@@ -15,6 +15,7 @@ load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular e
 
 
 
+
 # WRANGLE THE INJURY MARKER DATA ####
 # genes_injury_markers %>%
 #     unnest(data) %>%
@@ -26,7 +27,7 @@ injury_markers <- genes_injury_markers %>%
     drop_na(AffyID) %>%
     dplyr::filter(
         celltypename %>% str_detect(c("leukocytes"), negate = TRUE),
-        cluster %>% str_detect(c("New"), negate = TRUE),
+        cluster %>% str_detect(c("New"), negate = FALSE),
         # abs(log2FC) > 1
     ) %>%
     dplyr::select(celltypename:Symb) %>%
@@ -42,30 +43,28 @@ injury_markers <- genes_injury_markers %>%
         )
     ) %>%
     unnest(data) %>%
-    distinct(Symb, .keep_all = TRUE) %>% 
+    distinct(Symb, .keep_all = TRUE) %>%
     dplyr::select(AffyID, `cellular expression`)
 
 
 # FORMAT TABLES TO MAKE FLEXTABLES ####
+limma_tables$table[[1]]
 limma_tables <- limma_tables %>%
     mutate(
         gene_tables = map(
             table,
             function(table) {
-                colnames(table) <- table %>%
-                    colnames() %>%
-                    str_remove_all("\u394 |\u394")
+                # colnames(table) <- table %>%
+                #     colnames() %>%
+                #     str_remove_all("\u394 |\u394")
                 table %>%
-                    left_join(injury_markers, by = "AffyID")%>%
-                    dplyr::select(
-                        -contains("AffyID"), 
-                        -cortex, -FC,
-                        -contains("placebo FC"), -contains("felz FC"),
-                        -contains("MMDx")
-                    )  %>% 
+                    left_join(injury_markers, by = "AffyID") %>%
+                    dplyr::select(-t, -contains("AffyID"), -contains("MMDx")) %>%
                     dplyr::slice(1:20) %>%
                     mutate(
                         Gene = Gene %>% str_remove("///.*"),
+                        plogFC = plogFC %>% round(2),
+                        flogFC = flogFC %>% round(2),
                         logFC = logFC %>% round(2),
                         p = case_when(
                             p < 0.0001 ~ p %>% formatC(digits = 0, format = "e"),
@@ -77,30 +76,47 @@ limma_tables <- limma_tables %>%
                         )
                     ) %>%
                     relocate(
-                        c(`cellular expression`, "logFC", "p", "FDR"),
+                        c(
+                            # `HUVEC (unstimulated)`, `HUVEC (IFNg stimulated)`,
+                            #  `RPTEC (unstimulated)`,`RPTEC (IFNg stimulated)`,
+                            `cellular expression`, "plogFC", "flogFC", "logFC", "p", "FDR"
+                        ),
                         .after = PBT
                     )
             }
         )
     )
-limma_tables$gene_tables[[3]] %>% colnames()
+limma_tables$gene_tables[[1]] %>% colnames()
 
 
 # GLOBAL PARAMETERS FOR FLEXTABLES ####
 header1 <- c(
     # "AffyID",
-    "Gene\nsymbol", "Gene", "PBT", "Cellular expression\nin AKI",
-    "\u394\u394 logFC", "\u394\u394 P", "\u394\u394 FDR",
-    rep("Mean expression by group", 4)
+    "Gene\nsymbol", "Gene", "PBT",
+    "AKI-induced cell states",
+    rep("Differential expression", 5),
+    rep("Mean expression by group", 6),
+    rep("Cell panel expression", 4)
 )
 header2 <- c(
     # "AffyID",
-    "Gene\nsymbol", "Gene", "PBT", "Cellular expression\nin AKI",
-    "\u394\u394 logFC", "\u394\u394 P", "\u394\u394 FDR",
-    rep("Placebo", 2), rep("Felzartamab", 2)
+    "Gene\nsymbol", "Gene", "PBT",
+    "AKI-induced cell states",
+    "\u394\nplacebo\nlogFC", "\u394\nfelzartamab\nlogFC",
+    "\u394\u394\nlogFC", "\u394\u394\nP", "\u394\u394\nFDR",
+    rep("Placebo", 3), rep("Felzartamab", 3),
+    "HUVEC", "HUVEC\n(+IFNg)", " RPTEC", "RPTEC\n(+IFNg)"
+)
+header3 <- c(
+    "Gene\nsymbol", "Gene", "PBT",
+    "AKI-induced cell states",
+    "\u394\nplacebo\nlogFC", "\u394\nfelzartamab\nlogFC",
+    "\u394\u394\nlogFC", "\u394\u394\nP", "\u394\u394\nFDR",
+    "Baseline\n(N=10)", "Week24\n(N=10)", "Week52\n(N=10)", "Baseline\n(N=10)", "Week24\n(N=10)", "Week52\n(N=10)",
+    "HUVEC", "HUVEC\n(+IFNg)", " RPTEC", "RPTEC\n(+IFNg)"
 )
 
-cellWidths <- c(1.5, 5, 3, 1, 1, 1, 1, rep(1, 4)) # for individual tables up or down
+cellWidths <- c(1.5, 5, 3, 1.5, 1, 1, 1, 1, 1, rep(1, 6), rep(1, 4)) # for individual tables up or down
 cellWidths %>% length()
 
 # limma_tables$gene_tables[[1]] %>%
@@ -114,26 +130,12 @@ flextables <- limma_tables %>%
         flextables = pmap(
             list(design, gene_tables),
             function(design, gene_tables) {
-                # colnames(gene_tables) <- LETTERS[1:ncol(gene_tables)]
                 if (design == "Baseline_vs_Week24") {
                     title <- paste("Table i. Top 20 differentially expressed genes between baseline and week24 in biopsies from placebo and Felzartamab treated patients (by P-value)", sep = "")
-                    header3 <- c(
-                        "Gene\nsymbol", "Gene", "PBT", "Cellular expression\nin AKI", "\u394\u394 logFC", "\u394\u394 P", "\u394\u394 FDR",
-                        "Baseline\n(N=10)", "Week24\n(N=10)", "Baseline\n(N=10)", "Week24\n(N=10)"
-                    )
                 } else if (design == "Week24_vs_Week52") {
                     title <- paste("Table i. Top 20 differentially expressed genes between week24 and week52 in biopsies from placebo and Felzartamab treated patients (by P-value)", sep = "")
-
-                    header3 <- c(
-                        "Gene\nsymbol", "Gene", "PBT","Cellular expression\nin AKI", "\u394\u394 logFC",  "\u394\u394 P", "\u394\u394 FDR",
-                        "Week24\n(N=10)", "Week52\n(N=10)", "Week24\n(N=10)", "Week52\n(N=10)"
-                    )
                 } else if (design == "Baseline_vs_Week52") {
                     title <- paste("Table i. Top 20 differentially expressed genes between baseline and week52 in biopsies from placebo and Felzartamab treated patients (by P-value)", sep = "")
-                    header3 <- c(
-                        "Gene\nsymbol", "Gene", "PBT", "Cellular expression\nin AKI", "\u394\u394 logFC", "\u394\u394 P", "\u394\u394 FDR",
-                        "Baseline\n(N=10)", "Week52\n(N=10)", "Baseline\n(N=10)", "Week52\n(N=10)"
-                    )
                 }
                 gene_tables %>%
                     flextable::flextable() %>%
@@ -167,4 +169,4 @@ flextables$flextables[[3]]
 
 
 # PRINT THE DATA TO POWERPOINT ####
-flextables$flextables[[1]] %>% print(preview = "pptx")
+flextables$flextables[[3]] %>% print(preview = "pptx")

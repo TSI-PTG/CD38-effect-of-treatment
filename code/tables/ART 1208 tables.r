@@ -1,7 +1,7 @@
 # HOUSEKEEPING ####
 # CRAN libraries
 library(tidyverse) # install.packages("tidyverse")
-library(flextable) # install.packages("flextable") #for table outputs
+library(flextable) # install.packages("flextable")  
 library(officer) # install.packages("officer")
 # Custom operators, functions, and datasets
 "%nin%" <- function(a, b) match(a, b, nomatch = 0) == 0

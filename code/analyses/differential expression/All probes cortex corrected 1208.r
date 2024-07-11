@@ -1,7 +1,7 @@
 # HOUSEKEEPING ####
 # CRAN libraries
 library(tidyverse) # install.packages("tidyverse")
-library(flextable) # install.packages("flextable")
+library(flextable) # install.packages("flextable")  
 library(officer) # install.packages("officer")
 library(openxlsx) # install.packages("openxlsx")
 library(readxl) # install.packages("readxl")
@@ -21,8 +21,6 @@ affymap219 <- affymap219 %>% tibble()
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/mean_expression_by_probe_1208.RData")
 # load in house cell panel
 atagc <- read_excel("Z:/MISC/Patrick Gauthier/R/affymap219-CELL-PANEL/backup/UPDATED 2017 ANNOTATIONS - MASTERFILE - U133 HUMAN CELL PANEL - ALL PROBESETS (nonIQR) pfhptg.xlsx")
-# load DEG at baseline
-load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/DEG_at_baseline_limma_1208.RData")
 # load mean expression by MMDx in K1208
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/mean_expression_K1208_MMDx.RData")
 
@@ -33,16 +31,7 @@ set.seed(seed)
 
 
 # DEFINE THE SET ####
-set00 <- data_expressionset_k1208[, data_expressionset_k1208$Patient %nin% c(15, 18)]
-
-
-# IQR FILTER THE DATA ####
-f1 <- function(x) (IQR(x) > 0.5)
-ff <- filterfun(f1)
-if (!exists("selected")) {
-    selected <- genefilter(set00, ff)
-}
-set01 <- set00[selected, ]
+set01 <- data_expressionset_k1208[, data_expressionset_k1208$Patient %nin% c(15, 18)]
 
 
 # WRANGLE THE CELL PANEL DATA ####
@@ -59,13 +48,7 @@ cell_panel <- atagc %>%
     dplyr::slice_max(`HUVEC (unstimulated)`, by = "Symb", with_ties = FALSE)
 
 means_K1208_cell_panel <- means_K1208 %>%
-    left_join(cell_panel  %>% dplyr::select(-AffyID_U133))
-
-
-# DEFINE GENES SIMILAR AT BASELINE ####
-genes_baseline <- table_block_1 %>%
-    dplyr::filter(p > 0.05) %>%
-    pull(AffyID)
+    left_join(cell_panel %>% dplyr::select(-AffyID_U133))
 
 
 # WRANGLE THE MEAN EXPRESSION DATA ####
@@ -83,15 +66,8 @@ mean_exprs_by_probe <- set01 %>%
 genes <- mean_exprs_by_probe %>%
     group_by(Symb) %>%
     dplyr::slice_max(mean_exprs) %>%
-    dplyr::filter(Symb != "", AffyID %in% genes_baseline) %>%
     distinct(Symb, .keep_all = TRUE) %>%
     pull(AffyID)
-
-# genes <- mean_exprs_1208 %>%
-#     dplyr::slice_max(mean_expression, by = "Symb") %>%
-#     dplyr::filter(Symb != "", AffyID %in% genes_baseline) %>%
-#     distinct(Symb, .keep_all = TRUE) %>%
-#     pull(AffyID)
 
 set <- set01[featureNames(set01) %in% genes, ]
 
@@ -99,6 +75,7 @@ set <- set01[featureNames(set01) %in% genes, ]
 # DEFINE FACTOR FOR CONTRASTS ####
 Felzartamab_Followup <- set$Felzartamab_Followup %>% droplevels()
 cortex <- set$Cortexprob
+
 
 
 # DESIGN ####
@@ -364,51 +341,24 @@ limma_tables <- tibble(
         table_interaction_3
     )
 )
-limma_tables$table[[3]]
-limma_tables$table[[3]] %>%
-    dplyr::filter(Symb == "NFIX")
+
+
 
 
 # EXPORT THE DATA AS .RData FILE ####
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/"
 names(limma_tables$table) <- limma_tables$design
-save(limma_tables, file = paste(saveDir, "IQR_filtered_probes_unique_genes_baseline_corrected_cortex_corrected_limma_1208.RData", sep = ""))
+save(limma_tables, file = paste(saveDir, "All_probes_cortex_corrected_limma_1208.RData", sep = ""))
 
 
 # EXPORT THE DATA AS AN EXCEL SHEET ####
-names(limma_tables$toptable) <- limma_tables$design
 saveDir1 <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/output/"
-openxlsx::write.xlsx(limma_tables$toptable,
-    asTable = TRUE,
-    file = paste(saveDir1, "IQR_filtered_probes_unique_genes_baseline_corrected_cortex_corrected_limma_1208_3July24",
-        # Sys.Date(),
-        # format(Sys.time(), "_%I%M%p"),
-        ".xlsx",
-        sep = ""
-    )
-)
-
-
-limma_tables %>%
-    dplyr::filter(design == "Baseline_vs_Week24") %>%
-    pull(table) %>%
-    pluck(1) %>%
-    dplyr::filter(p < 0.05) %>%
-    mutate(direction = ifelse(logFC < 0, "down", "up")) %>%
-    nest(.by = direction)
-
-limma_tables %>%
-    dplyr::filter(design == "Week24_vs_Week52") %>%
-    pull(table) %>%
-    pluck(1) %>%
-    dplyr::filter(p < 0.05) %>%
-    mutate(direction = ifelse(logFC < 0, "down", "up")) %>%
-    nest(.by = direction)
-
-limma_tables %>%
-    dplyr::filter(design == "Baseline_vs_Week52") %>%
-    pull(table) %>%
-    pluck(1) %>%
-    dplyr::filter(p < 0.05) %>%
-    mutate(direction = ifelse(logFC < 0, "down", "up")) %>%
-    nest(.by = direction)
+# openxlsx::write.xlsx(limma_tables$table,
+#     asTable = TRUE,
+#     file = paste(saveDir1, "All_probes_cortex_corrected_limma_1208_11Jul24",
+#         # Sys.Date(),
+#         # format(Sys.time(), "_%I%M%p"),
+#         ".xlsx",
+#         sep = ""
+#     )
+# )

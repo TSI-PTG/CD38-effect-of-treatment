@@ -12,7 +12,7 @@ library(car) # install.packages("car") #for type-II manovas
 library(rstatix) # install.packages("rstatix") #for testing manova assumptions
 library(vegan) # install.packages("vegan") #for permanova
 library(pairwiseAdonis) # library(devtools) #install_github("pmartinezarbizu/pairwiseAdonis/pairwiseAdonis")
-library(flextable) # install.packages("flextable") #for table outputs
+library(flextable) # install.packages("flextable")  
 library(officer) # install.packages("officer")
 library(emmeans) # install.packages("emmeans") #for post-hoc testing and CLD
 library(multcomp) # install.packages("multcomp") #for for CLD

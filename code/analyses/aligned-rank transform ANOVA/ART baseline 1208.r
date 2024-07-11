@@ -3,7 +3,7 @@
 library(tidyverse) # install.packages("tidyverse")
 library(broom) # install.packages("broom") #for tabular model object transformations
 library(rstatix) # install.packages("rstatix") #for testing manova assumptions
-library(flextable) # install.packages("flextable") #for table outputs
+library(flextable) # install.packages("flextable")  
 library(officer) # install.packages("officer")
 library(emmeans) # install.packages("emmeans") #for post-hoc testing and CLD
 library(multcomp) # install.packages("multcomp") #for for CLD
