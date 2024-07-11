@@ -47,10 +47,17 @@ set01 <- set00[selected, ]
 
 # WRANGLE THE CELL PANEL DATA ####
 cell_panel <- atagc %>%
-    dplyr::select(`Affy Probeset ID`, `Index`, `Unstim HUVEC`, `HUVEC + IFNg`, `Unstim RPTEC`, `RPTEC + IFNg`) %>%
+    dplyr::select(
+        `Affy Probeset ID`, `Index`,
+        `Mcrphg unstim`, `Mcrphg + IFNg`,
+        `Unstim HUVEC`, `HUVEC + IFNg`,
+        `Unstim RPTEC`, `RPTEC + IFNg`
+    ) %>%
     dplyr::rename(
         AffyID_U133 = `Affy Probeset ID`,
         Symb = Index,
+        `Macrophage (unstimulated)` = `Mcrphg unstim`,
+        `Macrophage (IFNg stimulated)` = `Mcrphg + IFNg`,
         `HUVEC (unstimulated)` = `Unstim HUVEC`,
         `HUVEC (IFNg stimulated)` = `HUVEC + IFNg`,
         `RPTEC (unstimulated)` = `Unstim RPTEC`,
@@ -59,7 +66,11 @@ cell_panel <- atagc %>%
     dplyr::slice_max(`HUVEC (unstimulated)`, by = "Symb", with_ties = FALSE)
 
 means_K1208_cell_panel <- means_K1208 %>%
-    left_join(cell_panel  %>% dplyr::select(-AffyID_U133))
+    left_join(
+        cell_panel %>%
+            dplyr::select(-AffyID_U133),
+        by = "Symb"
+    )
 
 
 # DEFINE GENES SIMILAR AT BASELINE ####
@@ -308,7 +319,7 @@ table_interaction_2 <- tab_block_2 %>%
     dplyr::rename(
         p = P.Value,
         FDR = adj.P.Val
-    )
+    ) 
 
 table_interaction_3 <- tab_block_3 %>%
     arrange(P.Value) %>%
@@ -324,8 +335,7 @@ table_interaction_3 <- tab_block_3 %>%
     dplyr::rename(
         p = P.Value,
         FDR = adj.P.Val
-    )
-
+    ) 
 limma_tables <- tibble(
     design = c(
         "Baseline_vs_Week24",
@@ -359,14 +369,19 @@ limma_tables <- tibble(
             )
     ),
     table = list(
-        table_interaction_1,
-        table_interaction_2,
-        table_interaction_3
+        table_interaction_1 %>%
+            dplyr::select(-contains("macrophage"))
+,
+        table_interaction_2 %>%
+            dplyr::select(-contains("macrophage"))
+,
+        table_interaction_3 %>%
+            dplyr::select(-contains("macrophage"))
+
     )
 )
 limma_tables$table[[3]]
-limma_tables$table[[3]] %>%
-    dplyr::filter(Symb == "NFIX")
+
 
 
 # EXPORT THE DATA AS .RData FILE ####
