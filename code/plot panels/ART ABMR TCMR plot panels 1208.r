@@ -38,7 +38,7 @@ panel_pairs_ABMRpm <- panel_pairs_ABMRpm %>%
         font.label = list(size = 25, face = "bold")
     )  %>%
     ggpubr::annotate_figure(
-        top = text_grob("Tracking individual patient responses", face = "bold.italic", size = 25, hjust = 0.73)
+        top = text_grob("Tracking individual patient responses", face = "bold.italic", size = 25, hjust = 0.7)
     )
 
 
