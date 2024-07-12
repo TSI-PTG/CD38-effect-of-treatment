@@ -151,7 +151,7 @@ panels <- wrap_plots(
     C = panel_pairs_ABMRpm, 
     D = panels_violin_wlegend, 
     design = c(
-        'AAABC
+        'AAACC
         DDDDD
         DDDDD'
     ), 
