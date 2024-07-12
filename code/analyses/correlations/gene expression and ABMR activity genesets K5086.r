@@ -27,7 +27,7 @@ data_scores <- set %>%
     pData() %>%
     dplyr::select(ABMRact, ABMRifng, ABMRnk, ABMRendo) %>%
     drop_na() %>%
-    tibble
+    tibble()
 
 # DEFINE GENE EXPRESSION DATA ####
 data_probes <- set %>%
@@ -65,9 +65,23 @@ data_scc <- SCC_probes %>%
                     mutate(p = corPvalueStudent(SCC, 60), .after = SCC) %>%
                     arrange(p, SCC)
             }
+        ),
+        top100_positive = map(
+            data,
+            function(data) {
+                data %>%
+                    dplyr::slice_max(SCC, n = 1000, with_ties = FALSE)
+            }
+        ),
+        top100_negative = map(
+            data,
+            function(data) {
+                data %>%
+                    dplyr::slice_min(SCC, n = 1000, with_ties = FALSE)
+            }
         )
     )
-data_scc$data[[1]]
+data_scc$top100_negative[[1]]
 
 
 # EXPORT THE SCC TO AN .RData FILE ####
