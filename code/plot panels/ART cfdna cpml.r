@@ -48,9 +48,6 @@ plot_cfdna <- felzartamab_plots %>%
 
 panel_violin <- plot_cfdna + 
     plot_layout(ncol = 1) +
-    # plot_annotation(
-    #     tag_levels = list(c(LETTERS[1:15]))
-    # ) &
     theme(
         # legend.position = "none",
         axis.text = element_text(size = 12, colour = "black"),
@@ -66,12 +63,6 @@ panels <- ggarrange(
     heights = c(0.15, 1)
 )
 
-# panels_legend <- ggarrange(
-#     panel_legend,
-#     panels,
-#     nrow = 2, ncol = 1,
-#     heights = c(0.075, 1)
-# )
 
 
 # SAVE THE PLOTS ####
