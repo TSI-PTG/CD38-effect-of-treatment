@@ -48,7 +48,6 @@ scc_injury <- simplefile_injury %>%
     dplyr::filter(AffyID %in% means_K5086$AffyID)
 
 
-
 # WRANGLE THE CFDNA  SIMPLE FILE DATA ####
 simplefile_cfdna %>% colnames()
 scc_cfdna <- simplefile_cfdna %>%
@@ -63,7 +62,6 @@ scc_cfdna <- simplefile_cfdna %>%
 
 # JOIN THE SCC DATA ####
 scc <- left_join(scc_rejection, scc_cfdna, by = c("AffyID", "Symb", "Gene", "PBT"))
-
 
 
 # WRANGLE THE CELL PANEL DATA ####

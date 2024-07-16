@@ -9,15 +9,15 @@ gg_volcano_timeseries <- function(
     probes_sig_up <- data %>%
         dplyr::filter(
             design == "Baseline_vs_Week24",
-            `<U+0394><U+0394> p` < 0.05,
-            `<U+0394><U+0394> logFC` > 0
+            10^-p < 0.05,
+            logFC > 0
         ) %>%
         dplyr::pull(AffyID)
     probes_sig_dn <- data %>%
         dplyr::filter(
             design == "Baseline_vs_Week24",
-            `<U+0394><U+0394> p` < 0.05,
-            `<U+0394><U+0394> logFC` < 0
+            10^-p < 0.05,
+            logFC < 0
         ) %>%
         dplyr::pull(AffyID)
     data <- data %>%
@@ -77,7 +77,7 @@ gg_volcano_timeseries <- function(
             mapping = ggplot2::aes(x = p, y = logFC, group = AffyID, col = col),
             # col = data_sig$col,
             alpha = alpha_lines,
-            linewidth = 0.5, 
+            linewidth = 0.5,
             show.legend = FALSE
         ) +
         ggplot2::geom_point(
@@ -163,7 +163,7 @@ gg_volcano_timeseries <- function(
             legend.position = "none",
             axis.title = ggplot2::element_text(size = 12, face = "plain"),
             axis.text = ggplot2::element_text(colour = "black"),
-            plot.margin = ggplot2::unit(c(0.5, 0.1, 0.1, 0.1), "cm"),
+            plot.margin = ggplot2::unit(c(0, 0.1, 0, 0.1), "cm"),
             plot.background = ggplot2::element_rect(fill = "grey95", colour = " white")
         )
 }

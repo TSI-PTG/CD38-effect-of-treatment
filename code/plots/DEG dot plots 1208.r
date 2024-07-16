@@ -36,7 +36,7 @@ DEG_plots00 <- gene_tables %>%
                     "NK_ATAGC_U133", "NK_KTB18_RNAseq", "NK_LM22_U133"
                 ),
                 labels = c(
-                    "ABMR_activity genes",
+                    "ABMR activity genes",
                     "IFNG-inducible ABMR activity genes",
                     "NK cell-expressed ABMR activity genes",
                     "ABMR-associated endothelial genes",
@@ -62,7 +62,7 @@ DEG_plots <- DEG_plots00 %>%
             list(geneset, data),
             function(geneset, data) {
                 data <- data %>%
-                    dplyr::rename(logFC = `<U+0394><U+0394> logFC`, p = `<U+0394><U+0394> p`) %>%
+                    # dplyr::rename(logFC = `<U+0394><U+0394> logFC`, p = `<U+0394><U+0394> p`) %>%
                     dplyr::mutate(
                         col = dplyr::case_when(
                             p < 0.05 & logFC < 0 ~ col_dn,
@@ -106,7 +106,7 @@ DEG_plots <- DEG_plots00 %>%
             list(geneset, data),
             function(geneset, data) {
                 data <- data %>%
-                    dplyr::rename(logFC = `<U+0394><U+0394> logFC`, p = `<U+0394><U+0394> p`) %>%
+                    # dplyr::rename(logFC = `<U+0394><U+0394> logFC`, p = `<U+0394><U+0394> p`) %>%
                     dplyr::mutate(
                         col = dplyr::case_when(
                             p < 0.05 & logFC < 0 ~ col_dn,
@@ -146,7 +146,7 @@ DEG_plots <- DEG_plots00 %>%
             }
         )
     )
-DEG_plots$plot_long[[2]]
+DEG_plots$plot_long[[1]]
 
 
 # SAVE THE PLOT DATA ####
