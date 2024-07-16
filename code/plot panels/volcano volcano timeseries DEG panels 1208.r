@@ -23,7 +23,7 @@ size_title <- 15
 # MAKE PLOTS PANELS ####
 df_DEG_plot <- DEG_plots %>%
     dplyr::filter(geneset %in% c(
-        "ABMR activity genes",
+        # "ABMR activity genes",
         "IFNG-inducible ABMR activity genes",
         "NK cell-expressed ABMR activity genes",
         "ABMR-associated endothelial genes"
@@ -33,9 +33,9 @@ df_DEG_plot <- DEG_plots %>%
 # MAKE THE DOTPLOT PANELS ####
 panel_DEG2 <- wrap_plots(
     df_DEG_plot$plot_long,
-    nrow = 1, ncol = 4
+    nrow = 1, ncol = 3
 ) +
-    plot_annotation(tag_levels = list(c("D", "E", "F", "G"))) +
+    plot_annotation(tag_levels = list(c("D", "E", "F"))) +
     plot_layout(
         guides = "collect",
         # axes = "collect", axis_titles = "collect"
@@ -135,7 +135,7 @@ ggsave(
     panels_enrichment,
     file = paste(saveDir, "Volcano enrichment timerseries GEP IQR_filtered_probes_unique_genes_baseline_corrected_cortex_corrected 1208.png", sep = ""),
     dpi = 300,
-    width = 35,
+    width = 30,
     height = 15,
     units = "cm",
     bg = "white"

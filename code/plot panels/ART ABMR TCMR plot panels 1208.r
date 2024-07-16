@@ -10,7 +10,6 @@ library(ggprism) # install.packages("ggprism")
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/Felzartamab_plots.RData")
 
 
-
 # EXTRACT LEGEND FOR PLOTS ####
 panel_legend <- felzartamab_plots %>%
     dplyr::filter(variable == "AMAT1") %>%
@@ -18,7 +17,6 @@ panel_legend <- felzartamab_plots %>%
     ggpubr::get_legend() %>%
     ggpubr::as_ggplot() +
     theme(plot.margin = unit(c(0, 0, -1, 0), "cm"))
-
 
 
 # ABMRpm PATIENT PANELS ####
@@ -38,7 +36,7 @@ panel_pairs_ABMRpm <- panel_pairs_ABMRpm %>%
         font.label = list(size = 25, face = "bold")
     ) %>%
     ggpubr::annotate_figure(
-        top = text_grob("Tracking individual patient responses", face = "bold.italic", size = 25, hjust = 0.7)
+        top = text_grob("Tracking individual patient responses", face = "bold.italic", size = 25, hjust = 1.88)
     )
 
 
@@ -105,7 +103,6 @@ panel_violin_tcmr <- panel_violin_tcmr %>%
     )
 
 
-
 # COMBINED VIOLIN PANELS ####
 panels_violin <- ggarrange(
     panel_violin_abmr,
@@ -133,9 +130,8 @@ panels <- wrap_plots(
         C
         C"
     ),
-    heights = c(2, 3, 2)
+    heights = c(4, 3, 2)
 )
-
 
 
 # SAVE THE PLOTS ####
@@ -145,7 +141,7 @@ ggsave(
     plot = panels,
     dpi = 300,
     width = 60,
-    height = 50,
+    height = 57,
     units = "cm",
     bg = "white"
 )
