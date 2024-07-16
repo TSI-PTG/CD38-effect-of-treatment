@@ -16,7 +16,6 @@ load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular e
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/gene_DEG_plots.RData")
 
 
-
 # UNIUVERSAL PLOTTING PARAMETERS ####
 size_title <- 15
 
@@ -29,7 +28,6 @@ df_DEG_plot <- DEG_plots %>%
         "NK cell-expressed ABMR activity genes",
         "ABMR-associated endothelial genes"
     ))
-
 
 
 # MAKE THE DOTPLOT PANELS ####
@@ -89,7 +87,6 @@ panel_volcano_timeseries2 <- panel_volcano_timeseries %>%
 # )
 
 
-
 # MAKE THE VOLCANO ENRICHMENT PANELS ####
 panel_volcano_enrichment <- wrap_plots(
     A = plot_volcano_enrichment$plot_volcano_enrichment[[1]],
@@ -130,7 +127,6 @@ panels_enrichment <- ggarrange(
     nrow = 2, ncol = 1,
     heights = c(1, 0.8)
 )
-
 
 
 # SAVE THE PLOT ####

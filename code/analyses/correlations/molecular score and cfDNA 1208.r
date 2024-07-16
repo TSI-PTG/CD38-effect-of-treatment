@@ -162,7 +162,7 @@ data_01 <- data_00 %>%
                             variable == "BAT" ~ "B cell–associated transcripts (BAT)",
                             variable == "MCAT" ~ "Mast cell-associated transcripts (MCAT)",
                             variable == "KT1" ~ "Kidney parenchymal transcripts (KT1)",
-                            variable == "KT2" ~ "Kindey parenchymal transcripts - no solute carriers (KT2)",
+                            variable == "KT2" ~ "Kidney parenchymal transcripts - no solute carriers (KT2)",
                             variable == "RejAA_NR" ~ "Archetypal No Rejection score (NR)",
                             variable == "RejAA_EABMR" ~ "Archetypal Early ABMR score (EABMR)",
                             variable == "RejAA_FABMR" ~ "Archetypal Full ABMR score (FABMR)",

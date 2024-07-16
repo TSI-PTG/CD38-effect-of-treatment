@@ -36,7 +36,7 @@ panel_pairs_ABMRpm <- panel_pairs_ABMRpm %>%
     ggarrange(
         labels = "B",
         font.label = list(size = 25, face = "bold")
-    )  %>%
+    ) %>%
     ggpubr::annotate_figure(
         top = text_grob("Tracking individual patient responses", face = "bold.italic", size = 25, hjust = 0.7)
     )
@@ -128,12 +128,12 @@ panels <- wrap_plots(
     B = panel_pairs_ABMRpm,
     C = panels_violin_wlegend,
     design = c(
-        "AAABB
-        CCCCC
-        CCCCC"
+        "A
+        B
+        C
+        C"
     ),
-    nrow = 2
-    # heights =
+    heights = c(2, 3, 2)
 )
 
 
@@ -141,11 +141,11 @@ panels <- wrap_plots(
 # SAVE THE PLOTS ####
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/output/"
 ggsave(
-    filename = paste(saveDir, "Felzartamab violin plots cfdna ABMR and TCMR scores.png"),
+    filename = paste(saveDir, "Felzartamab violin plots ABMR and TCMR scores.png"),
     plot = panels,
     dpi = 300,
     width = 60,
-    height = 36,
+    height = 50,
     units = "cm",
     bg = "white"
 )
