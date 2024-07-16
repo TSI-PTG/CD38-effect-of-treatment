@@ -137,36 +137,36 @@ model_IRITD5 <- slopes_IRITD5 %>%
 # CREATE TABLE SUMMARIES OF SLOPES ####
 size_font <- 10
 table_slope_IRRAT30 <- model_IRRAT30 %>%
-  dplyr::select(-p_adjusted) %>%
+  dplyr::select(-p_value) %>%
   flextable::qflextable() %>%
   flextable::set_table_properties(layout = "autofit") %>%
   flextable::set_header_labels(
     name = "Group", result = "IRRAT30 Slope (95%CI)",
-    "p_value" = "P-Value"
+    "p_adjusted" = "FDR"
   ) %>%
   flextable::bold(i = NULL, part = "header") %>%
   flextable::fontsize(size = size_font, part = "all")
 # table_slope_IRRAT30 %>% print(preview = "pptx")
 
 table_slope_IRITD3 <- model_IRITD3 %>%
-  dplyr::select(-p_adjusted) %>%
+  dplyr::select(-p_value) %>%
   flextable::qflextable() %>%
   flextable::set_table_properties(layout = "autofit") %>%
   flextable::set_header_labels(
     name = "Group", result = "IRITD3 Slope (95%CI)",
-    "p_value" = "P-Value"
+    "p_adjusted" = "FDR"
   ) %>%
   flextable::bold(i = NULL, part = "header") %>%
   flextable::fontsize(size = size_font, part = "all")
 # table_slope_IRRAT30 %>% print(preview = "pptx")
 
 table_slope_IRITD5 <- model_IRITD5 %>%
-  dplyr::select(-p_adjusted) %>%
+  dplyr::select(-p_value) %>%
   flextable::qflextable() %>%
   flextable::set_table_properties(layout = "autofit") %>%
   flextable::set_header_labels(
     name = "Group", result = "IRITD5 Slope (95%CI)",
-    "p_value" = "P-Value"
+    "p_adjusted" = "FDR"
   ) %>%
   flextable::bold(i = NULL, part = "header") %>%
   flextable::fontsize(size = size_font, part = "all")
@@ -348,7 +348,7 @@ injury_slopes <- qflextable(injury_slopes) %>%
   set_table_properties(layout = "autofit") %>%
   set_header_labels(
     name = "Scores", result = "Estimated slope (95%CI)",
-    "p_value" = "P-Value", "p_adjusted" = "Adjusted P-Value"
+    "p_value" = "FDR", "p_adjusted" = "Adjusted FDR"
   ) %>%
   bold(i = NULL, part = "header") %>%
   bold(i = c(1, 5, 9), j = 1) %>%
@@ -421,20 +421,20 @@ plot_panels_regression_legend <- ggarrange(
 
 
 # MAKE PANEL OF VIOLIN PLOTS ####
-plot_panel_violin <- plots_violin %>%
-  wrap_plots(nrow = 1, ncol = 3) +
-  plot_annotation(tag_levels = list(c(LETTERS[1:15]))) &
-  theme(
-    legend.position = "none",
-    axis.text = element_text(size = 10, colour = "black"), plot.tag = element_text(size = 20, face = "bold", vjust = 1)
-  )
+# plot_panel_violin <- plots_violin %>%
+#   wrap_plots(nrow = 1, ncol = 3) +
+#   plot_annotation(tag_levels = list(c(LETTERS[1:15]))) &
+#   theme(
+#     legend.position = "none",
+#     axis.text = element_text(size = 10, colour = "black"), plot.tag = element_text(size = 20, face = "bold", vjust = 1)
+#   )
 
-panels_violin_legend <- ggarrange(
-  panel_legend_violin,
-  plot_panel_violin,
-  nrow = 2,
-  heights = c(0.25, 1.5)
-)
+# panels_violin_legend <- ggarrange(
+#   panel_legend_violin,
+#   plot_panel_violin,
+#   nrow = 2,
+#   heights = c(0.25, 1.5)
+# )
 
 
 # MAKE PANEL OF SLOPE AND VIOLIN PLOTS ####

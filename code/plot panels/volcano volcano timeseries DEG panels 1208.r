@@ -119,8 +119,6 @@ panel_volcano_enrichment <- panel_volcano_enrichment %>%
     # )
 
 
-
-
 # ARRANGE PANELS ####
 panels_enrichment <- ggarrange(
     ggarrange(
@@ -135,7 +133,6 @@ panels_enrichment <- ggarrange(
 
 
 
-
 # SAVE THE PLOT ####
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/output/"
 ggsave(
@@ -143,7 +140,7 @@ ggsave(
     file = paste(saveDir, "Volcano enrichment timerseries GEP IQR_filtered_probes_unique_genes_baseline_corrected_cortex_corrected 1208.png", sep = ""),
     dpi = 300,
     width = 35,
-    height = 20,
+    height = 15,
     units = "cm",
     bg = "white"
 ) %>% suppressWarnings()
