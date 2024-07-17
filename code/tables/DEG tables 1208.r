@@ -4,6 +4,7 @@ library(tidyverse) # install.packages("tidyverse")
 library(flextable) # install.packages("flextable")
 library(officer) # install.packages("officer")
 library(openxlsx) # install.packages("openxlsx")
+library(readxl) # install.packages("readxl")
 # Custom operators, functions, and datasets
 "%nin%" <- function(a, b) match(a, b, nomatch = 0) == 0
 # load affymap
@@ -12,16 +13,45 @@ load("Z:/DATA/Datalocks/Other data/affymap219_21Oct2019_1306_JR.RData")
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/IQR_filtered_probes_unique_genes_baseline_corrected_cortex_corrected_limma_1208.RData")
 # load gene lists
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/Hinze_injury_markers.RData")
+# load simple files for PBT correlations
+data_scc_all_import <- read_excel(
+    "Z:/MISC/Phil/AA All papers in progress/A GC papers/0000 simple XL files/Kidney 5086/MASTER COPY K5086 corr with ABMR activity genesets.xlsx",
+    sheet = 1
+)
+data_scc_FABMR_import <- read_excel(
+    "Z:/MISC/Phil/AA All papers in progress/A GC papers/0000 simple XL files/Kidney 5086/MASTER COPY K5086 corr with ABMR activity genesets Rej7AA.xlsx",
+    sheet = "FABMR (redundant)"
+)
+data_scc_EABMR_import <- read_excel(
+    "Z:/MISC/Phil/AA All papers in progress/A GC papers/0000 simple XL files/Kidney 5086/MASTER COPY K5086 corr with ABMR activity genesets Rej7AA.xlsx",
+    sheet = "EABMR (redundant)"
+)
+
+
+
+# WRANGLE THE SCC DATA ####
+data_scc_all <- data_scc_all_import %>%
+    dplyr::select(-SYMB, -Name, -PBT) %>%
+    dplyr::rename(AffyID = Affy) %>% 
+    dplyr::mutate_at(dplyr::vars(dplyr::contains("corr")), ~ round(., 2)) %>%
+    dplyr::mutate_at(dplyr::vars(dplyr::contains("pval")), ~ formatC(., digits = 0, format = "e")) 
+
+data_scc_FABMR <- data_scc_FABMR_import %>%
+    dplyr::select(-SYMB, -Name, -PBT) %>%
+    dplyr::rename(AffyID = Affy) %>%
+    dplyr::mutate_at(dplyr::vars(dplyr::contains("corr")), ~ round(., 2)) %>%
+    dplyr::mutate_at(dplyr::vars(dplyr::contains("pval")), ~ formatC(., digits = 0, format = "e"))
+
+data_scc_EABMR <- data_scc_EABMR_import %>%
+    dplyr::select(-SYMB, -Name, -PBT) %>%
+    dplyr::rename(AffyID = Affy) %>%
+    dplyr::mutate_at(dplyr::vars(dplyr::contains("corr")), ~ round(., 2)) %>%
+    dplyr::mutate_at(dplyr::vars(dplyr::contains("pval")), ~ formatC(., digits = 0, format = "e"))
 
 
 
 
 # WRANGLE THE INJURY MARKER DATA ####
-# genes_injury_markers %>%
-#     unnest(data) %>%
-#     nest(.by = c(celltypename, cluster)) %>%
-#     print(n = "all")
-
 injury_markers <- genes_injury_markers %>%
     unnest(data) %>%
     drop_na(AffyID) %>%
@@ -48,17 +78,25 @@ injury_markers <- genes_injury_markers %>%
 
 
 # FORMAT TABLES TO MAKE FLEXTABLES ####
-limma_tables$table[[1]]
-limma_tables <- limma_tables %>%
+limma_tables_formatted <- limma_tables %>%
+    expand_grid(direction = c("all", "increased", "decreased")) %>%
+    relocate(direction, .after = design) %>%
     mutate(
-        gene_tables = map(
-            table,
-            function(table) {
-                # colnames(table) <- table %>%
-                #     colnames() %>%
-                #     str_remove_all("\u394 |\u394")
+        gene_tables = pmap(
+            list(direction, table),
+            function(direction, table) {
+                if (direction == "increased") {
+                    table <- table %>%
+                        dplyr::filter(logFC > 0) %>%
+                        arrange(p)
+                } else if (direction == "decreased") {
+                    table <- table %>%
+                        dplyr::filter(logFC < 0) %>%
+                        arrange(p)
+                }
                 table %>%
                     left_join(injury_markers, by = "AffyID") %>%
+                    left_join(data_scc_EABMR, by = "AffyID") %>%
                     dplyr::select(-t, -contains("AffyID"), -contains("MMDx")) %>%
                     dplyr::slice(1:20) %>%
                     mutate(
@@ -86,7 +124,7 @@ limma_tables <- limma_tables %>%
             }
         )
     )
-limma_tables$gene_tables[[1]] %>% colnames()
+limma_tables_formatted$gene_tables[[2]] %>% colnames()
 
 
 # GLOBAL PARAMETERS FOR FLEXTABLES ####
@@ -96,7 +134,8 @@ header1 <- c(
     "AKI-induced cell states",
     rep("Differential expression", 5),
     rep("Mean expression by group", 6),
-    rep("Cell panel expression", 4)
+    rep("Cell panel expression", 4),
+    rep("Correlation with ABMR activity genesets in EABMR K5086", 8)
 )
 header2 <- c(
     # "AffyID",
@@ -105,7 +144,8 @@ header2 <- c(
     "\u394\nplacebo\nlogFC", "\u394\nfelzartamab\nlogFC",
     "\u394\u394\nlogFC", "\u394\u394\nP", "\u394\u394\nFDR",
     rep("Placebo", 3), rep("Felzartamab", 3),
-    "HUVEC", "HUVEC\n(+IFNg)", " RPTEC", "RPTEC\n(+IFNg)"
+    "HUVEC", "HUVEC\n(+IFNg)", " RPTEC", "RPTEC\n(+IFNg)",
+    rep(c("AAG", "IIAAG", "NKAAG", "AEG"), each = 2)
 )
 header3 <- c(
     "Gene\nsymbol", "Gene", "PBT",
@@ -113,21 +153,19 @@ header3 <- c(
     "\u394\nplacebo\nlogFC", "\u394\nfelzartamab\nlogFC",
     "\u394\u394\nlogFC", "\u394\u394\nP", "\u394\u394\nFDR",
     "Baseline\n(N=10)", "Week24\n(N=10)", "Week52\n(N=10)", "Baseline\n(N=10)", "Week24\n(N=10)", "Week52\n(N=10)",
-    "HUVEC", "HUVEC\n(+IFNg)", " RPTEC", "RPTEC\n(+IFNg)"
+    "HUVEC", "HUVEC\n(+IFNg)", " RPTEC", "RPTEC\n(+IFNg)",
+    rep(c("SCC", "p"), 4)
 )
 
-cellWidths <- c(1.5, 5, 3, 1.5, 1, 1, 1, 1, 1, rep(1, 6), rep(1, 4)) # for individual tables up or down
+cellWidths <- c(1.5, 5, 3, 1.5, 1, 1, 1, 1, 1, rep(1, 6), rep(1, 4), rep(1, 8)) # for individual tables up or down
 cellWidths %>% length()
 
-# limma_tables$gene_tables[[1]] %>%
-#     flextable::flextable() %>%
-#     flextable::delete_part("header")
 
 
 # MAKE FORMATTED FLEXTABLES ####
-flextables <- limma_tables %>%
+flextables <- limma_tables_formatted %>%
     mutate(
-        flextables = pmap(
+        flextable = pmap(
             list(design, gene_tables),
             function(design, gene_tables) {
                 if (design == "Baseline_vs_Week24") {
@@ -152,8 +190,8 @@ flextables <- limma_tables %>%
                     flextable::align(align = "center") %>%
                     flextable::align(align = "center", part = "header") %>%
                     flextable::font(fontname = "Arial", part = "all") %>%
-                    flextable::fontsize(size = 8, part = "all") %>%
-                    flextable::fontsize(size = 8, part = "footer") %>%
+                    flextable::fontsize(size = 7, part = "all") %>%
+                    flextable::fontsize(size = 7, part = "footer") %>%
                     flextable::fontsize(i = 1, size = 12, part = "header") %>%
                     flextable::bold(part = "header") %>%
                     flextable::bg(bg = "white", part = "all") %>%
@@ -163,10 +201,14 @@ flextables <- limma_tables %>%
             }
         )
     )
-
-flextables$flextables[[3]]
+# 
+# flextables$flextable[[3]]
 
 
 
 # PRINT THE DATA TO POWERPOINT ####
-flextables$flextables[[3]] %>% print(preview = "pptx")
+flextables %>%
+    dplyr::filter(design == "Baseline_vs_Week24", direction == "increased") %>%
+    pull(flextable) %>%
+    pluck(1) %>%
+    print(preview = "pptx")

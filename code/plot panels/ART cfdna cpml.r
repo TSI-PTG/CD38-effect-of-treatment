@@ -29,7 +29,7 @@ legend <- felzartamab_plots %>%
     ) +
     theme(legend.title = ggplot2::element_text(size = 15, hjust = 0.2, vjust = 1, face = "bold"))
 
-panel_legend <- legend %>% 
+panel_legend <- legend %>%
     ggpubr::get_legend() %>%
     ggpubr::as_ggplot()
 
@@ -46,7 +46,7 @@ plot_cfdna <- felzartamab_plots %>%
         plot.tag = element_text(size = 20, face = "bold.italic", vjust = 1)
     )
 
-panel_violin <- plot_cfdna + 
+panel_violin <- plot_cfdna +
     plot_layout(ncol = 1) +
     theme(
         # legend.position = "none",
