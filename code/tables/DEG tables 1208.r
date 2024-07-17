@@ -98,7 +98,7 @@ limma_tables_formatted <- limma_tables %>%
                     left_join(injury_markers, by = "AffyID") %>%
                     left_join(data_scc_EABMR, by = "AffyID") %>%
                     dplyr::select(-t, -contains("AffyID"), -contains("MMDx")) %>%
-                    dplyr::slice(1:20) %>%
+                    dplyr::slice(1:30) %>%
                     mutate(
                         Gene = Gene %>% str_remove("///.*"),
                         plogFC = plogFC %>% round(2),
