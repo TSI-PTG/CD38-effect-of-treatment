@@ -1,7 +1,7 @@
 # HOUSEKEEPING ####
 # CRAN libraries
 library(tidyverse) # install.packages("tidyverse")
-library(flextable) # install.packages("flextable")  
+library(flextable) # install.packages("flextable")
 library(officer) # install.packages("officer")
 # Custom operators, functions, and datasets
 "%nin%" <- function(a, b) match(a, b, nomatch = 0) == 0
@@ -58,17 +58,17 @@ data_pairwise_formatted_delta <- felzartamab_ARTanova %>%
     mutate(
         delta = paste(
             format(round(median_delta, 2), nsmall = 1),
-            "\u00B1",
+            " (",
             round(IQR_delta, 2),
-            # Letter,
-            sep = " "
+            ")",
+            sep = ""
         ),
         deltadelta = paste(
             format(round(median_delta_delta, 2), nsmall = 1),
-            "\u00B1",
+            " (",
             round(IQR_delta_delta, 2),
-            # Letter,
-            sep = " "
+            ")",
+            sep = ""
         )
     ) %>%
     dplyr::select(
@@ -102,15 +102,17 @@ data_delta_formatted <- felzartamab_ARTanova %>%
     mutate(
         delta = paste(
             format(round(median_delta, 2), nsmall = 1),
-            "\u00B1",
+            " (",
             round(IQR_delta, 2),
-            sep = " "
+            ")",
+            sep = ""
         ),
         deltadelta = paste(
             format(round(median_delta_delta, 2), nsmall = 1),
-            "\u00B1",
+            " (",
             round(IQR_delta_delta, 2),
-            sep = " "
+            ")",
+            sep = ""
         )
     ) %>%
     dplyr::select(annotation, score, Followup_pairwise, Felzartamab, delta, deltadelta) %>%
@@ -175,7 +177,7 @@ data_pairwise_formatted <- data_delta_formatted %>%
 
 
 # UNIVERSAL VARIABLES FOR FLEXTABLE ####
-title_art_pairwise <- paste("Table i. Median \u00B1 IQR molecular scores in biopsies from Felzartamab-treated vs placebo-treated patients")
+title_art_pairwise <- paste("Table i. Median (IQR) molecular scores in biopsies from Felzartamab-treated vs placebo-treated patients")
 
 footnoteText <- c(
     paste(

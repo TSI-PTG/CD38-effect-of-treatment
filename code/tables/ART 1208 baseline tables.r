@@ -56,10 +56,10 @@ data_formatted_medians <- felzartamab_ARTanova_baseline %>%
     mutate(
         median = paste(
             format(round(median, 2), nsmall = 1),
-            "\u00B1",
-            round(IQR, 2),
-            # Letter,
-            sep = " "
+            " (",
+            round(IQR, 1),
+            ")",
+            sep = ""
         )
     ) %>%
     dplyr::select(
@@ -80,7 +80,7 @@ data_formatted_medians <- felzartamab_ARTanova_baseline %>%
 
 
 # UNIVERSAL VARIABLES FOR FLEXTABLE ####
-title_art_baseline <- paste("Table i. Median \u00B1 IQR molecular scores in baseline biopsies from Felzartamab-treated vs placebo-treated patients")
+title_art_baseline <- paste("Table i. Median (IQR) molecular scores in baseline biopsies from Felzartamab-treated vs placebo-treated patients")
 
 footnoteText <- c(
     paste(
