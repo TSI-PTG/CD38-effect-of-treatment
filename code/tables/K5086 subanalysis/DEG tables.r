@@ -219,6 +219,7 @@ flextables %>%
     pull(flextable) %>%
     pluck(1) %>%
     print(preview = "pptx")
+    
 
 flextables %>%
     dplyr::filter(design == "EABMRvNONABMR", direction == "decreased") %>%
@@ -233,7 +234,7 @@ flextables %>%
     print(preview = "pptx")
 
 flextables %>%
-    dplyr::filter(design == "ABMRvNONABMR", direction == "increased") %>%
+    dplyr::filter(design == "ABMRvNONABMR", direction == "decreased") %>%
     pull(flextable) %>%
     pluck(1) %>%
     print(preview = "pptx")
