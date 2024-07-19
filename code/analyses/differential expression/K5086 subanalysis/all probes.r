@@ -15,7 +15,8 @@ library(genefilter) # BiocManager::install("genefilter")
 # load reference set
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/K5086Jul12_2024_PTG.RData")
 # load affymap
-load("Z:/DATA/Datalocks/Other data/affymap219_21Oct2019_1306_JR.RData")
+# load("Z:/DATA/Datalocks/Other data/affymap219_21Oct2019_1306_JR.RData")
+load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/affymap219_19Jul2024_PTG.RData")
 affymap219 <- affymap219 %>% tibble()
 # load in house cell panel
 atagc <- read_excel("Z:/MISC/Patrick Gauthier/R/affymap219-CELL-PANEL/backup/UPDATED 2017 ANNOTATIONS - MASTERFILE - U133 HUMAN CELL PANEL - ALL PROBESETS (nonIQR) pfhptg.xlsx")

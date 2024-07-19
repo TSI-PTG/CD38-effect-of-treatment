@@ -8,7 +8,7 @@ library(readxl) # install.packages("readxl")
 # Custom operators, functions, and datasets
 "%nin%" <- function(a, b) match(a, b, nomatch = 0) == 0
 # load affymap
-load("Z:/DATA/Datalocks/Other data/affymap219_21Oct2019_1306_JR.RData")
+load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/affymap219_19Jul2024_PTG.RData")
 # load limma results
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/limma_K5086.RData")
 # load gene lists
@@ -233,7 +233,7 @@ flextables %>%
     print(preview = "pptx")
 
 flextables %>%
-    dplyr::filter(design == "ABMRvNONABMR", direction == "decreased") %>%
+    dplyr::filter(design == "ABMRvNONABMR", direction == "increased") %>%
     pull(flextable) %>%
     pluck(1) %>%
     print(preview = "pptx")
