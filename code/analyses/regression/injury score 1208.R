@@ -31,7 +31,8 @@ m <- data_scores_k1208 %>%
       Group == "FU1" ~ 0.46,
       Group == "FU2" ~ 0.99
     ),
-    linetype = ifelse(Patient == 9, "solid", "dashed") %>% factor()
+    # linetype = ifelse(Patient == 9, "solid", "dashed") %>% factor()
+    linetype = "solid" %>% factor()
   ) %>%
   dplyr::filter(Group != "FU1b", Patient %nin% c(15, 18))
 
@@ -173,6 +174,20 @@ table_slope_IRITD5 <- model_IRITD5 %>%
   flextable::bold(i = NULL, part = "header") %>%
   flextable::fontsize(size = size_font, part = "all")
 # table_slope_IRRAT30 %>% print(preview = "pptx")
+
+
+# WRANGLE RESULTS FOR PLOTTING ####
+resuls_injury <- tibble(
+  variable = c("IRRAT30", "IRITD3", "IRITD5"),
+  reference_data = m  %>% list,
+  plot_data = list(effect_plot_IRRAT30, effect_plot_IRITD3, effect_plot_IRITD5),
+  slope_tables = list(table_slope_IRRAT30, table_slope_IRITD3, table_slope_IRITD5)
+
+)
+
+# EXPORT RESULTS FOR PLOTTING ####
+saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/"
+save(resuls_injury, file = paste(saveDir, "results_injury_k1208.RData", sep = ""))
 
 
 # MAKE PLOTS OF IRRAT30 MODEL RESULTS ####
@@ -342,19 +357,19 @@ plot_IRITD5 <- effect_plot_IRITD5 %>%
 
 
 # COMBINE THE SLOPE TABLES ####
-injury_slopes <- rbind(model_IRRAT30, model_IRITD3, model_IRITD5) %>%
-  tibble::add_row(name = "IRRAT", .after = 0) %>%
-  tibble::add_row(name = "IRITD3", .after = 4) %>%
-  tibble::add_row(name = "IRITD5", .after = 8)
-injury_slopes <- qflextable(injury_slopes) %>%
-  set_table_properties(layout = "autofit") %>%
-  set_header_labels(
-    name = "Scores", result = "Estimated slope (95%CI)",
-    "p_value" = "FDR", "p_adjusted" = "Adjusted FDR"
-  ) %>%
-  bold(i = NULL, part = "header") %>%
-  bold(i = c(1, 5, 9), j = 1) %>%
-  padding(i = c(2:4, 6:8, 10:12), j = 1, padding.left = 20)
+# injury_slopes <- rbind(model_IRRAT30, model_IRITD3, model_IRITD5) %>%
+#   tibble::add_row(name = "IRRAT", .after = 0) %>%
+#   tibble::add_row(name = "IRITD3", .after = 4) %>%
+#   tibble::add_row(name = "IRITD5", .after = 8)
+# injury_slopes <- qflextable(injury_slopes) %>%
+#   set_table_properties(layout = "autofit") %>%
+#   set_header_labels(
+#     name = "Scores", result = "Estimated slope (95%CI)",
+#     "p_value" = "FDR", "p_adjusted" = "Adjusted FDR"
+#   ) %>%
+#   bold(i = NULL, part = "header") %>%
+#   bold(i = c(1, 5, 9), j = 1) %>%
+#   padding(i = c(2:4, 6:8, 10:12), j = 1, padding.left = 20)
 # Print tables
 # injury_slopes %>% print(preview = "pptx")
 
@@ -381,7 +396,7 @@ panel_legend_violin <- felzartamab_plots %>%
 
 
 # EXTRACT LEGEND FOR REGRESSION PLOTS ####
-panel_legend_regression <- plot_IRRAT30  %>%
+panel_legend_regression <- plot_IRRAT30 %>%
   ggpubr::get_legend() %>%
   ggpubr::as_ggplot()
 
