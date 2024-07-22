@@ -36,7 +36,9 @@ gg_violin_interaction <- function(data, variable, score, medians_delta, art_con_
         dplyr::mutate(Felzartamab = Felzartamab %>% factor(labels = c("Placebo", "Felzartamab")))
     delta_delta <- medians_delta %>%
         dplyr::distinct(Followup_pairwise, .keep_all = TRUE) %>%
-        dplyr::mutate(Followup_pairwise = c("Week24 - Baseline", "Week52 - Baseline", "Week52 - Week24"))
+        # dplyr::mutate(Followup_pairwise = c("Week24 - Baseline", "Week52 - Baseline", "Week52 - Week24"))
+    dplyr::mutate(Followup_pairwise = c("Baseline - Week 24", "Baseline - Week 52", "Week 24 - Week 52"))
+
     delta_delta_p <- art_con_interaction_default_tidy %>%
         dplyr::select(Followup_pairwise, adj.p.value) %>%
         dplyr::mutate(
@@ -100,12 +102,12 @@ gg_violin_interaction <- function(data, variable, score, medians_delta, art_con_
     size_point <- ifelse(variable == "cfDNA", 4, 2.5)
     midpoint <- 0
     if (variable %in% c("KT1", "KT2", "InjPC2_5086Set")) {
-        gradient_labels <- c("worsened", "improved")
+        gradient_labels <- c("Worsened", "Improved")
         gradient_labels_hjust <- c(-0.075, 1.55)
         col_low <- "red"
         col_high <- "#00ff00bc"
     } else {
-        gradient_labels <- c("improved", "worsened")
+        gradient_labels <- c("Improved", "Worsened")
         col_low <- "#00ff00bc"
         col_high <- "red"
         gradient_labels_hjust <- c(-0.075, 1.85)
