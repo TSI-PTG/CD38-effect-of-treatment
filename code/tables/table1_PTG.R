@@ -73,6 +73,68 @@ d<- d |> mutate(age_at_tx_mean = Age_at_Tx,
                 screening_egfr_mean = Screening_GFR, 
                 screening_prot_krea_mean = Screening_Prot_Krea)
 
+# Calculate median age with range for all age related variables 
+age_tx_summary <- tbl1_data %>%
+  group_by(Felzartamab) %>%
+  summarise(Age_at_Tx_summary = paste0(round(median(Age_at_Tx, na.rm = TRUE)), " (", 
+                                       round(min(Age_at_Tx, na.rm = TRUE)), "-", 
+                                       round(max(Age_at_Tx, na.rm = TRUE)), ")")) %>%
+  pivot_wider(names_from = Felzartamab, values_from = Age_at_Tx_summary)
+
+donor_age_summary <- tbl1_data %>%
+  group_by(Felzartamab) %>%
+  summarise(Donor_Age_summary = paste0(round(median(Donor_Age, na.rm = TRUE)), " (", 
+                                       round(min(Donor_Age, na.rm = TRUE)), "-", 
+                                       round(max(Donor_Age, na.rm = TRUE)), ")")) %>%
+  pivot_wider(names_from = Felzartamab, values_from = Donor_Age_summary)
+
+age_screening_summary <- tbl1_data %>%
+  group_by(Felzartamab) %>%
+  summarise(Age_at_Screening_summary = paste0(round(median(Age_at_Screening, na.rm = TRUE)), " (", 
+                                              round(min(Age_at_Screening, na.rm = TRUE)), "-", 
+                                              round(max(Age_at_Screening, na.rm = TRUE)), ")")) %>%
+  pivot_wider(names_from = Felzartamab, values_from = Age_at_Screening_summary)
+
+
+
+# Calculate for total 
+total_summary <- tbl1_data %>%
+  summarise(
+    Age_at_Tx_summary = paste0(round(median(Age_at_Tx, na.rm = TRUE)), " (", 
+                               round(min(Age_at_Tx, na.rm = TRUE)), "-", 
+                               round(max(Age_at_Tx, na.rm = TRUE)), ")"),
+    Donor_Age_summary = paste0(round(median(Donor_Age, na.rm = TRUE)), " (", 
+                               round(min(Donor_Age, na.rm = TRUE)), "-", 
+                               round(max(Donor_Age, na.rm = TRUE)), ")"),
+    Age_at_Screening_summary = paste0(round(median(Age_at_Screening, na.rm = TRUE)), " (", 
+                                      round(min(Age_at_Screening, na.rm = TRUE)), "-", 
+                                      round(max(Age_at_Screening, na.rm = TRUE)), ")")
+  )
+
+# make tibble to be add to table 
+age_tx_tibble <- tibble(
+  label = "Median recipient age (range) - yr",
+  `0` = age_tx_summary$`0`,
+  `1` = age_tx_summary$`1`,
+  Total = total_summary$Age_at_Tx_summary
+)
+
+donor_age_tibble <- tibble(
+  label = "Median donor age (range) – yr",
+  `0` = donor_age_summary$`0`,
+  `1` = donor_age_summary$`1`,
+  Total = total_summary$Donor_Age_summary
+)
+
+age_screening_tibble <- tibble(
+  label = "Median age of study patients (range) – yr",
+  `0` = age_screening_summary$`0`,
+  `1` = age_screening_summary$`1`,
+  Total = total_summary$Age_at_Screening_summary
+)
+
+
+
 
 tbl1_data <- d %>% select(Female_gender, Age_at_Tx, age_at_tx_mean, LD_Tx, Donor_Age, donor_age_mean, MM_ABDR, 
                           Age_at_Screening, age_at_screening_mean, Years_to_ScreeningVisit, Screening_GFR, screening_egfr_mean, Screening_Prot_Krea, screening_prot_krea_mean,
@@ -84,11 +146,12 @@ tbl1_data <- d %>% select(Female_gender, Age_at_Tx, age_at_tx_mean, LD_Tx, Donor
 
 
 
-explanatory <- Hmisc::.q(Female_gender, Age_at_Tx, age_at_tx_mean, LD_Tx, Donor_Age, donor_age_mean, MM_ABDR, 
-                         Age_at_Screening, age_at_screening_mean, Years_to_ScreeningVisit, Screening_GFR, screening_egfr_mean, Screening_Prot_Krea, screening_prot_krea_mean,
+explanatory <- Hmisc::.q(Female_gender, age_at_tx_mean, LD_Tx, donor_age_mean, MM_ABDR, 
+                         age_at_screening_mean, Years_to_ScreeningVisit, Screening_GFR, screening_egfr_mean, Screening_Prot_Krea, screening_prot_krea_mean,
                          IndexBx_Active_ABMR_Banff19 ,IndexBx_Chronic_active_ABMR_Banff19, 
                          IndexBx_Borderline_Banff, DSA_HLA_class_I_Only_Screening, DSA_HLA_class_II_Only_Screening, 
                          DSA_HLA_class_I_and_II_Screening, HLA_DQ_DSA_Screening, mfi_immunodominant, DSA_Number_Screening )    
+
 
 
 
@@ -99,13 +162,13 @@ dependent <- ("Felzartamab")
 
 tbl1<- tbl1_data %>% mutate(Felzartamab = factor(Felzartamab), 
                             Female_gender = ff_label(Female_gender, "Female sex – no. (%)"), 
-                            Age_at_Tx = ff_label(Age_at_Tx, "Median recipient age (IQR) – yr"),
+                            #Age_at_Tx = ff_label(Age_at_Tx, "Median recipient age (IQR) – yr"),
                             age_at_tx_mean = ff_label(age_at_tx_mean, "Mean recipient age (SD) - yr"), 
                             LD_Tx = ff_label(LD_Tx , "Living donor – no. (%)"), 
-                            Donor_Age = ff_label(Donor_Age, "Median donor age (IQR) – yr"), 
+                            # Donor_Age = ff_label(Donor_Age, "Median donor age (IQR) – yr"), 
                             donor_age_mean = ff_label(donor_age_mean,"Mean donor age (SD) – yr" ),
                             MM_ABDR = ff_label(MM_ABDR, "Median HLA (A, B, DR) mismatch (IQR)"), 
-                            Age_at_Screening = ff_label(Age_at_Screening, "Median age of study patients (IQR) – yr"), 
+                            #Age_at_Screening = ff_label(Age_at_Screening, "Median age of study patients (IQR) – yr"), 
                             age_at_screening_mean = ff_label(age_at_screening_mean, "Mean age of study patients (SD) – yr"), 
                             Years_to_ScreeningVisit = ff_label(Years_to_ScreeningVisit, "Median time to inclusion in the trial (IQR) – yr"), 
                             Screening_GFR= ff_label(Screening_GFR, "Median eGFR (IQR) – mL/min/1.73 m2"), 
@@ -126,11 +189,11 @@ tbl1<- tbl1_data %>% mutate(Felzartamab = factor(Felzartamab),
   summary_factorlist(dependent, explanatory, 
                      total_col = T, 
                      #cont = "median", 
-                     na_include = T,
+                     na_include = F,
                      p=F,
                      cont_cut = F, 
-                     digits = c(0, 0, 3, 1, 0), 
-                     cont_nonpara = c(2,5,7,8,10,11,13,23)) %>% 
+                     digits = c(0, 0, 3, 1, 0)  , 
+                     cont_nonpara = c(5,7,8,10,13,20)) %>% 
   ff_remove_ref(only_binary = F) |> 
   select(-levels)
 
@@ -139,7 +202,10 @@ tbl1<- tbl1_data %>% mutate(Felzartamab = factor(Felzartamab),
 tbl1<- 
   tbl1 %>% 
   tibble::add_row(label = "Recorded at transplantation", .after = 0) %>% 
+  tibble::add_row(age_tx_tibble, .after= 2) |> 
+  tibble::add_row(donor_age_tibble, .after= 5) |> 
   tibble::add_row(label = "Recorded at trial inclusion", .after = 8) %>%
+  tibble::add_row(age_screening_tibble, .after= 9) |> 
   tibble::add_row(label = "Banff 2019 ABMR phenotypes (baseline biopsies) – no. (%)", .after = 16) %>%
   tibble::add_row(label = "DSA characteristics (screening visit)", .after = 20) 
 
