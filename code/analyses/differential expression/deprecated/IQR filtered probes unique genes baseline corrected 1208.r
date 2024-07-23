@@ -1,7 +1,7 @@
 # HOUSEKEEPING ####
 # CRAN libraries
 library(tidyverse) # install.packages("tidyverse")
-library(flextable) # install.packages("flextable") #for table outputs
+library(flextable) # install.packages("flextable")  
 library(officer) # install.packages("officer")
 library(openxlsx) # install.packages("openxlsx")
 # Bioconductor libraries
@@ -17,11 +17,13 @@ load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular e
 load("Z:/DATA/Datalocks/Other data/affymap219_21Oct2019_1306_JR.RData")
 # load mean expression in K1208
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/mean_expression_K1208_MMDx.RData")
+# load DEG at baseline ####
+load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/DEG_at_baseline_limma_1208.RData")
+
 
 
 # DEFINE THE SET ####
 set00 <- data_expressionset_k1208[, data_expressionset_k1208$Patient %nin% c(15, 18)]
-
 
 
 # IQR FILTER THE DATA ####
@@ -31,6 +33,13 @@ if (!exists("selected")) {
     selected <- genefilter(set00, ff)
 }
 set01 <- set00[selected, ]
+
+
+# DEFINE GENES SIMILAR AT BASELINE ####
+genes_baseline <- table_block_1 %>%
+    dplyr::filter(p > 0.05) %>%
+    pull(AffyID)
+
 
 
 # KEEP UNIQUE GENES (keep probe with highest mean expression) ####
@@ -44,7 +53,7 @@ mean_exprs_by_probe <- set01 %>%
 genes <- mean_exprs_by_probe %>%
     group_by(Symb) %>%
     dplyr::slice_max(mean_exprs) %>%
-    dplyr::filter(Symb != "") %>%
+    dplyr::filter(Symb != "", AffyID %in% genes_baseline) %>%
     distinct(Symb, .keep_all = TRUE) %>%
     pull(AffyID)
 
@@ -57,11 +66,10 @@ seed <- 42
 
 # DEFINE FACTOR FOR CONTRASTS ####
 Felzartamab_Followup <- set$Felzartamab_Followup %>% droplevels()
-cortex <- set$Cortexprob
 
 
 # DESIGN ####
-design <- model.matrix(~ 0 + Felzartamab_Followup + cortex)
+design <- model.matrix(~ 0 + Felzartamab_Followup)
 
 
 # CONTRAST DESIGN week24 - baseline ####
@@ -253,14 +261,14 @@ limma_tables <- tibble(
 # EXPORT THE DATA AS .RData FILE ####
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/"
 names(limma_tables$table) <- limma_tables$design
-save(limma_tables, file = paste(saveDir, "IQR_filtered_probes_unique_genes_cortex_corrected_limma_1208.RData", sep = ""))
+save(limma_tables, file = paste(saveDir, "IQR_filtered_probes_unique_genes_baseline_corrected_limma_1208.RData", sep = ""))
 
 
 # EXPORT THE DATA AS AN EXCEL SHEET ####
 saveDir1 <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/output/"
 openxlsx::write.xlsx(limma_tables$table,
     asTable = TRUE,
-    file = paste(saveDir1, "IQR_filtered_probes_unique_genes_cortex_corrected_limma_1208_13Jun24",
+    file = paste(saveDir1, "IQR_filtered_probes_unique_genes_baseline_corrected_limma_1208_13Jun24",
         # Sys.Date(),
         # format(Sys.time(), "_%I%M%p"),
         ".xlsx",

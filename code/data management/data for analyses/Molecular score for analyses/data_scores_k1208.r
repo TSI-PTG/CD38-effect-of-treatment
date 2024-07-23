@@ -7,12 +7,23 @@ library(haven) # install.packages("haven")
 source("C:/R/CD38-effect-of-treatment/code/functions/complex_pivot.R")
 # load data
 data <- read_spss("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vienna/G_Rstuff/data/Generalfile_Felzartamab SPSS.sav")
-load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/vienna_1208_6Mar24.RData")
+load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/vienna_1208_12Jul24.RData")
 # load the processed cfDNA data
 # load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/data_cfdna_cpml.RData")
 
 
 data  %>% dplyr::select(contains("cort"))
+
+
+
+# DEFINE THE ADDITIONAL PBTS ####
+pbts_new <- vienna_1208 %>%
+    pData() %>%
+    dplyr::select(
+        CEL,
+        ABMRact, ABMRifng, ABMRnk, ABMRendo
+    )
+
 
 
 
@@ -196,6 +207,7 @@ data_k1208 <- data_scores %>%
     left_join(data_dateBx, by = c("Trial_Center", "STUDY_EVALUATION_ID", "Felzartamab", "Group")) %>%
     left_join(data_cfdna_cpml, by = c("Trial_Center", "STUDY_EVALUATION_ID", "Felzartamab", "Group")) %>%
     left_join(data_cfdna_percent, by = c("Trial_Center", "STUDY_EVALUATION_ID", "Felzartamab", "Group")) %>%
+    left_join(pbts_new, by = "CEL")  %>% 
     dplyr::rename(Center = Trial_Center, Patient = STUDY_EVALUATION_ID) %>%
     mutate(
         Patient = Patient %>% factor(),

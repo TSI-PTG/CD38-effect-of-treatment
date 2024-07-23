@@ -1,9 +1,10 @@
 # HOUSEKEEPING ####
 # CRAN libraries
 library(tidyverse) # install.packages("tidyverse")
-library(flextable) # install.packages("flextable") #for table outputs
+library(flextable) # install.packages("flextable")
 library(officer) # install.packages("officer")
 library(openxlsx) # install.packages("openxlsx")
+library(readxl) # install.packages("readxl")
 # Bioconductor libraries
 library(Biobase) # BiocManager::install("Biobase")
 library(limma) # BiocManager::install("limma")
@@ -15,15 +16,24 @@ library(genefilter) # BiocManager::install("genefilter")
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/data_expressionset_k1208.RData")
 # load affymap
 load("Z:/DATA/Datalocks/Other data/affymap219_21Oct2019_1306_JR.RData")
-# load mean expression in K1208
-load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/mean_expression_K1208_MMDx.RData")
-# load DEG at baseline ####
+affymap219 <- affymap219 %>% tibble()
+# load mean expression by probe in K1208
+load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/mean_expression_by_probe_1208.RData")
+# load in house cell panel
+atagc <- read_excel("Z:/MISC/Patrick Gauthier/R/affymap219-CELL-PANEL/backup/UPDATED 2017 ANNOTATIONS - MASTERFILE - U133 HUMAN CELL PANEL - ALL PROBESETS (nonIQR) pfhptg.xlsx")
+# load DEG at baseline
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/DEG_at_baseline_limma_1208.RData")
+# load mean expression by MMDx in K1208
+load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/mean_expression_K1208_MMDx.RData")
+
+
+# DEFINE SEED ####
+seed <- 42
+set.seed(seed)
 
 
 # DEFINE THE SET ####
 set00 <- data_expressionset_k1208[, data_expressionset_k1208$Patient %nin% c(15, 18)]
-
 
 
 # IQR FILTER THE DATA ####
@@ -35,19 +45,51 @@ if (!exists("selected")) {
 set01 <- set00[selected, ]
 
 
+# WRANGLE THE CELL PANEL DATA ####
+cell_panel <- atagc %>%
+    dplyr::select(
+        `Affy Probeset ID`, `Index`,
+        `Mcrphg unstim`, `Mcrphg + IFNg`,
+        `Unstim HUVEC`, `HUVEC + IFNg`,
+        `Unstim RPTEC`, `RPTEC + IFNg`
+    ) %>%
+    dplyr::rename(
+        AffyID_U133 = `Affy Probeset ID`,
+        Symb = Index,
+        `Macrophage (unstimulated)` = `Mcrphg unstim`,
+        `Macrophage (IFNg stimulated)` = `Mcrphg + IFNg`,
+        `HUVEC (unstimulated)` = `Unstim HUVEC`,
+        `HUVEC (IFNg stimulated)` = `HUVEC + IFNg`,
+        `RPTEC (unstimulated)` = `Unstim RPTEC`,
+        `RPTEC (IFNg stimulated)` = `RPTEC + IFNg`
+    ) %>%
+    dplyr::slice_max(`HUVEC (unstimulated)`, by = "Symb", with_ties = FALSE)
+
+means_K1208_cell_panel <- means_K1208 %>%
+    left_join(
+        cell_panel %>%
+            dplyr::select(-AffyID_U133),
+        by = "Symb"
+    )
+
+
 # DEFINE GENES SIMILAR AT BASELINE ####
 genes_baseline <- table_block_1 %>%
     dplyr::filter(p > 0.05) %>%
     pull(AffyID)
 
 
-# KEEP UNIQUE GENES (keep probe with highest mean expression) ####
+# WRANGLE THE MEAN EXPRESSION DATA ####
 mean_exprs_by_probe <- set01 %>%
     exprs() %>%
     as_tibble(rownames = "AffyID") %>%
     right_join(affymap219 %>% dplyr::select(AffyID, Symb) %>% tibble(), ., by = "AffyID") %>%
-    mutate(mean_exprs = set01 %>%
-        exprs() %>% rowMeans(), .after = Symb)
+    mutate(
+        mean_exprs = set01 %>%
+            exprs() %>%
+            rowMeans(),
+        .after = Symb
+    )
 
 genes <- mean_exprs_by_probe %>%
     group_by(Symb) %>%
@@ -56,11 +98,13 @@ genes <- mean_exprs_by_probe %>%
     distinct(Symb, .keep_all = TRUE) %>%
     pull(AffyID)
 
+# genes <- mean_exprs_1208 %>%
+#     dplyr::slice_max(mean_expression, by = "Symb") %>%
+#     dplyr::filter(Symb != "", AffyID %in% genes_baseline) %>%
+#     distinct(Symb, .keep_all = TRUE) %>%
+#     pull(AffyID)
+
 set <- set01[featureNames(set01) %in% genes, ]
-
-
-# DEFINE SEED ####
-seed <- 42
 
 
 # DEFINE FACTOR FOR CONTRASTS ####
@@ -73,140 +117,225 @@ design <- model.matrix(~ 0 + Felzartamab_Followup + cortex)
 
 
 # CONTRAST DESIGN week24 - baseline ####
-contrast_block_01 <- makeContrasts(
+contrast_interaction_01 <- makeContrasts(
     "x =  (Felzartamab_FollowupWeek24_Felzartamab-Felzartamab_FollowupBaseline_Felzartamab)/2 -(Felzartamab_FollowupWeek24_Placebo-Felzartamab_FollowupBaseline_Placebo)/2",
+    levels = design
+)
+contrast_felzartamab_01 <- makeContrasts(
+    "x =  (Felzartamab_FollowupWeek24_Felzartamab-Felzartamab_FollowupBaseline_Felzartamab)/2",
+    levels = design
+)
+contrast_placebo_01 <- makeContrasts(
+    "x =  (Felzartamab_FollowupWeek24_Placebo-Felzartamab_FollowupBaseline_Placebo)/2",
     levels = design
 )
 
 
 # CONTRAST DESIGN week52 - week24 ####
-contrast_block_02 <- makeContrasts(
+contrast_interaction_02 <- makeContrasts(
     "x =  (Felzartamab_FollowupWeek52_Felzartamab-Felzartamab_FollowupWeek24_Felzartamab)/2 - (Felzartamab_FollowupWeek52_Placebo-Felzartamab_FollowupWeek24_Placebo)/2",
+    levels = design
+)
+contrast_felzartamab_02 <- makeContrasts(
+    "x =  (Felzartamab_FollowupWeek52_Felzartamab-Felzartamab_FollowupWeek24_Felzartamab)/2",
+    levels = design
+)
+contrast_placebo_02 <- makeContrasts(
+    "x =  (Felzartamab_FollowupWeek52_Placebo-Felzartamab_FollowupWeek24_Placebo)/2",
     levels = design
 )
 
 
 # CONTRAST DESIGN week52 - baseline####
-contrast_block_03 <- makeContrasts(
+contrast_interaction_03 <- makeContrasts(
     "x =  (Felzartamab_FollowupWeek52_Felzartamab-Felzartamab_FollowupBaseline_Felzartamab)/2 - (Felzartamab_FollowupWeek52_Placebo-Felzartamab_FollowupBaseline_Placebo)/2",
+    levels = design
+)
+contrast_felzartamab_03 <- makeContrasts(
+    "x =  (Felzartamab_FollowupWeek52_Felzartamab-Felzartamab_FollowupBaseline_Felzartamab)/2",
+    levels = design
+)
+contrast_placebo_03 <- makeContrasts(
+    "x =  (Felzartamab_FollowupWeek52_Placebo-Felzartamab_FollowupBaseline_Placebo)/2",
     levels = design
 )
 
 
 # FIT BLOCK week24 - baseline LIMMA MODEL ####
-fit_block_1 <- limma::lmFit(set, design)
-cfit_block_1 <- limma::contrasts.fit(fit_block_1, contrast_block_01)
-ebayes_block_1 <- limma::eBayes(cfit_block_1)
-tab_block_1 <- limma::topTable(ebayes_block_1, adjust = "fdr", sort.by = "p", number = "all")
-ebayes_block_1 %>% limma::topTable()
+fit_interaction_1 <- limma::lmFit(set, design)
+cfit_interaction_1 <- limma::contrasts.fit(fit_interaction_1, contrast_interaction_01)
+ebayes_interaction_1 <- limma::eBayes(cfit_interaction_1)
+tab_interaction_1 <- limma::topTable(ebayes_interaction_1, adjust = "fdr", sort.by = "p", number = "all") %>%
+    as_tibble(rownames = "AffyID") %>%
+    right_join(affymap219 %>% dplyr::select(AffyID, Symb, Gene, PBT), ., by = "AffyID")
+
+fit_felzartamab_1 <- limma::lmFit(set, design)
+cfit_felzartamab_1 <- limma::contrasts.fit(fit_felzartamab_1, contrast_felzartamab_01)
+ebayes_felzartamab_1 <- limma::eBayes(cfit_felzartamab_1)
+tab_felzartamab_1 <- limma::topTable(ebayes_felzartamab_1, adjust = "fdr", sort.by = "p", number = "all") %>%
+    as_tibble(rownames = "AffyID") %>%
+    right_join(affymap219 %>% dplyr::select(AffyID, Symb, Gene, PBT), ., by = "AffyID")
+
+fit_placebo_1 <- limma::lmFit(set, design)
+cfit_placebo_1 <- limma::contrasts.fit(fit_placebo_1, contrast_placebo_01)
+ebayes_placebo_1 <- limma::eBayes(cfit_placebo_1)
+tab_placebo_1 <- limma::topTable(ebayes_placebo_1, adjust = "fdr", sort.by = "p", number = "all") %>%
+    as_tibble(rownames = "AffyID") %>%
+    right_join(affymap219 %>% dplyr::select(AffyID, Symb, Gene, PBT), ., by = "AffyID")
 
 
 # FIT BLOCK week52 - week24 LIMMA MODEL ####
-fit_block_2 <- limma::lmFit(set, design)
-cfit_block_2 <- limma::contrasts.fit(fit_block_2, contrast_block_02)
-ebayes_block_2 <- limma::eBayes(cfit_block_2)
-tab_block_2 <- limma::topTable(ebayes_block_2, adjust = "fdr", sort.by = "p", number = "all")
-ebayes_block_2 %>% limma::topTable()
+fit_interaction_2 <- limma::lmFit(set, design)
+cfit_interaction_2 <- limma::contrasts.fit(fit_interaction_2, contrast_interaction_02)
+ebayes_interaction_2 <- limma::eBayes(cfit_interaction_2)
+tab_interaction_2 <- limma::topTable(ebayes_interaction_2, adjust = "fdr", sort.by = "p", number = "all") %>%
+    as_tibble(rownames = "AffyID") %>%
+    right_join(affymap219 %>% dplyr::select(AffyID, Symb, Gene, PBT), ., by = "AffyID")
+
+fit_felzartamab_2 <- limma::lmFit(set, design)
+cfit_felzartamab_2 <- limma::contrasts.fit(fit_felzartamab_2, contrast_felzartamab_02)
+ebayes_felzartamab_2 <- limma::eBayes(cfit_felzartamab_2)
+tab_felzartamab_2 <- limma::topTable(ebayes_felzartamab_2, adjust = "fdr", sort.by = "p", number = "all") %>%
+    as_tibble(rownames = "AffyID") %>%
+    right_join(affymap219 %>% dplyr::select(AffyID, Symb, Gene, PBT), ., by = "AffyID")
+
+fit_placebo_2 <- limma::lmFit(set, design)
+cfit_placebo_2 <- limma::contrasts.fit(fit_placebo_2, contrast_placebo_02)
+ebayes_placebo_2 <- limma::eBayes(cfit_placebo_2)
+tab_placebo_2 <- limma::topTable(ebayes_placebo_2, adjust = "fdr", sort.by = "p", number = "all") %>%
+    as_tibble(rownames = "AffyID") %>%
+    right_join(affymap219 %>% dplyr::select(AffyID, Symb, Gene, PBT), ., by = "AffyID")
 
 
 # FIT BLOCK week52 - baseline LIMMA MODEL ####
-fit_block_3 <- limma::lmFit(set, design)
-cfit_block_3 <- limma::contrasts.fit(fit_block_3, contrast_block_03)
-ebayes_block_3 <- limma::eBayes(cfit_block_3)
-tab_block_3 <- limma::topTable(ebayes_block_3, adjust = "fdr", sort.by = "p", number = "all")
-ebayes_block_3 %>% limma::topTable()
+fit_interaction_3 <- limma::lmFit(set, design)
+cfit_interaction_3 <- limma::contrasts.fit(fit_interaction_3, contrast_interaction_03)
+ebayes_interaction_3 <- limma::eBayes(cfit_interaction_3)
+tab_interaction_3 <- limma::topTable(ebayes_interaction_3, adjust = "fdr", sort.by = "p", number = "all") %>%
+    as_tibble(rownames = "AffyID") %>%
+    right_join(affymap219 %>% dplyr::select(AffyID, Symb, Gene, PBT), ., by = "AffyID")
+
+fit_felzartamab_3 <- limma::lmFit(set, design)
+cfit_felzartamab_3 <- limma::contrasts.fit(fit_felzartamab_3, contrast_felzartamab_03)
+ebayes_felzartamab_3 <- limma::eBayes(cfit_felzartamab_3)
+tab_felzartamab_3 <- limma::topTable(ebayes_felzartamab_3, adjust = "fdr", sort.by = "p", number = "all") %>%
+    as_tibble(rownames = "AffyID") %>%
+    right_join(affymap219 %>% dplyr::select(AffyID, Symb, Gene, PBT), ., by = "AffyID")
+
+fit_placebo_3 <- limma::lmFit(set, design)
+cfit_placebo_3 <- limma::contrasts.fit(fit_placebo_3, contrast_placebo_03)
+ebayes_placebo_3 <- limma::eBayes(cfit_placebo_3)
+tab_placebo_3 <- limma::topTable(ebayes_placebo_3, adjust = "fdr", sort.by = "p", number = "all") %>%
+    as_tibble(rownames = "AffyID") %>%
+    right_join(affymap219 %>% dplyr::select(AffyID, Symb, Gene, PBT), ., by = "AffyID")
+
+
+# MERGE BLOCKS ####
+tab_block_1 <- tab_interaction_1 %>%
+    left_join(
+        tab_felzartamab_1 %>%
+            dplyr::select(AffyID, logFC) %>%
+            rename(flogFC = logFC),
+        by = "AffyID"
+    ) %>%
+    left_join(
+        tab_placebo_1 %>%
+            dplyr::select(AffyID, logFC) %>%
+            rename(plogFC = logFC),
+        by = "AffyID"
+    ) %>%
+    relocate(plogFC, flogFC, .before = logFC) %>%
+    arrange(P.Value)
+
+tab_block_2 <- tab_interaction_2 %>%
+    left_join(
+        tab_felzartamab_2 %>%
+            dplyr::select(AffyID, logFC) %>%
+            rename(flogFC = logFC),
+        by = "AffyID"
+    ) %>%
+    left_join(
+        tab_placebo_2 %>%
+            dplyr::select(AffyID, logFC) %>%
+            rename(plogFC = logFC),
+        by = "AffyID"
+    ) %>%
+    relocate(plogFC, flogFC, .before = logFC) %>%
+    arrange(P.Value)
+
+tab_block_3 <- tab_interaction_3 %>%
+    left_join(
+        tab_felzartamab_3 %>%
+            dplyr::select(AffyID, logFC) %>%
+            rename(flogFC = logFC),
+        by = "AffyID"
+    ) %>%
+    left_join(
+        tab_placebo_3 %>%
+            dplyr::select(AffyID, logFC) %>%
+            rename(plogFC = logFC),
+        by = "AffyID"
+    ) %>%
+    relocate(plogFC, flogFC, .before = logFC) %>%
+    arrange(P.Value)
 
 
 # CALCULATE MEAN GENE EXPRESSION FOR EACH PROBE BETWEEN GROUPINGS ####
-means_baseline_week24 <- fit_block_1 %>%
+means <- fit_interaction_1 %>%
     avearrays() %>%
-    data.frame() %>%
-    rownames_to_column("AffyID") %>%
-    tibble() %>%
+    as_tibble(rownames = "AffyID") %>%
     mutate_if(is.numeric, ~ 2^. %>% round(0)) %>%
     rename_at(vars(contains("Felz")), ~ str_remove(., "Felzartamab_Followup")) %>%
-    dplyr::select(-contains("Week52"), -contains("Week12"))
-
-means_week24_week52 <- fit_block_2 %>%
-    avearrays() %>%
-    data.frame() %>%
-    rownames_to_column("AffyID") %>%
-    tibble() %>%
-    mutate_if(is.numeric, ~ 2^. %>% round(0)) %>%
-    rename_at(vars(contains("Felz")), ~ str_remove(., "Felzartamab_Followup")) %>%
-    dplyr::select(-contains("Baseline"), -contains("Week12"))
-
-means_week52_baseline <- fit_block_3 %>%
-    avearrays() %>%
-    data.frame() %>%
-    rownames_to_column("AffyID") %>%
-    tibble() %>%
-    mutate_if(is.numeric, ~ 2^. %>% round(0)) %>%
-    rename_at(vars(contains("Felz")), ~ str_remove(., "Felzartamab_Followup")) %>%
-    dplyr::select(-contains("Week24"), -contains("Week12"))
+    dplyr::select(-contains("Week12"), -any_of(c("cortex")))
 
 
 # FORMAT TOPTABLES ####
-table_block_1 <- tab_block_1 %>%
-    as_tibble(rownames = "AffyID") %>%
-    right_join(affymap219 %>% dplyr::select(AffyID, Symb, Gene, PBT), ., by = "AffyID") %>%
+table_interaction_1 <- tab_block_1 %>%
+    arrange(P.Value) %>%
+    mutate_at(c("P.Value", "adj.P.Val"), as.numeric) %>%
+    left_join(means, by = "AffyID") %>%
+    dplyr::select(
+        AffyID, Symb, Gene, PBT,
+        t, plogFC, flogFC, logFC, P.Value, adj.P.Val,
+        all_of(colnames(means))
+    ) %>%
+    left_join(means_K1208_cell_panel %>% dplyr::select(-Symb, -Gene, -PBT), by = "AffyID") %>%
+    dplyr::rename(
+        p = P.Value,
+        FDR = adj.P.Val
+    )
+
+table_interaction_2 <- tab_block_2 %>%
     arrange(P.Value) %>%
     mutate_at(c("P.Value", "adj.P.Val"), as.numeric) %>%
     tibble() %>%
-    left_join(means_baseline_week24, by = "AffyID") %>%
+    left_join(means, by = "AffyID") %>%
     dplyr::select(
         AffyID, Symb, Gene, PBT,
-        all_of(colnames(means_baseline_week24)[-1]),
-        logFC, P.Value, adj.P.Val,
+        t, plogFC, flogFC, logFC, P.Value, adj.P.Val,
+        all_of(colnames(means))
     ) %>%
-    mutate(
-        pFC = 2^(log2(Week24_Placebo) - log2(Baseline_Placebo)) %>% round(2),
-        fFC = 2^(log2(Week24_Felzartamab) - log2(Baseline_Felzartamab)) %>% round(2),
-        FC = 2^logFC,
-        .after = logFC
-    ) %>%
-    left_join(means_K1208 %>% dplyr::select(-Symb, -Gene, -PBT), by = "AffyID")
+    left_join(means_K1208_cell_panel %>% dplyr::select(-Symb, -Gene, -PBT), by = "AffyID") %>%
+    dplyr::rename(
+        p = P.Value,
+        FDR = adj.P.Val
+    ) 
 
-table_block_2 <- tab_block_2 %>%
-    as_tibble(rownames = "AffyID") %>%
-    right_join(affymap219 %>% dplyr::select(AffyID, Symb, Gene, PBT), ., by = "AffyID") %>%
+table_interaction_3 <- tab_block_3 %>%
     arrange(P.Value) %>%
     mutate_at(c("P.Value", "adj.P.Val"), as.numeric) %>%
     tibble() %>%
-    left_join(., means_week24_week52, by = "AffyID") %>%
+    left_join(means, by = "AffyID") %>%
     dplyr::select(
         AffyID, Symb, Gene, PBT,
-        all_of(colnames(means_week24_week52)[-1]),
-        logFC, P.Value, adj.P.Val,
+        t, plogFC, flogFC, logFC, P.Value, adj.P.Val,
+        all_of(colnames(means))
     ) %>%
-    mutate(
-        pFC = 2^(log2(Week52_Placebo) - log2(Week24_Placebo)) %>% round(2),
-        fFC = 2^(log2(Week52_Felzartamab) - log2(Week24_Felzartamab)) %>% round(2),
-        FC = 2^logFC,
-        .after = logFC
-    ) %>%
-    left_join(means_K1208 %>% dplyr::select(-Symb, -Gene, -PBT), by = "AffyID")
-
-table_block_3 <- tab_block_3 %>%
-    as_tibble(rownames = "AffyID") %>%
-    right_join(affymap219 %>% dplyr::select(AffyID, Symb, Gene, PBT), ., by = "AffyID") %>%
-    arrange(P.Value) %>%
-    mutate_at(c("P.Value", "adj.P.Val"), as.numeric) %>%
-    tibble() %>%
-    left_join(., means_week52_baseline, by = "AffyID") %>%
-    dplyr::select(
-        AffyID, Symb, Gene, PBT,
-        all_of(colnames(means_week52_baseline)[-1]),
-        logFC, P.Value, adj.P.Val,
-    ) %>%
-    mutate(
-        pFC = 2^(log2(Week52_Placebo) - log2(Baseline_Placebo)) %>% round(2),
-        fFC = 2^(log2(Week52_Felzartamab) - log2(Baseline_Felzartamab)) %>% round(2),
-        FC = 2^logFC,
-        .after = logFC
-    ) %>%
-    left_join(means_K1208 %>% dplyr::select(-Symb, -Gene, -PBT), by = "AffyID")
-
+    left_join(means_K1208_cell_panel %>% dplyr::select(-Symb, -Gene, -PBT), by = "AffyID") %>%
+    dplyr::rename(
+        p = P.Value,
+        FDR = adj.P.Val
+    ) 
 limma_tables <- tibble(
     design = c(
         "Baseline_vs_Week24",
@@ -214,89 +343,87 @@ limma_tables <- tibble(
         "Baseline_vs_Week52"
     ),
     toptable = list(
-        tab_block_1 %>%
-            as_tibble(rownames = "AffyID"),
-        tab_block_2 %>%
-            as_tibble(rownames = "AffyID"),
-        tab_block_3 %>%
-            as_tibble(rownames = "AffyID")
+        table_interaction_1 %>%
+            dplyr::rename(
+                "\u394 placebo logFC" = plogFC,
+                "\u394 felz logFC" = flogFC,
+                "\u394\u394 logFC" = logFC,
+                "\u394\u394 p" = p,
+                "\u394\u394 FDR" = FDR
+            ),
+        table_interaction_2 %>%
+            dplyr::rename(
+                "\u394 placebo logFC" = plogFC,
+                "\u394 felz logFC" = flogFC,
+                "\u394\u394 logFC" = logFC,
+                "\u394\u394 p" = p,
+                "\u394\u394 FDR" = FDR
+            ),
+        table_interaction_3 %>%
+            dplyr::rename(
+                "\u394 placebo logFC" = plogFC,
+                "\u394 felz logFC" = flogFC,
+                "\u394\u394 logFC" = logFC,
+                "\u394\u394 p" = p,
+                "\u394\u394 FDR" = FDR
+            )
     ),
     table = list(
-        table_block_1 %>%
-            relocate(logFC, .before = "FC") %>%
-            dplyr::rename(
-                "\u394 placebo FC" = pFC,
-                "\u394 felz FC" = fFC,
-                "\u394\u394 logFC" = logFC,
-                "\u394\u394 FC" = FC,
-                "\u394\u394 p" = P.Value,
-                "\u394\u394 FDR" = adj.P.Val
-            ),
-        table_block_2 %>%
-            relocate(logFC, .before = "FC") %>%
-            dplyr::rename(
-                "\u394 placebo FC" = pFC,
-                "\u394 felz FC" = fFC,
-                "\u394\u394 logFC" = logFC,
-                "\u394\u394 FC" = FC,
-                "\u394\u394 p" = P.Value,
-                "\u394\u394 FDR" = adj.P.Val
-            ),
-        table_block_3 %>%
-            relocate(logFC, .before = "FC") %>%
-            dplyr::rename(
-                "\u394 placebo FC" = pFC,
-                "\u394 felz FC" = fFC,
-                "\u394\u394 logFC" = logFC,
-                "\u394\u394 FC" = FC,
-                "\u394\u394 p" = P.Value,
-                "\u394\u394 FDR" = adj.P.Val
-            )
+        table_interaction_1 %>%
+            dplyr::select(-contains("macrophage"))
+,
+        table_interaction_2 %>%
+            dplyr::select(-contains("macrophage"))
+,
+        table_interaction_3 %>%
+            dplyr::select(-contains("macrophage"))
+
     )
 )
-# limma_tables$table[[1]]
-# tab_block_1 %>% as_tibble(rownames = "AffyID")
+limma_tables$table[[3]]
+
 
 
 # EXPORT THE DATA AS .RData FILE ####
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/"
 names(limma_tables$table) <- limma_tables$design
-# save(limma_tables, file = paste(saveDir, "IQR_filtered_probes_unique_genes_baseline_corrected_cortex_corrected_limma_1208.RData", sep = ""))
+save(limma_tables, file = paste(saveDir, "IQR_filtered_probes_unique_genes_baseline_corrected_cortex_corrected_limma_1208.RData", sep = ""))
 
 
 # EXPORT THE DATA AS AN EXCEL SHEET ####
+names(limma_tables$toptable) <- limma_tables$design
 saveDir1 <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/output/"
-# openxlsx::write.xlsx(limma_tables$table,
-#     asTable = TRUE,
-#     file = paste(saveDir1, "IQR_filtered_probes_unique_genes_baseline_corrected_cortex_corrected_limma_1208_14Jun24",
-#         # Sys.Date(),
-#         # format(Sys.time(), "_%I%M%p"),
-#         ".xlsx",
-#         sep = ""
-#     )
-# )
+openxlsx::write.xlsx(limma_tables$toptable,
+    asTable = TRUE,
+    file = paste(saveDir1, "IQR_filtered_probes_unique_genes_baseline_corrected_cortex_corrected_limma_1208_3July24",
+        # Sys.Date(),
+        # format(Sys.time(), "_%I%M%p"),
+        ".xlsx",
+        sep = ""
+    )
+)
 
 
 limma_tables %>%
     dplyr::filter(design == "Baseline_vs_Week24") %>%
-    pull(toptable) %>%
+    pull(table) %>%
     pluck(1) %>%
-    dplyr::filter(P.Value < 0.05) %>%
+    dplyr::filter(p < 0.05) %>%
     mutate(direction = ifelse(logFC < 0, "down", "up")) %>%
     nest(.by = direction)
 
 limma_tables %>%
     dplyr::filter(design == "Week24_vs_Week52") %>%
-    pull(toptable) %>%
+    pull(table) %>%
     pluck(1) %>%
-    dplyr::filter(P.Value < 0.05) %>%
+    dplyr::filter(p < 0.05) %>%
     mutate(direction = ifelse(logFC < 0, "down", "up")) %>%
     nest(.by = direction)
 
 limma_tables %>%
     dplyr::filter(design == "Baseline_vs_Week52") %>%
-    pull(toptable) %>%
+    pull(table) %>%
     pluck(1) %>%
-    dplyr::filter(P.Value < 0.05) %>%
+    dplyr::filter(p < 0.05) %>%
     mutate(direction = ifelse(logFC < 0, "down", "up")) %>%
     nest(.by = direction)

@@ -14,7 +14,7 @@ load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular e
 plot_panels_wide <- DEG_plots %>%
     dplyr::filter(geneset %in% c(
         "IFNG-inducible ABMR activity genes",
-        "NK cell expressed ABMR activity genes",
+        "NK cell-expressed ABMR activity genes",
         "ABMR-associated endothelial genes"
     )) %>%
     pull(plot_wide) %>%
@@ -25,7 +25,7 @@ plot_panels_wide <- DEG_plots %>%
 plot_panels_long <- DEG_plots %>%
     dplyr::filter(geneset %in% c(
         "IFNG-inducible ABMR activity genes",
-        "NK cell expressed ABMR activity genes",
+        "NK cell-expressed ABMR activity genes",
         "ABMR-associated endothelial genes"
     )) %>%
     pull(plot_long) %>%

@@ -8,7 +8,7 @@ library(ggrepel) # install.packages("ggrepel")
 library(gghalves) # pak::pak("erocoar/gghalves")
 library(ggh4x) # install.packages("ggh4x")
 library(broom) # install.packages("broom") #for tabular model object transformations
-library(flextable) # install.packages("flextable") #for table outputs
+library(flextable) # install.packages("flextable")  
 library(officer) # install.packages("officer")
 library(emmeans) # install.packages("emmeans") #for post-hoc testing and CLD
 library(multcomp) # install.packages("multcomp") #for for CLD
@@ -183,7 +183,7 @@ data_02 <- data_01 %>%
                             variable == "BAT" ~ "B cell–associated transcripts (BAT)",
                             variable == "MCAT" ~ "Mast cell-associated transcripts (MCAT)",
                             variable == "KT1" ~ "Kidney parenchymal transcripts (KT1)",
-                            variable == "KT2" ~ "Kindey parenchymal transcripts - no solute carriers (KT2)",
+                            variable == "KT2" ~ "Kidney parenchymal transcripts - no solute carriers (KT2)",
                             variable == "RejAA_NR" ~ "Archetypal No Rejection score (NR)",
                             variable == "RejAA_EABMR" ~ "Archetypal Early ABMR score (EABMR)",
                             variable == "RejAA_FABMR" ~ "Archetypal Full ABMR score (FABMR)",

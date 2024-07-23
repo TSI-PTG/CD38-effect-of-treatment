@@ -3,7 +3,8 @@ immune_response <- paste(
     c(
         "immune", "immunity", "cytokine", "leukocyte", "cell activation",
         "interaction", "virus", "symbiont", "defense response",
-        "cell killing", "cell surface receptor", "interspecies", "other organism"
+        "cell killing", "cell surface receptor", "interspecies", "other organism",
+        "immunoglobulin production"
     ),
     collapse = "|"
 )
@@ -43,7 +44,8 @@ cellular_regulation <- paste(c(
 
 
 rna_transcription <- paste(c(
-    "RNA biosynthetic process", "templated transcription"
+    "RNA biosynthetic process", "templated transcription", "RNA splicing",
+    "transcription by RNA", "nucleobase-containing"
 ), collapse = "|")
 
 
@@ -64,7 +66,16 @@ xenobiotic_metabolism <- paste(
     collapse = "|"
 )
 
-metabolic_response <- paste(c("metabolism", "metabolic", "catabolic", "cellular metabolic"), collapse = "|")
+organic_metabolism <- paste(
+    c(
+        "compound biosynthetic", "macromolecule metabolic",
+        "macromolecule biosynthetic"
+    ),
+    collapse = "|"
+)
+
+metabolic_response <- paste(c("metabolism", "metabolic", "catabolic", "cellular metabolic", "biosynthetic process"), collapse = "|")
+
 
 
 # PROTEIN SYNTHESIS ####
@@ -74,8 +85,15 @@ protein_synthesis <- paste(
 )
 
 
+# HOMEOSTASIS ####
+homeostasis <- paste(c("homeostasis"),collapse = "|")
+
+
 # MERGE ANNOTATIONS ####
-general_metabolic_response <- paste(protein_metabolism, nitrogen_metabolism, xenobiotic_metabolism, metabolic_response, sep = "|")
+general_metabolic_response <- paste(protein_metabolism, nitrogen_metabolism,
+    xenobiotic_metabolism, metabolic_response, organic_metabolism,
+    sep = "|"
+)
 cellular_development_and_metabolism <- paste(general_metabolic_response, cell_cycle, cell_mobilization, cellular_development, cellular_regulation, protein_synthesis, sep = "|")
 response_to_stimulus <- paste(endogenous_stimulus, exogenous_stimulus, stress_response, sep = "|")
 cell_signalling_and_RNA_transcription <- paste(cell_signalling, rna_transcription, sep = "|")
@@ -88,6 +106,7 @@ GO_annotation_levels_truncated <- c(
     "immune response", "response to infection",
     "inflammation", "injury response",
     "response to exogenous/endogenous stimulus",
-    "cell signalling and RNA transcription", 
-    "cell development,\nmobilization,\nand metabolism"
+    "cell signalling and RNA transcription",
+    "cell development,\nmobilization,\nand metabolism", 
+    "homeostasis"
 )

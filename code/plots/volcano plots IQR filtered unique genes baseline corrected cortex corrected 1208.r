@@ -45,7 +45,7 @@ labels_probes <- list(
         dplyr::select(AffyID) %>%
         mutate(label = "IFNG-inducible ABMR activity genes"),
     genes_NK_TBB896 %>% dplyr::select(AffyID) %>%
-        mutate(label = "NK cell expressed ABMR activity genes"),
+        mutate(label = "NK cell-expressed ABMR activity genes"),
     genes_ABMR_endothelial %>%
         dplyr::select(AffyID) %>%
         mutate(label = "ABMR-associated endothelial genes")

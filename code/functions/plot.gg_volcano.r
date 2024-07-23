@@ -10,14 +10,14 @@ gg_volcano <- function(
     require(tidyverse)
     probes_sig_up <- data %>%
         dplyr::filter(
-            `<U+0394><U+0394> p` < 0.05,
-            `<U+0394><U+0394> logFC` > 0
+            10^-p < 0.05,
+            logFC > 0
         ) %>%
         dplyr::pull(AffyID)
     probes_sig_dn <- data %>%
         dplyr::filter(
-            `<U+0394><U+0394> p` < 0.05,
-            `<U+0394><U+0394> logFC` < 0
+            10^-p < 0.05,
+            logFC < 0
         ) %>%
         dplyr::pull(AffyID)
     data <- data %>%
@@ -33,11 +33,35 @@ gg_volcano <- function(
     data_sig <- data %>%
         dplyr::filter(AffyID %in% c(probes_sig_up, probes_sig_dn))
     min_p <- data %>%
-        dplyr::slice_min(`<U+0394><U+0394> p`) %>%
-        dplyr::pull(`<U+0394><U+0394> p`) %>%
+        dplyr::slice_min(p) %>%
+        dplyr::pull(p) %>%
         log10() * -1
     plot <- data %>%
         ggplot2::ggplot(mapping = ggplot2::aes(x = p, y = logFC)) +
+        # ggplot2::geom_segment(
+        #     inherit.aes = FALSE,
+        #     data = dplyr::tibble(
+        #         x0 = seq(
+        #             -log10(0.05),
+        #             3.5 %>% max(),
+        #             length.out = 300
+        #         ),
+        #         xend = x0,
+        #         y0 = -Inf,
+        #         yend = Inf,
+        #         col = x0
+        #     ),
+        #     mapping = ggplot2::aes(
+        #         x = x0,
+        #         xend = xend,
+        #         y = y0,
+        #         yend = yend,
+        #         col = x0
+        #     ),
+        #     show.legend = FALSE
+        # ) +
+        # ggplot2::scale_colour_gradient(low = "#ffffff95", high = "#ffffff00") +
+        # ggnewscale::new_scale_colour() +
         ggplot2::geom_hline(yintercept = 0, linetype = "dashed") +
         ggplot2::geom_vline(xintercept = -log10(0.05), linetype = "dashed") +
         ggplot2::geom_point(
@@ -87,7 +111,7 @@ gg_volcano <- function(
             axis.title = ggplot2::element_text(size = 12, face = "plain"),
             axis.text = ggplot2::element_text(colour = "black"),
             plot.margin = ggplot2::unit(c(0.25, 0.1, 0.1, 0.1), "cm"),
-            plot.background = ggplot2::element_rect(fill = "grey95", colour = " white")
+            # plot.background = ggplot2::element_rect(fill = "grey95", colour = " white")
         )
     if (show_labels) {
         labels_probes <- labels_probes %>% dplyr::bind_rows()

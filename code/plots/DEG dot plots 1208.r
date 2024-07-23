@@ -30,15 +30,17 @@ DEG_plots00 <- gene_tables %>%
             factor(
                 levels = c(
                     "ABMR_activity",
-                    "IFNG",
-                    "NK_ATAGC_U133", "NK_KTB18_RNAseq", "NK_LM22_U133", "NK_L765",
-                    "Endothelial"
+                    "ABMR_IFNG",
+                    "ABMR_NK",
+                    "ABMR_endothelial",
+                    "NK_ATAGC_U133", "NK_KTB18_RNAseq", "NK_LM22_U133"
                 ),
                 labels = c(
-                    "ABMR_activity genes",
+                    "ABMR activity genes",
                     "IFNG-inducible ABMR activity genes",
-                    "NK_ATAGC_U133 genes", "NK_KTB18_RNAseq genes", "NK_LM22_U133 genes", "NK cell expressed ABMR activity genes",
-                    "ABMR-associated endothelial genes"
+                    "NK cell-expressed ABMR activity genes",
+                    "ABMR-associated endothelial genes",
+                    "NK_ATAGC_U133 genes", "NK_KTB18_RNAseq genes", "NK_LM22_U133 genes"
                 )
             ),
         data = map(data, unnest, everything())
@@ -60,7 +62,7 @@ DEG_plots <- DEG_plots00 %>%
             list(geneset, data),
             function(geneset, data) {
                 data <- data %>%
-                    dplyr::rename(logFC = `<U+0394><U+0394> logFC`, p = `<U+0394><U+0394> p`) %>%
+                    # dplyr::rename(logFC = `<U+0394><U+0394> logFC`, p = `<U+0394><U+0394> p`) %>%
                     dplyr::mutate(
                         col = dplyr::case_when(
                             p < 0.05 & logFC < 0 ~ col_dn,
@@ -104,7 +106,7 @@ DEG_plots <- DEG_plots00 %>%
             list(geneset, data),
             function(geneset, data) {
                 data <- data %>%
-                    dplyr::rename(logFC = `<U+0394><U+0394> logFC`, p = `<U+0394><U+0394> p`) %>%
+                    # dplyr::rename(logFC = `<U+0394><U+0394> logFC`, p = `<U+0394><U+0394> p`) %>%
                     dplyr::mutate(
                         col = dplyr::case_when(
                             p < 0.05 & logFC < 0 ~ col_dn,
@@ -144,7 +146,7 @@ DEG_plots <- DEG_plots00 %>%
             }
         )
     )
-DEG_plots$plot_long[[2]]
+DEG_plots$plot_long[[1]]
 
 
 # SAVE THE PLOT DATA ####

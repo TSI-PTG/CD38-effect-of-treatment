@@ -1,7 +1,7 @@
 # HOUSEKEEPING ####
 # CRAN libraries
 library(tidyverse) # install.packages("tidyverse")
-library(flextable) # install.packages("flextable") #for table outputs
+library(flextable) # install.packages("flextable")  
 library(officer) # install.packages("officer")
 library(openxlsx) # install.packages("openxlsx")
 # Bioconductor libraries
@@ -21,6 +21,7 @@ load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular e
 
 # DEFINE THE SET ####
 set00 <- data_expressionset_k1208[, data_expressionset_k1208$Patient %nin% c(15, 18)]
+
 
 
 # IQR FILTER THE DATA ####
@@ -56,10 +57,11 @@ seed <- 42
 
 # DEFINE FACTOR FOR CONTRASTS ####
 Felzartamab_Followup <- set$Felzartamab_Followup %>% droplevels()
+cortex <- set$Cortexprob
 
 
 # DESIGN ####
-design <- model.matrix(~ 0 + Felzartamab_Followup)
+design <- model.matrix(~ 0 + Felzartamab_Followup + cortex)
 
 
 # CONTRAST DESIGN week24 - baseline ####
@@ -251,14 +253,14 @@ limma_tables <- tibble(
 # EXPORT THE DATA AS .RData FILE ####
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/"
 names(limma_tables$table) <- limma_tables$design
-save(limma_tables, file = paste(saveDir, "IQR_filtered_probes_unique_genes_limma_1208.RData", sep = ""))
+save(limma_tables, file = paste(saveDir, "IQR_filtered_probes_unique_genes_cortex_corrected_limma_1208.RData", sep = ""))
 
 
 # EXPORT THE DATA AS AN EXCEL SHEET ####
 saveDir1 <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/output/"
 openxlsx::write.xlsx(limma_tables$table,
     asTable = TRUE,
-    file = paste(saveDir1, "IQR_filtered_probes_unique_genes_limma_1208_13Jun24",
+    file = paste(saveDir1, "IQR_filtered_probes_unique_genes_cortex_corrected_limma_1208_13Jun24",
         # Sys.Date(),
         # format(Sys.time(), "_%I%M%p"),
         ".xlsx",

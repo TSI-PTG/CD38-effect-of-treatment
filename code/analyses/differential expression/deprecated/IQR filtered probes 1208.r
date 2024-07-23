@@ -1,7 +1,7 @@
 # HOUSEKEEPING ####
 # CRAN libraries
 library(tidyverse) # install.packages("tidyverse")
-library(flextable) # install.packages("flextable") #for table outputs
+library(flextable) # install.packages("flextable")  
 library(officer) # install.packages("officer")
 library(openxlsx) # install.packages("openxlsx")
 # Bioconductor libraries
@@ -15,12 +15,6 @@ library(genefilter) # BiocManager::install("genefilter")
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/data_expressionset_k1208.RData")
 # load affymap
 load("Z:/DATA/Datalocks/Other data/affymap219_21Oct2019_1306_JR.RData")
-# load mean expression in K1208
-load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/mean_expression_K1208_MMDx.RData")
-# load gene IDs data
-load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/NK cell selective genes.RData")
-load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/NK cell selective genes atagc cell panel.RData")
-
 
 
 # DEFINE THE SET ####
@@ -28,45 +22,12 @@ set00 <- data_expressionset_k1208[, data_expressionset_k1208$Patient %nin% c(15,
 
 
 # IQR FILTER THE DATA ####
-# f1 <- function(x) (IQR(x) > 0.5)
-# ff <- filterfun(f1)
-# if (!exists("selected")) {
-#     selected <- genefilter(set00, ff)
-# }
-# set01 <- set00[selected, ]
-set01 <- set00
-
-
-
-# KEEP UNIQUE GENES (keep probe with highest mean expression) ####
-mean_exprs_by_probe <- set01 %>%
-    exprs() %>%
-    as_tibble(rownames = "AffyID") %>%
-    right_join(affymap219 %>% dplyr::select(AffyID, Symb) %>% tibble(), ., by = "AffyID") %>%
-    mutate(
-        mean_exprs = set01 %>%
-            exprs() %>% rowMeans(), .after = Symb
-    )
-
-genes <- mean_exprs_by_probe %>%
-    group_by(Symb) %>%
-    dplyr::slice_max(mean_exprs) %>%
-    dplyr::filter(Symb != "") %>%
-    distinct(Symb, .keep_all = TRUE) %>%
-    dplyr::select(AffyID, Symb)
-
-nk_genes <- nk_genes_atagc %>%
-    dplyr::select(-AffyID) %>%
-    left_join(genes, by = "Symb")
-
-nk_probes <- nk_genes %>%
-    dplyr::filter(AffyID %in% genes$AffyID)
-
-
-
-
-# set <- set01[featureNames(set01) %in% genes, ]
-set <- set01
+f1 <- function(x) (IQR(x) > 0.5)
+ff <- filterfun(f1)
+if (!exists("selected")) {
+    selected <- genefilter(set00, ff)
+}
+set <- set00[selected, ]
 
 
 # DEFINE SEED ####
@@ -99,6 +60,8 @@ contrast_block_03 <- makeContrasts(
     "x =  (Felzartamab_FollowupWeek52_Felzartamab-Felzartamab_FollowupBaseline_Felzartamab)/2 - (Felzartamab_FollowupWeek52_Placebo-Felzartamab_FollowupBaseline_Placebo)/2",
     levels = design_block03
 )
+
+
 
 
 # FIT BLOCK week24 - baseline LIMMA MODEL ####
@@ -161,7 +124,7 @@ table_block_1 <- tab_block_1 %>%
     arrange(P.Value) %>%
     mutate_at(c("P.Value", "adj.P.Val"), as.numeric) %>%
     tibble() %>%
-    left_join(means_baseline_week24, by = "AffyID") %>%
+    left_join(., means_baseline_week24, by = "AffyID") %>%
     dplyr::select(
         AffyID, Symb, Gene, PBT,
         all_of(colnames(means_baseline_week24)[-1]),
@@ -172,13 +135,7 @@ table_block_1 <- tab_block_1 %>%
         fFC = 2^(log2(Week24_Felzartamab) - log2(Baseline_Felzartamab)) %>% round(2),
         FC = 2^logFC,
         .after = logFC
-    ) %>%
-    # dplyr::filter(AffyID %in% nk_genes$AffyID) %>%
-    # left_join(nk_probes %>% dplyr::select(-Symb), by = c("AffyID")) %>%
-    # relocate(GEP_panel) %>%
-    # distinct(Symb, .keep_all = TRUE) %>%
-    left_join(means_K1208 %>% dplyr::select(-Symb, -Gene, -PBT), by = "AffyID")
-
+    )
 
 table_block_2 <- tab_block_2 %>%
     as_tibble(rownames = "AffyID") %>%
@@ -197,12 +154,7 @@ table_block_2 <- tab_block_2 %>%
         fFC = 2^(log2(Week52_Felzartamab) - log2(Week24_Felzartamab)) %>% round(2),
         FC = 2^logFC,
         .after = logFC
-    ) %>%
-    # dplyr::filter(AffyID %in% nk_genes$AffyID) %>%
-    # left_join(nk_probes %>% dplyr::select(-Symb), by = c("AffyID")) %>%
-    # relocate(GEP_panel) %>%
-    # distinct(Symb, .keep_all = TRUE) %>%
-    left_join(means_K1208 %>% dplyr::select(-Symb, -Gene, -PBT), by = "AffyID")
+    )
 
 table_block_3 <- tab_block_3 %>%
     as_tibble(rownames = "AffyID") %>%
@@ -221,12 +173,8 @@ table_block_3 <- tab_block_3 %>%
         fFC = 2^(log2(Week52_Felzartamab) - log2(Baseline_Felzartamab)) %>% round(2),
         FC = 2^logFC,
         .after = logFC
-    ) %>%
-    # dplyr::filter(AffyID %in% nk_genes$AffyID) %>%
-    # left_join(nk_probes %>% dplyr::select(-Symb), by = c("AffyID")) %>%
-    # relocate(GEP_panel) %>%
-    # distinct(Symb, .keep_all = TRUE) %>%
-    left_join(means_K1208 %>% dplyr::select(-Symb, -Gene, -PBT), by = "AffyID")
+    )
+
 
 limma_tables <- tibble(
     design = c(
@@ -282,14 +230,14 @@ limma_tables <- tibble(
 # EXPORT THE DATA AS .RData FILE ####
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/"
 names(limma_tables$table) <- limma_tables$design
-save(limma_tables, file = paste(saveDir, "all_probes_limma_1208.RData", sep = ""))
+save(limma_tables, file = paste(saveDir, "IQR_filtered_probes_limma_1208.RData", sep = ""))
 
 
 # EXPORT THE DATA AS AN EXCEL SHEET ####
 saveDir1 <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/output/"
 openxlsx::write.xlsx(limma_tables$table,
     asTable = TRUE,
-    file = paste(saveDir1, "all_probes_limma_1208_11Jun24",
+    file = paste(saveDir1, "IQR_filtered_probes_limma_1208_23May24",
         # Sys.Date(),
         # format(Sys.time(), "_%I%M%p"),
         ".xlsx",

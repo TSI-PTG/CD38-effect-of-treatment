@@ -1,7 +1,7 @@
 # HOUSEKEEPING ####
 # CRAN libraries
 library(tidyverse) # install.packages("tidyverse")
-library(flextable) # install.packages("flextable") #for table outputs
+library(flextable) # install.packages("flextable")
 library(officer) # install.packages("officer")
 # Custom operators, functions, and datasets
 "%nin%" <- function(a, b) match(a, b, nomatch = 0) == 0
@@ -32,7 +32,7 @@ res_art_flextable <- felzartamab_ARTanova %>%
     flextable::border_remove() %>%
     flextable::bold(part = "header") %>%
     flextable::padding(padding = 0, part = "all") %>%
-    flextable::border(border = fp_border(), part = "all") %>%
+    flextable::border(border = officer::fp_border(), part = "all") %>%
     flextable::autofit()
 # res_art_flextable %>% print(preview = "pptx")
 
@@ -58,17 +58,17 @@ data_pairwise_formatted_delta <- felzartamab_ARTanova %>%
     mutate(
         delta = paste(
             format(round(median_delta, 2), nsmall = 1),
-            "\u00B1",
+            " (",
             round(IQR_delta, 2),
-            # Letter,
-            sep = " "
+            ")",
+            sep = ""
         ),
         deltadelta = paste(
             format(round(median_delta_delta, 2), nsmall = 1),
-            "\u00B1",
+            " (",
             round(IQR_delta_delta, 2),
-            # Letter,
-            sep = " "
+            ")",
+            sep = ""
         )
     ) %>%
     dplyr::select(
@@ -102,15 +102,17 @@ data_delta_formatted <- felzartamab_ARTanova %>%
     mutate(
         delta = paste(
             format(round(median_delta, 2), nsmall = 1),
-            "\u00B1",
+            " (",
             round(IQR_delta, 2),
-            sep = " "
+            ")",
+            sep = ""
         ),
         deltadelta = paste(
             format(round(median_delta_delta, 2), nsmall = 1),
-            "\u00B1",
+            " (",
             round(IQR_delta_delta, 2),
-            sep = " "
+            ")",
+            sep = ""
         )
     ) %>%
     dplyr::select(annotation, score, Followup_pairwise, Felzartamab, delta, deltadelta) %>%
@@ -175,7 +177,7 @@ data_pairwise_formatted <- data_delta_formatted %>%
 
 
 # UNIVERSAL VARIABLES FOR FLEXTABLE ####
-title_art_pairwise <- paste("Table i. Median \u00B1 IQR molecular scores in biopsies from Felzartamab-treated vs placebo-treated patients")
+title_art_pairwise <- paste("Table i. Median (IQR) molecular scores in biopsies from Felzartamab-treated vs placebo-treated patients")
 
 footnoteText <- c(
     paste(
@@ -224,10 +226,10 @@ flextable_pairwise <- data_pairwise_formatted %>%
     flextable::merge_v(part = "header") %>%
     flextable::merge_h(part = "header") %>%
     flextable::border_remove() %>%
-    flextable::border(part = "header", border = fp_border()) %>%
-    flextable::border(part = "body", border = fp_border()) %>%
-    flextable::border(part = "footer", border.left = fp_border(), border.right = fp_border()) %>%
-    flextable::border(i = 1, part = "footer", border.bottom = fp_border()) %>%
+    flextable::border(part = "header", border = officer::fp_border()) %>%
+    flextable::border(part = "body", border = officer::fp_border()) %>%
+    flextable::border(part = "footer", border.left = officer::fp_border(), border.right = officer::fp_border()) %>%
+    flextable::border(i = 1, part = "footer", border.bottom = officer::fp_border()) %>%
     flextable::align(align = "center") %>%
     flextable::align(align = "center", part = "header") %>%
     flextable::font(fontname = "Arial", part = "all") %>%

@@ -1,7 +1,7 @@
 # HOUSEKEEPING ####
 # CRAN libraries
 library(tidyverse) # install.packages("tidyverse")
-library(flextable) # install.packages("flextable") #for table outputs
+library(flextable) # install.packages("flextable")  
 library(officer) # install.packages("officer")
 library(openxlsx) # install.packages("openxlsx")
 # Bioconductor libraries
@@ -97,7 +97,7 @@ table_block_1 <- tab_block_1 %>%
     dplyr::select(
         AffyID, Symb, Gene, PBT,
         Baseline_Placebo, Baseline_Felzartamab,
-        logFC, P.Value, adj.P.Val,
+        t, logFC, P.Value, adj.P.Val,
     ) %>%
     mutate(
         FC = 2^logFC,

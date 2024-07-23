@@ -19,18 +19,17 @@ data_plot_timeseries_00 <- limma_tables %>%
     unnest(everything())
 
 min_p <- data_plot_timeseries_00 %>%
-    slice_min(`<U+0394><U+0394> p`) %>%
-    pull(`<U+0394><U+0394> p`) %>%
+    slice_min(p) %>%
+    pull(p) %>%
     log10() * -1.2
 
 data_plot_timeseries <- data_plot_timeseries_00 %>%
     mutate(
         p = ifelse(
             design == "Week24_vs_Week52",
-            -log10(`<U+0394><U+0394> p`) + min_p,
-            -log10(`<U+0394><U+0394> p`)
-        ),
-        logFC = `<U+0394><U+0394> logFC`
+            -log10(p) + min_p,
+            -log10(p)
+        )
     )
 # data_plot_timeseries %>% dplyr::filter(AffyID %in% probes_abmr)
 

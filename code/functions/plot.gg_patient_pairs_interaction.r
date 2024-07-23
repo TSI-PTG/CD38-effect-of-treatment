@@ -30,7 +30,7 @@ gg_patient_pairs_interaction <- function(data, variable, score) {
         dplyr::select(Followup, sample_pairs) %>%
         dplyr::mutate(xlabels = paste(Followup, "\n(n = ", sample_pairs, ")", sep = "")) %>%
         dplyr::pull(xlabels)
-    dodge <- 0.3
+    dodge <- 0.5
     data <- data %>%
         dplyr::mutate(
             variable = variable,
@@ -45,20 +45,44 @@ gg_patient_pairs_interaction <- function(data, variable, score) {
                 group = Patient
             )
         ) +
-        ggplot2::geom_point(size = 5, alpha = 0.15, position = ggplot2::position_dodge(width = dodge)) +
+        ggplot2::geom_point(
+            size = 5,
+            alpha = 0.5,
+            # position = ggplot2::position_dodge(width = dodge)
+        ) +
         ggplot2::geom_line(
-            linewidth = 0.25,
+            linewidth = 0.5,
             # alpha = 0.75,
-            linetype = "dashed",
-            position = ggplot2::position_dodge(width = dodge),
+            linetype = "solid",
+            # position = ggplot2::position_dodge(width = dodge),
             show.legend = FALSE
         ) +
-        ggplot2::geom_text(
+        ggplot2::geom_point(
+            size = 2,
+            alpha = 1,
+            col = "black"
+            # position = ggplot2::position_dodge(width = dodge)
+        ) +
+        # ggplot2::geom_text(
+        #     mapping = ggplot2::aes(label = Patient),
+        #     size = 5,
+        #     col = "black",
+        #     show.legend = FALSE,
+        #     position = ggplot2::position_dodge(width = dodge)
+        # ) +
+        ggrepel::geom_label_repel(
+            seed = 42,
             mapping = ggplot2::aes(label = Patient),
-            size = 4,
             col = "black",
+            fill = alpha("white", 0.75),
+            box.padding = 0.35,
+            label.padding = 0.15,
+            label.r = 0.5,
+            label.size = 0,
+            # min.segment.length = 0,
             show.legend = FALSE,
-            position = ggplot2::position_dodge(width = dodge)
+            force_pull = 5,
+            size = 8
         ) +
         ggplot2::labs(
             x = NULL,
@@ -71,9 +95,10 @@ gg_patient_pairs_interaction <- function(data, variable, score) {
         ggplot2::theme_bw() +
         ggplot2::theme(
             axis.title = ggplot2::element_text(size = 15),
-            axis.text = ggplot2::element_text(size = 12, colour = "black"),
+            axis.text = ggplot2::element_text(size = 15, colour = "black"),
+            axis.text.x = ggplot2::element_text(size = 15, colour = "black"),
             panel.grid = ggplot2::element_blank(),
-            strip.text = ggplot2::element_text(size = 12, colour = "black"),
+            strip.text = ggplot2::element_text(size = 15, colour = "black"),
             legend.position = "top",
             legend.title = ggplot2::element_text(size = 15, face = "bold"),
             legend.text = ggplot2::element_text(size = 15),
@@ -93,7 +118,7 @@ gg_patient_pairs_interaction <- function(data, variable, score) {
             ggplot2::theme(axis.ticks.length.y = unit(0.25, "cm")) +
             ggplot2::guides(y = ggprism::guide_prism_minor())
     } else {
-        plot 
+        plot
     }
     plot
 }

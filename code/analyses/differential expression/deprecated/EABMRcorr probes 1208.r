@@ -1,7 +1,7 @@
 # HOUSEKEEPING ####
 # CRAN libraries
 library(tidyverse) # install.packages("tidyverse")
-library(flextable) # install.packages("flextable") #for table outputs
+library(flextable) # install.packages("flextable")  
 library(officer) # install.packages("officer")
 library(openxlsx) # install.packages("openxlsx")
 library(readxl) # install.packages("readxl")
@@ -266,7 +266,7 @@ flextable_block_1 <- table_block_1 %>%
     flextable::merge_h(part = "header") %>%
     flextable::bg(bg = "white", part = "all") %>%
     flextable::border_remove() %>%
-    flextable::border(border = fp_border(), part = "all") %>%
+    flextable::border(border = officer::fp_border(), part = "all") %>%
     flextable::align(part = "header", align = "center") %>%
     flextable::align(part = "body", align = "center") %>%
     flextable::valign(i = 2:4, valign = "bottom", part = "header") %>%
@@ -310,7 +310,7 @@ flextable_block_2 <- table_block_2 %>%
     flextable::merge_h(part = "header") %>%
     flextable::bg(bg = "white", part = "all") %>%
     flextable::border_remove() %>%
-    flextable::border(border = fp_border(), part = "all") %>%
+    flextable::border(border = officer::fp_border(), part = "all") %>%
     flextable::align(part = "header", align = "center") %>%
     flextable::align(part = "body", align = "center") %>%
     flextable::valign(i = 2:4, valign = "bottom", part = "header") %>%
@@ -354,7 +354,7 @@ flextable_block_3 <- table_block_3 %>%
     flextable::merge_h(part = "header") %>%
     flextable::bg(bg = "white", part = "all") %>%
     flextable::border_remove() %>%
-    flextable::border(border = fp_border(), part = "all") %>%
+    flextable::border(border = officer::fp_border(), part = "all") %>%
     flextable::align(part = "header", align = "center") %>%
     flextable::align(part = "body", align = "center") %>%
     flextable::valign(i = 2:4, valign = "bottom", part = "header") %>%

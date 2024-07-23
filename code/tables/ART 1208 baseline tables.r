@@ -1,7 +1,7 @@
 # HOUSEKEEPING ####
 # CRAN libraries
 library(tidyverse) # install.packages("tidyverse")
-library(flextable) # install.packages("flextable") #for table outputs
+library(flextable) # install.packages("flextable")  
 library(officer) # install.packages("officer")
 # Custom operators, functions, and datasets
 "%nin%" <- function(a, b) match(a, b, nomatch = 0) == 0
@@ -31,7 +31,7 @@ res_art_flextable <- felzartamab_ARTanova_baseline %>%
     flextable::border_remove() %>%
     flextable::bold(part = "header") %>%
     flextable::padding(padding = 0, part = "all") %>%
-    flextable::border(border = fp_border(), part = "all") %>%
+    flextable::border(border = officer::fp_border(), part = "all") %>%
     flextable::autofit()
 
 # res_art_flextable %>% print(preview = "pptx")
@@ -56,10 +56,10 @@ data_formatted_medians <- felzartamab_ARTanova_baseline %>%
     mutate(
         median = paste(
             format(round(median, 2), nsmall = 1),
-            "\u00B1",
-            round(IQR, 2),
-            # Letter,
-            sep = " "
+            " (",
+            round(IQR, 1),
+            ")",
+            sep = ""
         )
     ) %>%
     dplyr::select(
@@ -80,7 +80,7 @@ data_formatted_medians <- felzartamab_ARTanova_baseline %>%
 
 
 # UNIVERSAL VARIABLES FOR FLEXTABLE ####
-title_art_baseline <- paste("Table i. Median \u00B1 IQR molecular scores in baseline biopsies from Felzartamab-treated vs placebo-treated patients")
+title_art_baseline <- paste("Table i. Median (IQR) molecular scores in baseline biopsies from Felzartamab-treated vs placebo-treated patients")
 
 footnoteText <- c(
     paste(
@@ -125,10 +125,10 @@ flextable_baseline <- data_formatted_medians %>%
     flextable::merge_v(part = "header") %>%
     flextable::merge_h(part = "header") %>%
     flextable::border_remove() %>%
-    flextable::border(part = "header", border = fp_border()) %>%
-    flextable::border(part = "body", border = fp_border()) %>%
-    flextable::border(part = "footer", border.left = fp_border(), border.right = fp_border()) %>%
-    flextable::border(i = 1, part = "footer", border.bottom = fp_border()) %>%
+    flextable::border(part = "header", border = officer::fp_border()) %>%
+    flextable::border(part = "body", border = officer::fp_border()) %>%
+    flextable::border(part = "footer", border.left = officer::fp_border(), border.right = officer::fp_border()) %>%
+    flextable::border(i = 1, part = "footer", border.bottom = officer::fp_border()) %>%
     flextable::align(align = "center") %>%
     flextable::align(align = "center", part = "header") %>%
     flextable::font(fontname = "Arial", part = "all") %>%
