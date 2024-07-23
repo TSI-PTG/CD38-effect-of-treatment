@@ -58,7 +58,7 @@ d[,factor_variables] <- lapply(d[,factor_variables], factor)
 # Create variable MFI >5000
 ### Variable DSA MFI of immunodominant DSA >5000
 
-d<- d %>% mutate(mfi_immunodominant = case_when(DSA_highest_Category_Screening >= 3~ 1, 
+d<- d %>% mutate(mfi_immunodominant = case_when(DSA_highest_Category_Screening > 3~ 1, 
                                                 TRUE ~ 0)) %>% 
   mutate(mfi_immunodominant = factor(mfi_immunodominant))
 
