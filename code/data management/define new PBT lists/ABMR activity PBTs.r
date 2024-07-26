@@ -16,10 +16,10 @@ load("Z:/DATA/Datalocks/Other data/PBTlist219_14Dec2020_JR.RData")
 
 # DEFINE ABMR ACTIVITY PBTLIST ####
 PBTlist219_ABMRactivity <- list(
-    ABMRact = genes_ABMR_activity$AffyID,
-    ABMRifng = genes_ABMR_IFNG$AffyID,
-    ABMRnk = genes_ABMR_NK$AffyID,
-    ABMRendo = genes_ABMR_endothelial$AffyID
+    AAG = genes_ABMR_activity$AffyID,
+    IIAAG = genes_ABMR_IFNG$AffyID,
+    NKAAG = genes_ABMR_NK$AffyID,
+    AEG = genes_ABMR_endothelial$AffyID
 )
 
 
