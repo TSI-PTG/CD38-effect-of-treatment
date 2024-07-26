@@ -16,17 +16,6 @@ simplefile_path <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/0000 simp
 simplefile <- read_excel(path = simplefile_path, sheet = "simpleCorrAAInjRejInjset")
 
 
-# DEFINE GENES FROM FUNCTIONAL ENRICHMENT ####
-genes_injury <- Hmisc::.q(
-    SPTBN1, NRP1, KLF6, 'HLA-DRB1', DOCK11, DUSP1, CHSY1, LDHA,
-    CDC42SE2, TPM4, PTBP3, ARHGAP29, SYNE2, SERP1, CORO1C, LRRFIP1, PPFIBP1, CANX, JUN,
-    SCOC, RNF213, SPP1, PIK3AP1, VIM, SVIL, TPM3, RAN, ANXA5, ADAM10, HSPA1A, CEBPB,
-    SPARC, ACTB, HNRNPK, SLFN5, RHOA
-)
-
-
-
-
 
 genes_injury_markers %>%
     # mutate(data = map(data, filter, abs(log2FC) > 1)) %>%
@@ -149,49 +138,43 @@ genes_injury %>%
         KLF6, NRP1, RARRES3, ARL6IP5, FGFR1, MMP7, TSC22D1, WWC1, "HLA-E"
     ))
 
-
-
-
 genes_injury <- join %>%
     # slice_min(`corrInjAA3-AKI1`, n = 100) %>%
     slice_min(`pvalInjAA3-AKI1`, n = 20)
 
 
-
-
-
 # SAVE THE DATA ####
-# saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/"
+saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/"
 # save(genes_injury, file = paste(saveDir, "injury_genes.RData", sep = ""))
 
 
 # MAKE A FLEXTABLE OF THE DATA ####
-flextable <- join %>%
-    flextable::flextable() %>%
-    flextable::border(part = "header", border = officer::fp_border()) %>%
-    flextable::border(part = "body", border = officer::fp_border()) %>%
-    flextable::align(align = "center") %>%
-    flextable::align(align = "center", part = "header") %>%
-    flextable::font(fontname = "Arial", part = "all") %>%
-    flextable::fontsize(size = 8, part = "all") %>%
-    flextable::fontsize(size = 8, part = "footer") %>%
-    flextable::fontsize(i = 1, size = 12, part = "header") %>%
-    flextable::bold(part = "header") %>%
-    flextable::bg(bg = "white", part = "all") %>%
-    flextable::padding(padding = 0, part = "all")
+# flextable <- join %>%
+#     flextable::flextable() %>%
+#     flextable::border(part = "header", border = officer::fp_border()) %>%
+#     flextable::border(part = "body", border = officer::fp_border()) %>%
+#     flextable::align(align = "center") %>%
+#     flextable::align(align = "center", part = "header") %>%
+#     flextable::font(fontname = "Arial", part = "all") %>%
+#     flextable::fontsize(size = 8, part = "all") %>%
+#     flextable::fontsize(size = 8, part = "footer") %>%
+#     flextable::fontsize(i = 1, size = 12, part = "header") %>%
+#     flextable::bold(part = "header") %>%
+#     flextable::bg(bg = "white", part = "all") %>%
+#     flextable::padding(padding = 0, part = "all")
 
-flextable %>% print(preview = "pptx")
+# flextable %>% print(preview = "pptx")
 
 
 
 # EXPORT DATA FOR ALL MARKER GENES ####
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/"
-openxlsx::write.xlsx(injury_markers_all,
-    asTable = TRUE,
-    file = paste(saveDir, "Injury_marker_genes_26Jul24",
-        # Sys.Date(),
-        # format(Sys.time(), "_%I%M%p"),
-        ".xlsx",
-        sep = ""
-    )
-)
+# openxlsx::write.xlsx(injury_markers_all,
+#     asTable = TRUE,
+#     file = paste(saveDir, "Injury_marker_genes_26Jul24",
+#         # Sys.Date(),
+#         # format(Sys.time(), "_%I%M%p"),
+#         ".xlsx",
+#         sep = ""
+#     )
+# )
