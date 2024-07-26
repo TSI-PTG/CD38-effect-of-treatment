@@ -28,14 +28,36 @@ genes_injury <- Hmisc::.q(
 
 
 
-
-
 genes_injury_markers %>%
     # mutate(data = map(data, filter, abs(log2FC) > 1)) %>%
     unnest(data) %>%
     drop_na(AffyID) %>%
     filter(Symb == "SLFN5") %>%
     dplyr::select(AffyID, Symb, cluster, log2FC)
+
+
+# COLLATE ALL INJURY MARKER DATA ####
+injury_markers_all <- genes_injury_markers %>%
+    # mutate(data = map(data, filter, abs(log2FC) > 1)) %>%
+    unnest(data) %>%
+    drop_na(AffyID) %>%
+    # dplyr::filter(cluster %>% str_detect("New")) %>%
+    dplyr::select(cluster, AffyID, Symb, Gene, PBT) %>%
+    nest(.by = AffyID) %>%
+    mutate(
+        "cellular expression in AKI" = map_chr(
+            data,
+            function(data) {
+                data %>%
+                    pull(cluster) %>%
+                    paste(collapse = ",")
+            }
+        )
+    ) %>%
+    unnest(data) %>%
+    distinct(AffyID, .keep_all = TRUE) %>%
+    dplyr::select(-cluster)
+
 
 
 # WRANGLE THE INJURY MARKER DATA ####
@@ -159,3 +181,17 @@ flextable <- join %>%
     flextable::padding(padding = 0, part = "all")
 
 flextable %>% print(preview = "pptx")
+
+
+
+# EXPORT DATA FOR ALL MARKER GENES ####
+saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/"
+openxlsx::write.xlsx(injury_markers_all,
+    asTable = TRUE,
+    file = paste(saveDir, "Injury_marker_genes_26Jul24",
+        # Sys.Date(),
+        # format(Sys.time(), "_%I%M%p"),
+        ".xlsx",
+        sep = ""
+    )
+)
