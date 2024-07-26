@@ -20,6 +20,7 @@ load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular e
 
 # SUMMARIZE THE GSEA DATA ####
 felzartamab_gsea_k1208 %>%
+    dplyr::filter(design == "Baseline_vs_Week52") %>% 
     dplyr::select(design, gsea_table) %>%
     unnest(everything()) %>%
     mutate(Symb = core_enrichment %>% strsplit("/"), .by = ID) %>%
@@ -31,6 +32,7 @@ felzartamab_gsea_k1208 %>%
 
 # FIND TOP GENES BY OVERLAP ####
 overlap <- felzartamab_gsea_k1208 %>%
+    dplyr::filter(design == "Baseline_vs_Week52") %>%
     dplyr::select(design, gsea_table) %>%
     unnest(everything()) %>%
     mutate(Symb = core_enrichment %>% strsplit("/"), .by = ID) %>%
@@ -60,6 +62,7 @@ overlap <- felzartamab_gsea_k1208 %>%
 
 # WRANGLE THE GSEA RESULTS ####
 gsea <- felzartamab_gsea_k1208 %>%
+    dplyr::filter(design == "Baseline_vs_Week52") %>%
     mutate(
         gsea_table = map(
             gsea_table,
@@ -83,6 +86,7 @@ gsea <- felzartamab_gsea_k1208 %>%
 
 # WRANGLE THE DATA FOR VOLCANO PLOTS ####
 data_volcano <- limma_tables %>%
+    dplyr::filter(design == "Baseline_vs_Week52") %>%
     dplyr::select(design, table) %>%
     mutate(
         data_plot = map(
@@ -135,16 +139,23 @@ xlim <- c(0, data_volcano %>%
 x_end <- 3.25
 
 
-# MAKE VOLCANO PLOTS ####
+# MAKE VOLCANO PLOT ####
+plot_volcano
+
+
 plot_volcano <- data_volcano %>%
     mutate(
         plot_volcano = pmap(
             list(data_plot, design),
             gg_volcano,
-            ylim = ylim, xlim = xlim
+            point_size_null = 3,
+            point_size = 5,
+            ylim = ylim, 
+            xlim = xlim
         )
     )
-# plot_volcano$plot_volcano[[1]]
+plot_volcano$plot_volcano[[1]]
+
 
 
 # DEFINE CURVE GRADIENT LAYER ####
@@ -239,16 +250,6 @@ curves_baseline_vs_week52_injury_response <- ggplot2::geom_curve(
 
 
 # DEFINE VOLCANO PLOTS ####
-plot_volcano_baseline_vs_week24 <- plot_volcano %>%
-    dplyr::filter(design == "Baseline_vs_Week24") %>%
-    pull(plot_volcano) %>%
-    pluck(1)
-
-plot_volcanoweek24_vs_week52 <- plot_volcano %>%
-    dplyr::filter(design == "Week24_vs_Week52") %>%
-    pull(plot_volcano) %>%
-    pluck(1)
-
 plot_volcano_baseline_vs_week52 <- plot_volcano %>%
     dplyr::filter(design == "Baseline_vs_Week52") %>%
     pull(plot_volcano) %>%
@@ -256,17 +257,6 @@ plot_volcano_baseline_vs_week52 <- plot_volcano %>%
 
 
 # RE-ARRANGE LAYERS OF GGPLOT ####
-plot_volcano_baseline_vs_week24$layers <- c(
-    curves_baseline_vs_week24_immune_response,
-    plot_volcano_curve_gradient,
-    plot_volcano_baseline_vs_week24 %>% pluck("layers", 1),
-    plot_volcano_baseline_vs_week24 %>% pluck("layers", 2),
-    plot_volcano_baseline_vs_week24 %>% pluck("layers", 3),
-    plot_volcano_baseline_vs_week24 %>% pluck("layers", 4),
-    plot_volcano_baseline_vs_week24 %>% pluck("layers", 5),
-    plot_volcano_baseline_vs_week24 %>% pluck("layers", 6)
-)
-
 plot_volcano_baseline_vs_week52$layers <- c(
     curves_baseline_vs_week52_immune_response,
     curves_baseline_vs_week52_injury_response,
@@ -281,9 +271,6 @@ plot_volcano_baseline_vs_week52$layers <- c(
 
 
 # FINALIZE PLOTS ####
-plot_volcano_baseline_vs_week24 <- plot_volcano_baseline_vs_week24 +
-    ggplot2::scale_colour_gradient(low = "#ffffff95", high = "#ffffff00")
-
 plot_volcano_baseline_vs_week52 <- plot_volcano_baseline_vs_week52 +
     ggplot2::scale_colour_gradient(low = "#ffffff95", high = "#ffffff00")
 
@@ -292,10 +279,6 @@ plot_volcano_baseline_vs_week52 <- plot_volcano_baseline_vs_week52 +
 # MAKE PLOT PANELS ####
 plot_volcano_enrichment <- tibble(
     plot_volcano_enrichment = list(
-        plot_volcano_baseline_vs_week24 %>%
-            ggpubr::ggarrange(., NULL, ncol = 2, widths = c(1, 0)),
-        plot_volcanoweek24_vs_week52 %>%
-            ggpubr::ggarrange(., NULL, ncol = 2, widths = c(1, 0)),
         plot_volcano_baseline_vs_week52 %>%
             ggpubr::ggarrange(., NULL, ncol = 2, widths = c(1, 0))
     )
@@ -305,7 +288,7 @@ plot_volcano_enrichment <- tibble(
 
 # SAVE THE PLOT DATA ####
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/"
-# save(plot_volcano_enrichment, file = paste(saveDir, "Volcano enrichment plots IQR_filtered_probes_unique_genes_baseline_corrected_cortex_corrected 1208.RData", sep = ""))
+save(plot_volcano_enrichment, file = paste(saveDir, "Volcano enrichment plots baseline to week 52 IQR_filtered_probes_unique_genes_baseline_corrected_cortex_corrected 1208.RData", sep = ""))
 
 
 

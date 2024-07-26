@@ -146,7 +146,7 @@ DEG_plots <- DEG_plots00 %>%
             }
         )
     )
-DEG_plots$plot_long[[1]]
+DEG_plots$plot_long[[4]]
 
 
 # SAVE THE PLOT DATA ####
