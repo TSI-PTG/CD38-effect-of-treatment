@@ -19,31 +19,15 @@ pbt.generate <- function(data_CEL, reference_set, pbtlist) {
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/vienna_1208_6Mar24.RData")
 # load nephrectomies
 load("Z:/Genome-Archive/RefData/KidneyReports2021REDCap/data/Conset.RData") # 4 Controls used for PBT calculations
-
-# load gene lists
-load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/genes_NK_GEP.RData")
-load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/ABMR_NK_genes.RData")
-load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/ABMR_endothelial_genes.RData")
-load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/ABMR_activity_genes.RData")
-load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/ABMR_IFNG_genes.RData")
 # load pbt lists
-load("Z:/DATA/Datalocks/Other data/PBTlist219_14Dec2020_JR.RData")
-
-
-# DEFINE ABMR ACTIVITY PBTLIST ####
-ABMRactivity_genesets <- list(
-    ABMRact = genes_ABMR_activity$AffyID,
-    ABMRifng = genes_ABMR_IFNG$AffyID, 
-    ABMRnk = genes_ABMR_NK$AffyID, 
-    ABMRendo = genes_ABMR_endothelial$AffyID
-)
-
+load("Z:/DATA/Datalocks/Other data/PBTlist219_26Jul2024_PTG.RData")
 
 # DEFINE SET ####
 set <- vienna_1208
 
+
 # GENERATE PBT SCORES ####
-set <- pbt.generate(set, Conset, ABMRactivity_genesets)
+set <- pbt.generate(set, Conset, PBTlist219)
 
 
 # REDFINE THE SET ###
@@ -51,4 +35,4 @@ vienna_1208 <- set
 
 
 # SAVE THE SET ####
-save(vienna_1208, file = "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/vienna_1208_12Jul24.RData")
+# save(vienna_1208, file = "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/vienna_1208_12Jul24.RData")

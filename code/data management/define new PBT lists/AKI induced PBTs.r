@@ -17,7 +17,12 @@ injury_markers_new <- genes_injury_markers %>%
     dplyr::select(cluster, AffyID) %>%
     mutate(cluster = cluster %>% str_replace_all("-", "_")) %>%
     nest(.by = cluster) %>%
-    mutate(data = map(data, pull, AffyID))
+    mutate(
+        data = map(data, pull, AffyID),
+        n = map_dbl(data, length)
+    ) %>%
+    dplyr::filter(n > 1)
+
 
 
 # TRANSFORM ISOLATED INJURY MARKERS TO A PBTLIST ####

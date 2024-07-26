@@ -30,7 +30,6 @@ affymap219_new <- affymap219 %>%
         PBT = ifelse(AffyID %in% PT_New3, paste(PBT, "PT_New3", sep = ","), PBT),
         PBT = ifelse(AffyID %in% PT_New4, paste(PBT, "PT_New4", sep = ","), PBT),
         PBT = ifelse(AffyID %in% TL_New1, paste(PBT, "TL_New1", sep = ","), PBT),
-        PBT = ifelse(AffyID %in% TAL_New1, paste(PBT, "TAL_New1", sep = ","), PBT),
         PBT = ifelse(AffyID %in% TAL_New2, paste(PBT, "TAL_New2", sep = ","), PBT),
         PBT = ifelse(AffyID %in% TAL_New3, paste(PBT, "TAL_New3", sep = ","), PBT),
         PBT = ifelse(AffyID %in% TAL_New4, paste(PBT, "TAL_New4", sep = ","), PBT),
