@@ -128,12 +128,16 @@ n_genes <- df_set %>%
 
 
 # WRANGLE THE DATA TO MAKE SUMMARY TABLES ####
-set_pbts <- set %>%
+set_pbt_pcs <- set %>%
     pData() %>%
     left_join(df_pbt_pc, by = "CEL")
 
+set_pbt <- set1 %>%
+    pData() 
 
-set_pbts_means <- set_pbts %>%
+
+
+means_pbt_pc1 <- set_pbt_pcs %>%
     dplyr::select(-CEL) %>%
     nest(.by = injAA) %>%
     mutate(means = map(data, summarise_all, mean)) %>%
@@ -142,24 +146,91 @@ set_pbts_means <- set_pbts %>%
     pivot_longer(cols = -injAA, names_to = "pbt") %>%
     pivot_wider(names_from = injAA, values_from = value) %>%
     mutate_if(is.numeric, ~ formatC(., digits = 3, format = "f")) %>%
+    mutate_at(vars(all_of(c("MildCKD", "CKDAKI", "AKI1", "AKI2", "Normal"))), ~ as.numeric(.)) %>%
     mutate(
         score = pbt %>% str_extract("PC1|PC2"),
         pbt = pbt %>% str_remove("_PC1|_PC2")
     ) %>%
     left_join(n_genes, by = "pbt") %>%
     left_join(df_scc %>% dplyr::select(pbt, SCC), by = "pbt") %>%
-    dplyr::select(pbt, "n genes in pbt", score, SCC, MildCKD, CKDAKI, AKI1, AKI2, Normal)
+    dplyr::select(pbt, "n genes in pbt", score, SCC, MildCKD, CKDAKI, AKI1, AKI2, Normal) %>%
+    mutate(`n genes in pbt` = `n genes in pbt` %>% as.character()) %>%
+    dplyr::filter(score == "PC1")
+
+
+means_pbt <- set_pbt %>%
+    dplyr::select(-CEL) %>%
+    nest(.by = injAA) %>%
+    mutate(means = map(data, summarise_all, mean)) %>%
+    dplyr::select(-data) %>%
+    unnest(means) %>%
+    pivot_longer(cols = -injAA, names_to = "pbt") %>%
+    pivot_wider(names_from = injAA, values_from = value) %>%
+    mutate_if(is.numeric, ~ formatC(., digits = 3, format = "f")) %>%
+    mutate_at(vars(all_of(c("MildCKD", "CKDAKI", "AKI1", "AKI2", "Normal"))), ~ as.numeric(.)) %>%
+    # mutate(
+    #     score = pbt %>% str_extract("PC1|PC2"),
+    #     pbt = pbt %>% str_remove("_PC1|_PC2")
+    # ) %>%
+    left_join(n_genes, by = "pbt") %>%
+    dplyr::select(pbt, "n genes in pbt", MildCKD, CKDAKI, AKI1, AKI2, Normal) %>%
+    mutate(`n genes in pbt` = `n genes in pbt` %>% as.character()) 
+
 
 
 
 # DEFINE COLOUR GRADIENT FOR INTERPRETATION ####
-# colormat <-
+# Define a function to generate gradient colors from blue through white to red
+gradient_colors <- function(cell_values, reference_value) {
+    min_value <- min(cell_values, reference_value)
+    max_value <- max(cell_values, reference_value)
+    normalized_values <- (cell_values - reference_value) / (max_value - min_value)
+    normalized_values <- pmax(0, pmin(1, normalized_values + 0.5))
+    color <- colorRampPalette(c("#6767ff", "white", "#ff6969"))(100)
+    colors <- color[as.integer(normalized_values * 99) + 1]
+    return(colors)
+}
+
+# Calculate the colors
+# Create a matrix to store colors
+color_matrix_pc <- matrix("white", nrow = nrow(means_pbt_pc1), ncol = ncol(means_pbt_pc1))
+color_matrix_pbt <- matrix("white", nrow = nrow(means_pbt), ncol = ncol(means_pbt))
+
+
+# Column B is always white
+color_matrix_pc[, which(names(means_pbt_pc1) == "Normal")] <- "white"
+color_matrix_pbt[, which(names(means_pbt) == "Normal")] <- "white"
+
+
+# Identify numeric columns (excluding column B)
+numeric_cols_pc1 <- which(sapply(means_pbt_pc1, is.numeric))
+numeric_cols_pc1 <- numeric_cols_pc1[numeric_cols_pc1 != which(names(means_pbt_pc1) == "Normal")]
+
+numeric_cols_pbt <- which(sapply(means_pbt, is.numeric))
+numeric_cols_pbt <- numeric_cols_pbt[numeric_cols_pbt != which(names(means_pbt) == "Normal")]
+
+
+# Calculate colors for numeric columns only
+for (i in 1:nrow(means_pbt_pc1)) {
+    reference_value <- means_pbt_pc1$Normal[i] # Get the value in column B for the current row
+    row_values <- means_pbt_pc1[i, numeric_cols_pc1] # Extract numeric columns except B
+    colors <- gradient_colors(row_values, reference_value)
+    color_matrix_pc[i, numeric_cols_pc1] <- colors
+}
+
+for (i in 1:nrow(means_pbt)) {
+    reference_value <- means_pbt$Normal[i] # Get the value in column B for the current row
+    row_values <- means_pbt[i, numeric_cols_pbt] # Extract numeric columns except B
+    colors <- gradient_colors(row_values, reference_value)
+    color_matrix_pbt[i, numeric_cols_pbt] <- colors
+}
+
+
 
 
 
 # TABULATE pbt SCORES ####
-set_pbts_means %>%
-    dplyr::filter(score == "PC1") %>%
+means_pbt_pc1 %>%
     flextable::flextable() %>%
     flextable::add_header_row(
         top = TRUE,
@@ -176,10 +247,37 @@ set_pbts_means %>%
     flextable::fontsize(size = 12, part = "all") %>%
     flextable::fontsize(i = 1, size = 15, part = "header") %>%
     flextable::bold(part = "header") %>%
-    flextable::bg(bg = "white", part = "all") %>%
+    flextable::bg(bg = "white", part = "header") %>%
+    flextable::bg(bg = color_matrix_pc) %>%
     flextable::padding(padding = 0, part = "all") %>%
     flextable::width(., width = dim(.)$widths * 30 / (flextable::flextable_dim(.)$widths), unit = "cm") %>%
     print(preview = "pptx")
+
+means_pbt %>%
+    flextable::flextable() %>%
+    flextable::add_header_row(
+        top = TRUE,
+        values = rep("Mean PBT score of AKI markers in K4502", flextable::ncol_keys(.))
+    ) %>%
+    flextable::merge_h(part = "header") %>%
+    flextable::merge_v(j = 1, part = "body") %>%
+    flextable::border_remove() %>%
+    flextable::border(part = "all", border = officer::fp_border()) %>%
+    flextable::border(part = "footer", border.left = officer::fp_border(), border.right = officer::fp_border()) %>%
+    flextable::border(i = 1, part = "footer", border.bottom = officer::fp_border()) %>%
+    flextable::align(align = "center", part = "all") %>%
+    flextable::font(fontname = "Arial", part = "all") %>%
+    flextable::fontsize(size = 12, part = "all") %>%
+    flextable::fontsize(i = 1, size = 15, part = "header") %>%
+    flextable::bold(part = "header") %>%
+    flextable::bg(bg = "white", part = "header") %>%
+    flextable::bg(bg = color_matrix_pbt) %>%
+    flextable::padding(padding = 0, part = "all") %>%
+    flextable::width(., width = dim(.)$widths * 30 / (flextable::flextable_dim(.)$widths), unit = "cm") %>%
+    print(preview = "pptx")
+
+
+
 
 
 # MAKE PLOTS FOR ALL PBTS ####
@@ -189,7 +287,6 @@ df_plot <- df_scc %>%
     pivot_longer(c(pbt_score, pc_score), names_to = "method", values_to = "score") %>%
     left_join(set1 %>% pData() %>% dplyr::select(CEL, injAA), by = "CEL") %>%
     nest(.by = c(pbt, method))
-
 
 df_joint_plot <- df_plot %>%
     mutate(
@@ -283,7 +380,6 @@ df_joint_plot <- df_plot %>%
             }
         )
     )
-
 
 df_joint_plot$plot[[2]]
 
@@ -482,7 +578,6 @@ plot_EC_New1 <- df_joint_plot %>%
     plot_layout(guides = "collect") &
     theme(legend.position = "top") &
     guides(fill = guide_legend(nrow = 1, reverse = TRUE))
-
 
 
 # SAVE THE PLOTS ####
