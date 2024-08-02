@@ -98,7 +98,7 @@ limma_tables_formatted <- limma_tables %>%
                     left_join(injury_markers, by = "AffyID") %>%
                     left_join(data_scc_EABMR, by = "AffyID") %>%
                     dplyr::select(-t, -contains("AffyID"), -contains("MMDx")) %>%
-                    dplyr::slice(1:30) %>%
+                    dplyr::slice(1:20) %>%
                     mutate(
                         Gene = Gene %>% str_remove("///.*"),
                         plogFC = plogFC %>% round(2),
@@ -176,6 +176,7 @@ flextables <- limma_tables_formatted %>%
                     title <- paste("Table i. Top 20 differentially expressed genes between baseline and week52 in biopsies from placebo and Felzartamab treated patients (by P-value)", sep = "")
                 }
                 gene_tables %>%
+                    arrange(logFC) %>% 
                     flextable::flextable() %>%
                     flextable::delete_part("header") %>%
                     flextable::add_header_row(top = TRUE, values = header3) %>%
@@ -202,13 +203,13 @@ flextables <- limma_tables_formatted %>%
         )
     )
 # 
-# flextables$flextable[[3]]
+flextables$gene_tables[[3]]
 
 
 
 # PRINT THE DATA TO POWERPOINT ####
 flextables %>%
-    dplyr::filter(design == "Baseline_vs_Week24", direction == "increased") %>%
+    dplyr::filter(design == "Baseline_vs_Week52", direction == "all") %>%
     pull(flextable) %>%
     pluck(1) %>%
     print(preview = "pptx")
