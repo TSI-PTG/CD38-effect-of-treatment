@@ -6,7 +6,7 @@ library(flextable) # install.packages("flextable")
 library(officer) # install.packages("officer")
 # load AFFYMAP
 load("Z:/DATA/Datalocks/Other data/affymap219_21Oct2019_1306_JR.RData") # for labeling genes
-# load hinze single cell results normal vs AKI
+# load hinze single cell results normal vs AKI (Hinze et al. 2022 supp file 7)
 single_cell_path <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/Hinze single cell state injury markers.xlsx"
 sheetnames <- excel_sheets(single_cell_path)
 mylist <- lapply(sheetnames, read_excel, path = single_cell_path, col_types = c(rep("text", 5), rep("numeric", 5)))
