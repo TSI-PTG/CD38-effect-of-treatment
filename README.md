@@ -1,2 +1,2 @@
 # CD38-effect-of-treatment
-A REPOSITORY FOR ASSESSING THE EFFECT OF TREATMENT IN CD38 VIENNA STUDY
+A repository containing all code used in the pre print of "Effect of felzartamab anti-CD38 treatment on the molecular phenotype of antibody-mediated rejection in kidney transplant biopsies."
