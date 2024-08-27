@@ -23,7 +23,7 @@ pData(set_exprs) <- set_exprs %>%
 
 # DEFINE CELS IN PHENOTYPE DATA ####
 cels <- data_scores_k1208 %>% pull(CEL)
-
+data_scores_k1208  %>% dplyr::select(contains("banff"))
 
 # MAKE SURE NO MISSING CELS ####
 set_exprs$CEL[set_exprs$CEL %nin% cels]
