@@ -12,7 +12,10 @@ load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular e
 # load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/data_cfdna_cpml.RData")
 
 
-data  %>% dplyr::select(contains("cort"))
+data %>% dplyr::select(contains("cort"))
+data %>%
+    dplyr::select(contains("Banff")) %>%
+    colnames()
 
 
 
@@ -82,12 +85,7 @@ vars <- c(
     "_RejAA_Mixed_1208Set",
     "_RejAA_EABMR_1208Set",
     "_RejAA_FABMR_1208Set",
-    "_RejAA_LABMR_1208Set",
-    "ABMRActivity_Banff19",
-    "Bx_Active_ABMR_Banff19",
-    "Bx_Chronic_active_ABMR_Banff19",
-    "Bx_Borderline_Banff",
-    "Bx_MVI_Score"
+    "_RejAA_LABMR_1208Set"
 )
 
 
@@ -102,7 +100,132 @@ data_scores <- data %>% complex_pivot(
 )
 
 data_scores %>% print(n = "all")
-data_scores %>% dplyr::select(contains("cort"))
+data_scores %>% dplyr::select(contains("Banff19"))
+
+
+
+# WRANGLE THE ABMRactivity_Banff19 SCORES FROM SPSS DATA ####
+data_ABMRactivity_Banff19 <- data %>%
+    dplyr::select(
+        Trial_Center,
+        STUDY_EVALUATION_ID,
+        Felzartamab,
+        contains("_ABMRActivity_Banff19")
+    ) %>%
+    mutate_at(vars(contains("_ABMRActivity_Banff19")), ~ as.numeric(.) %>% suppressWarnings()) %>%
+    pivot_longer(
+        cols = contains("_ABMRActivity_Banff19"),
+        names_to = "Group",
+        values_to = "ABMRActivity_Banff19"
+    ) %>%
+    mutate(
+        Group = Group %>%
+            str_remove_all("Bx_Morphologic_ABMRactivity_Banff19") %>%
+            str_remove_all("Bx_Morphologic_ABMRActivity_Banff19") %>%
+            str_replace("Day0", "Index") %>%
+            str_replace("Week12", "FU1b") %>%
+            str_replace("Week24", "FU1") %>%
+            str_replace("Week52", "FU2")
+    )
+
+
+# WRANGLE THE Active_ABMR_Banff19 SCORES FROM SPSS DATA ####
+data_Active_ABMR_Banff19 <- data %>%
+    dplyr::select(
+        Trial_Center,
+        STUDY_EVALUATION_ID,
+        Felzartamab,
+        contains("Bx_Active_ABMR_Banff19")
+    ) %>%
+    mutate_at(vars(contains("_Active_ABMR_Banff19")), ~ as.numeric(.) %>% suppressWarnings()) %>%
+    pivot_longer(
+        cols = contains("_Active_ABMR_Banff19"),
+        names_to = "Group",
+        values_to = "Active_ABMR_Banff19"
+    ) %>%
+    mutate(
+        Group = Group %>%
+            str_remove_all("Bx_Active_ABMR_Banff19") %>%
+            # str_remove_all("_Morphologic_ABMRActivity_Banff19") %>%
+            str_replace("Day0", "Index") %>%
+            str_replace("Week12", "FU1b") %>%
+            str_replace("Week24", "FU1") %>%
+            str_replace("Week52", "FU2")
+    )
+
+
+# WRANGLE THE Chronic_active_ABMR_Banff19 SCORES FROM SPSS DATA ####
+data_Chronic_active_ABMR_Banff19 <- data %>%
+    dplyr::select(
+        Trial_Center,
+        STUDY_EVALUATION_ID,
+        Felzartamab,
+        contains("Chronic_active_ABMR_Banff19")
+    ) %>%
+    mutate_at(vars(contains("_Chronic_active_ABMR_Banff19")), ~ as.numeric(.) %>% suppressWarnings()) %>%
+    pivot_longer(
+        cols = contains("_Chronic_active_ABMR_Banff19"),
+        names_to = "Group",
+        values_to = "Chronic_active_ABMR_Banff19"
+    ) %>%
+    mutate(
+        Group = Group %>%
+            str_remove_all("Bx_Chronic_active_ABMR_Banff19") %>%
+            # str_remove_all("_Morphologic_ABMRActivity_Banff19") %>%
+            str_replace("Day0", "Index") %>%
+            str_replace("Week12", "FU1b") %>%
+            str_replace("Week24", "FU1") %>%
+            str_replace("Week52", "FU2")
+    )
+
+
+# WRANGLE THE Borderline_Banff SCORES FROM SPSS DATA ####
+data_Borderline_Banff <- data %>%
+    dplyr::select(
+        Trial_Center,
+        STUDY_EVALUATION_ID,
+        Felzartamab,
+        contains("Borderline_Banff")
+    ) %>%
+    mutate_at(vars(contains("_Borderline_Banff")), ~ as.numeric(.) %>% suppressWarnings()) %>%
+    pivot_longer(
+        cols = contains("_Borderline_Banff"),
+        names_to = "Group",
+        values_to = "Borderline_Banff"
+    ) %>%
+    mutate(
+        Group = Group %>%
+            str_remove_all("Bx_Borderline_Banff") %>%
+            # str_remove_all("_Morphologic_ABMRActivity_Banff19") %>%
+            str_replace("Day0", "Index") %>%
+            str_replace("Week12", "FU1b") %>%
+            str_replace("Week24", "FU1") %>%
+            str_replace("Week52", "FU2")
+    )
+
+
+# WRANGLE THE MVI_Score SCORES FROM SPSS DATA ####
+data_MVI_Score <- data %>%
+    dplyr::select(
+        Trial_Center,
+        STUDY_EVALUATION_ID,
+        Felzartamab,
+        ends_with("MVI_Score")
+    ) %>%
+    mutate_at(vars(contains("_MVI_Score")), ~ as.numeric(.) %>% suppressWarnings()) %>%
+    pivot_longer(
+        cols = contains("_MVI_Score"),
+        names_to = "Group",
+        values_to = "MVI_Score"
+    ) %>%
+    mutate(
+        Group = Group %>%
+            str_remove("Bx_MVI_Score") %>%
+            str_replace("Day0", "Index") %>%
+            str_replace("Week12", "FU1b") %>%
+            str_replace("Week24", "FU1") %>%
+            str_replace("Week52", "FU2")
+    )
 
 
 # WRANGLE THE CP/ML cfDNA FROM SPSS DATA ####
@@ -201,13 +324,19 @@ data_dateBx <- data %>%
 
 
 # JOIN THE SPSS AND MOLECULAR SCORE DATA ####
+data_scores %>% colnames
 data_k1208 <- data_scores %>%
     left_join(data_patient, by = c("Trial_Center", "STUDY_EVALUATION_ID", "Felzartamab")) %>%
     left_join(data_CEL, by = c("Trial_Center", "STUDY_EVALUATION_ID", "Felzartamab", "Group")) %>%
     left_join(data_dateBx, by = c("Trial_Center", "STUDY_EVALUATION_ID", "Felzartamab", "Group")) %>%
     left_join(data_cfdna_cpml, by = c("Trial_Center", "STUDY_EVALUATION_ID", "Felzartamab", "Group")) %>%
     left_join(data_cfdna_percent, by = c("Trial_Center", "STUDY_EVALUATION_ID", "Felzartamab", "Group")) %>%
-    left_join(pbts_new, by = "CEL")  %>% 
+    left_join(data_ABMRactivity_Banff19, by = c("Trial_Center", "STUDY_EVALUATION_ID", "Felzartamab", "Group")) %>%
+    left_join(data_Active_ABMR_Banff19, by = c("Trial_Center", "STUDY_EVALUATION_ID", "Felzartamab", "Group")) %>%
+    left_join(data_Chronic_active_ABMR_Banff19, by = c("Trial_Center", "STUDY_EVALUATION_ID", "Felzartamab", "Group")) %>%
+    left_join(data_Borderline_Banff, by = c("Trial_Center", "STUDY_EVALUATION_ID", "Felzartamab", "Group")) %>%
+    left_join(data_MVI_Score, by = c("Trial_Center", "STUDY_EVALUATION_ID", "Felzartamab", "Group")) %>%
+    left_join(pbts_new, by = "CEL") %>%
     dplyr::rename(Center = Trial_Center, Patient = STUDY_EVALUATION_ID) %>%
     mutate(
         Patient = Patient %>% factor(),
@@ -242,8 +371,13 @@ data_k1208 <- data_scores %>%
 
 # RENAME THE MOLECULAR DATA ####
 data_scores_k1208 <- data_k1208
-data_scores_k1208  %>% colnames
-
+data_scores_k1208 %>% colnames()
+data_scores_k1208 %>%
+    dplyr::select(contains("banff")) %>%
+    print(n="all")
+data_scores_k1208 %>%
+    dplyr::select(contains("MVI")) %>%
+    print(n = "all")
 
 
 # SAVE THE DATA ####

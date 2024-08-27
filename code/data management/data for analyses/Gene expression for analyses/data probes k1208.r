@@ -39,6 +39,8 @@ set_pdata <- set_felzartamab %>%
     pData() %>%
     left_join(data_scores_k1208, by = "CEL")
 
+set_pdata  %>% dplyr::select(contains("anff"))
+
 
 # ALIGN PHENOTYPE DATA TO EXPRESSION SET ####
 pData(set_felzartamab) <- set_pdata
