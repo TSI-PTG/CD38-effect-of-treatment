@@ -45,8 +45,11 @@ set_pdata  %>% dplyr::select(contains("anff"))
 # ALIGN PHENOTYPE DATA TO EXPRESSION SET ####
 pData(set_felzartamab) <- set_pdata
 
+set_felzartamab_01 <- set_felzartamab[, set_felzartamab$Group != "FU1b"]
+set_felzartamab_01  %>% pData
+
 
 # SAVE THE DATA ####
-data_expressionset_k1208 <- set_felzartamab
+data_expressionset_k1208 <- set_felzartamab_01
 saveDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/"
 save(data_expressionset_k1208, file = paste(saveDir, "data_expressionset_k1208.RData", sep = ""))
