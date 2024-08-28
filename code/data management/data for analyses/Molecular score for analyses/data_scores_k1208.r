@@ -2,21 +2,17 @@
 # CRAN libraries
 library(tidyverse) # install.packages("tidyverse")
 library(haven) # install.packages("haven")
+# Bioconductor libraries
+library(Biobase) # BiocManager::install("Biobase")
 # Custom operators, functions, and datasets
 "%nin%" <- function(a, b) match(a, b, nomatch = 0) == 0
 source("C:/R/CD38-effect-of-treatment/code/functions/complex_pivot.R")
 # load data
 data <- read_spss("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vienna/G_Rstuff/data/Generalfile_Felzartamab SPSS.sav")
 load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/vienna_1208_12Jul24.RData")
-# load the processed cfDNA data
-# load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/data_cfdna_cpml.RData")
-
-
-data %>% dplyr::select(contains("cort"))
-data %>%
-    dplyr::select(contains("Banff")) %>%
-    colnames()
-
+# load the cibersort results
+loadDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/deconvolution/cibersort/fraction/"
+load(paste(loadDir, "vienna1208_fraction_LM22_Bmode.Rdata", sep = ""))
 
 
 # DEFINE THE ADDITIONAL PBTS ####
@@ -28,6 +24,7 @@ pbts_new <- vienna_1208 %>%
     )
 
 
+vienna1208_fraction_LM22
 
 
 # DEFINE PATIENT VARIABLES ####
@@ -98,10 +95,6 @@ data_scores <- data %>% complex_pivot(
         "Felzartamab"
     )
 )
-
-data_scores %>% print(n = "all")
-data_scores %>% dplyr::select(contains("Banff19"))
-
 
 
 # WRANGLE THE ABMRactivity_Banff19 SCORES FROM SPSS DATA ####
@@ -337,6 +330,7 @@ data_k1208 <- data_scores %>%
     left_join(data_Borderline_Banff, by = c("Trial_Center", "STUDY_EVALUATION_ID", "Felzartamab", "Group")) %>%
     left_join(data_MVI_Score, by = c("Trial_Center", "STUDY_EVALUATION_ID", "Felzartamab", "Group")) %>%
     left_join(pbts_new, by = "CEL") %>%
+    left_join(vienna1208_fraction_LM22, by = "CEL") %>% 
     dplyr::rename(Center = Trial_Center, Patient = STUDY_EVALUATION_ID) %>%
     mutate(
         Patient = Patient %>% factor(),

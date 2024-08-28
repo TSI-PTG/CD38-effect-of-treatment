@@ -30,27 +30,40 @@ log10zero <- scales::trans_new(
 )
 # Suppress pesky dplyr reframe info
 options(dplyr.reframe.inform = FALSE)
-# source plot function
-source("C:/R/CD38-effect-of-treatment/code/functions/plot.gg_violin_interaction cibersort.r")
-source("C:/R/CD38-effect-of-treatment/code/functions/plot.gg_violin_interaction cibersort kidneycells.r")
+# load data
+loadDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular effects Matthias PFH/data/"
+load(paste(loadDir, "data_scores_k1208.RData", sep = ""))
+# load LM22 key
+loadDir <- "Z:/MISC/Phil/AA All papers in progress/A GC papers/A a New 3BMB report/data/deconvolution/signature matrix/"
+load(paste(loadDir, "LM22_key.RData", sep = ""))
 
-# load reference set
-load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0Georg Felz CD38 Vienna/G_Rstuff/data/vienna_1208_cibersort_21apr24.RData")
 
+
+# WRANGLE DATA FOR ANALYSES ####
+df02 <- df00 %>%
+    dplyr::select(CEL, AARej3, AARej4, all_of(LM22_key$label_tsi)) %>%
+    pivot_longer(cols = c(-CEL, -AARej3, -AARej4), names_to = "label_tsi", values_to = "Fraction") %>%
+    group_by(label_tsi) %>%
+    nest() %>%
+    tibble() %>%
+    right_join(LM22_key, ., by = "label_tsi")
+
+
+data_scores_k1208 %>%
+    right_join(LM22_key, ., by = "label_tsi")
 
 # DEFINE SEED ####
 seed <- 42
 
 
+# WRANGLE THE PHENOTYPE DATA ####
+vienna1208_fraction_LM22 %>%
+    left_join(AA_key, by = "CEL")
+
+
+
+
 # DEFINE CATEGORIES FOR FEATURES ####
-Rejectionrelated <- c("GRIT3", "Rej-RAT", "RejAA_NR")
-ABMRrelated <- c("DSAST", "NKB", "ABMRpm", "ggt0", "ptcgt0") # "cggt0", "RejAA_EABMR", "RejAA_FABMR", "RejAA_LABMR")
-TCMRrelated <- c("QCAT", "TCB", "TCMRt", "tgt1", "igt1") # , "TCMR-RAT", )
-Endothelium <- c("ENDAT")
-Parenchyma <- c("KT1", "KT2")
-Macrophage <- c("AMAT1", "QCMAT")
-Injuryrecent <- c("FICOL", "IRRAT30", "IRITD3", "IRITD5")
-Injurylate <- c("IGT", "MCAT", "BAT", "cigt1", "ctgt1")
 tcells <- c(
     "CD4naiveTcells",
     "CD4memoryTcells",
@@ -67,16 +80,7 @@ nkcells <- c(
     "NKFCGR3Alo",
     "NKFCGR3Ahi"
 )
-kidneycells <- c(
-    "Podocytes",
-    "ProximalTubulecells",
-    "LoopofHenle",
-    "Intercalatedcells",
-    "Endothelialcellsglomerular",
-    "Endothelialcellsperitubular",
-    "Endothelialcellsvasarecta",
-    "vascularsmoothmusclepericytes"
-)
+
 
 
 # DEFINE FEATURES ####
