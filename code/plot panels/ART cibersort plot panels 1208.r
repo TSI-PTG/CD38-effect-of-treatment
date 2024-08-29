@@ -19,7 +19,7 @@ load("Z:/MISC/Phil/AA All papers in progress/A GC papers/AP1.0A CD38 molecular e
 
 
 felzartamab_plots$category
-felzartamab_plots <- felzartamab_plots%>%
+felzartamab_plots <- felzartamab_plots %>%
     arrange(category, score)
 
 
