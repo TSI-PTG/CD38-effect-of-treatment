@@ -117,9 +117,6 @@ contrast_placebo_03 <- makeContrasts(
 
 
 # FIT BLOCK week24 - baseline LIMMA MODEL ####
-ebayes_interaction_1$stdev.unscaled %>% head()
-
-
 fit_interaction_1 <- limma::lmFit(set02, design)
 cfit_interaction_1 <- limma::contrasts.fit(fit_interaction_1, contrast_interaction_01)
 ebayes_interaction_1 <- limma::eBayes(cfit_interaction_1)
