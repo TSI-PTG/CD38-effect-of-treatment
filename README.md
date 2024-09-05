@@ -1,2 +1,2 @@
-# CD38-effect-of-treatment
-A repository containing all code used in the pre print of "Effect of felzartamab anti-CD38 treatment on the molecular phenotype of antibody-mediated rejection in kidney transplant biopsies."
+# Felzartamab-effect-of-treatment
+A repository holding the original code used for the CD38 effect of treatment paper
