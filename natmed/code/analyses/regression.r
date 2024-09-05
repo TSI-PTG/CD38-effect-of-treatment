@@ -32,23 +32,34 @@ data <- set %>%
 # FIT MODELS ####
 # IRRAT30
 fit_IRRAT30 <- lmer(IRRAT30 ~ Felzartamab * time + (time | Patient), data)
-# summary(fit_IRRAT30)
+# test model assumptions
 performance::check_model(fit_IRRAT30)
 performance::check_normality(fit_IRRAT30)
+# test linearity
+fit_IRRAT30_nonlinear <- lmer(IRRAT30 ~ Felzartamab * poly(time, 2) + (time | Patient), data)
+anova(fit_IRRAT30, fit_IRRAT30_nonlinear)
 # Get predictions
 effect_plot_IRRAT30 <- ggeffects::ggpredict(fit_IRRAT30, c("time", "Felzartamab"))
+
 # IRITD3
 fit_IRITD3 <- lmer(IRITD3 ~ Felzartamab * time + (time | Patient), data)
-# summary(fit_IRITD3)
+# test model assumptions
 performance::check_model(fit_IRITD3)
 performance::check_normality(fit_IRITD3)
+# test linearity
+fit_IRITD3_nonlinear <- lmer(IRITD3 ~ Felzartamab * poly(time, 2) + (time | Patient), data)
+anova(fit_IRITD3, fit_IRITD3_nonlinear)
 # Get predictions
 effect_plot_IRITD3 <- ggeffects::ggpredict(fit_IRITD3, c("time", "Felzartamab"))
+
 # IRITD5
 fit_IRITD5 <- lmer(IRITD5 ~ Felzartamab * time + (time | Patient), data)
-# summary(fit_IRITD5)
+# test model assumptions
 performance::check_model(fit_IRITD5)
 performance::check_normality(fit_IRITD5)
+# test linearity
+fit_IRITD5_nonlinear <- lmer(IRITD5 ~ Felzartamab * poly(time, 2) + (time | Patient), data)
+anova(fit_IRITD5, fit_IRITD5_nonlinear)
 # Get predictions
 effect_plot_IRITD5 <- ggeffects::ggpredict(fit_IRITD5, c("time", "Felzartamab"))
 
