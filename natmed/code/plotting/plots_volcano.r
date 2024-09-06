@@ -133,7 +133,7 @@ xlim <- c(0, data_volcano %>%
     pull(p) %>%
     max() * 1.3)
 x_end <- 3.25
-# scales::show_col(pal_npg()(9))
+scales::show_col(pal_npg()(10))
 col_dn <- pal_npg()(9)[2]
 col_up <- pal_npg()(9)[1]
 col_baseline_vs_week24_immune_response <- pal_npg()(9)[4]
