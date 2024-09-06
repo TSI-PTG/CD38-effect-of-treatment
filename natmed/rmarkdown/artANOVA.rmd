@@ -1,31 +1,72 @@
-# HOUSEKEEPING ####
-# CRAN libraries
-library(tidyverse) # install.packages("tidyverse")
-library(broom) # install.packages("broom") #for tabular model object transformations
-library(rstatix) # install.packages("rstatix") #for testing manova assumptions
-library(flextable) # install.packages("flextable")
-library(officer) # install.packages("officer")
-library(emmeans) # install.packages("emmeans") #for post-hoc testing and CLD
-library(multcomp) # install.packages("multcomp") #for for CLD
-library(ARTool) # install.packages("ARTool") #for non-parametric anova (aligned-rank test) and post-hoc
-library(rcompanion) # install.packages("rcompanion") #for non-parametric anova (aligned-rank test) and post-hoc
-# Bioconductor libraries
-library(Biobase) # BiocManager::install("Biobase")
-# Custom operators and functions
+---
+title: "Analysing the effect of treatment on molecular scores using aligned-rank transformed analysis of variance"
+author: "Patrick T Gauthier"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
+    code_folding: show
+---
+<style>
+pre code {
+  font-size: 10px; 
+}
+</style>
+
+## INTRODUCTION
+
+<span style="font-family: Helvetica; font-size: 20px;">This analysis assesses how felzartamab therapy affects molecular sores measured with gene expression data from biopsies from kidney allografts taken from patient with antibody mediated rejection. The assumptions of normality and heterogeneity of variance differ across molecular scores, thus we avail to alinged-rank transformation to carry out a non-parametric ANOVA. This is powerful in this context because it allows us to test for the interactive effect of treatment (i.e., placebo vs felzartamab) and time (i.e., change in scores from biopsy to biopsy).</span>
+<br>
+
+<span style="font-family: Helvetica; font-size: 20px; ">References:</strong></span>
+
+<span style="font-family: Helvetica; font-size: 15px; font-style: italic;">&#8226; Wobbrock J, F.L., Gergle D, Higgins J The Aligned Rank Transform for Nonparametric Factorial Analyses Using Only ANOVA Procedures. In Proceedings of the ACM Conference on Human Factors in Computing Systems (CHI '11) 143–146. doi:10.1145/1978942.1978963, https://depts.washington.edu/acelab/proj/art/.(2011).</strong></span>
+
+<span style="font-family: Helvetica; font-size: 15px; font-style: italic;">&#8226; Kay M, E.L., Higgins J, Wobbrock J. ARTool: Aligned Rank Transform for Nonparametric Factorial ANOVAs. doi:10.5281/zenodo.594511, R package version 0.11.1, https://github.com/mjskay/ARTool. (2021).</strong></span>
+
+<span style="font-family: Helvetica; font-size: 15px; font-style: italic;">&#8226; Elkin, L.A., Kay, M., Higgins, J.J. & Wobbrock, J.O. An Aligned Rank Transform Procedure for Multifactor Contrast Tests. in The 34th Annual ACM Symposium on User Interface Software and Technology 754–768 (Association for Computing Machinery, Virtual Event, USA, 2021).</strong></span>
+
+
+## HOUSEKEEPING
+<br>
+<span style="font-family: Helvetica; font-size: 20px;">&#8226; First we need to load the necessary R packages and data.</strong></span>
+
+```{r}
+
+# Load necessary libraries
+library(tidyverse)
+library(broom)
+library(rstatix)
+library(flextable)
+library(officer)
+library(emmeans)
+library(multcomp)
+library(ARTool)
+library(rcompanion)
+library(Biobase)
+
+# Custom operators
 "%nin%" <- function(a, b) match(a, b, nomatch = 0) == 0
-# Suppress pesky dplyr reframe info
+
+# Suppress dplyr reframe info
 options(dplyr.reframe.inform = FALSE)
-# load reference set #TODO: transition to GEO data
-load("natmed/data/cd38_3Sept24.RData")
-# load affymap
-load("natmed/data/affymap219.RData")
 
+# Load data
+load("C:/R/CD38-effect-of-treatment/natmed/data/cd38_3Sept24.RData")
+load("C:/R/CD38-effect-of-treatment/natmed/results/flextable_artANOVA.RData")
 
-# DEFINE SEED ####
-seed <- 42
+# Seed for reproducibility
+set.seed(42)
 
+```
+<br>
 
-# DEFINE CATEGORIES FOR FEATURES ####
+<span style="font-family: Helvetica; font-size: 20px;">&#8226; Now we define the categories of molecular scores for easier organization downstream.</strong></span>
+
+```{r}
+# Feature categories
 vars_cfDNA <- c("cfDNA_cpml")
 vars_abmr <- c("ABMRpm", "ggt0", "ptcgt0", "DSAST", "NKB")
 vars_tcmr <- c("TCMRt", "tgt1", "igt1", "QCAT", "TCB")
@@ -33,11 +74,16 @@ vars_injury <- c("IRRAT30", "IRITD3", "IRITD5", "cigt1", "ctgt1")
 vars_parenchyma <- c("KT1", "KT2")
 vars_macrophage <- c("AMAT1", "QCMAT")
 
-
 # DEFINE VARIABLES TO ASSESS ####
 vars <- c(vars_cfDNA, vars_abmr, vars_tcmr, vars_macrophage, vars_injury, vars_parenchyma)
 
+```
 
+## DATA WRANGLING
+<br>
+<span style="font-family: Helvetica; font-size: 20px;">&#8226; Now we process the data so we can iteratively carry out the analyses on each score.</strong></span>
+
+```{r}
 # DEFINE THE DATA ####
 data <- set %>%
     pData()  %>% 
@@ -46,7 +92,6 @@ data <- set %>%
     left_join(., summarise(., sample_pairs = n(), .by = Felzartamab_Followup), by = "Felzartamab_Followup") %>%
     relocate(sample_pairs, .after = Felzartamab_Followup) %>%
     arrange(Felzartamab, Patient, Group)
-
 
 
 # WRANGLE THE PHENOTYPE DATA ####
@@ -156,7 +201,25 @@ data_01 <- data_00 %>%
     unnest(data_univariate) %>%
     mutate(n_cat = score %>% unique() %>% length(), .by = category, .after = variable)
 
+```
+<br>
+<span style="font-family: Helvetica; font-size: 20px;">&#8226; This is what the data look like after we have organized them. Each row of the dataframe contains the data for each score, the category it belongs to, it's category annotation, it's long-format name, and the name of the variable in the data.</strong></span>
 
+
+
+```{r}
+options(pillar.max_columns = NULL)
+options(pillar.width = NULL)
+data_01 %>% print(n="all")
+```
+
+
+## CALCULATE MEDIAN SCORES AND MEDIAN EFFECT OF TREATMENT
+<br>
+<span style="font-family: Helvetica; font-size: 20px;">&#8226; At this stage we can summarize the median values for each score by treatment and follow-up.</strong></span>
+
+
+```{r}
 # UNIVARIATE MEDIANS ####
 data_02 <- data_01 %>%
     mutate(
@@ -197,15 +260,35 @@ data_02 <- data_01 %>%
             }
         )
     )
-data_02$data[[1]]
+```
+<br>
+<span style="font-family: Helvetica; font-size: 20px;">&#8226; Let's take a look at what the median summaries look like for the ABMRprob score.</strong></span>
+
+
+```{r}
 data_02 %>%
     dplyr::filter(variable == "ABMRpm") %>%
     pull(medians)
+```
+<br>
+<span style="font-family: Helvetica; font-size: 20px;">&#8226; Now we can look at the change in median ABMRprob scores in the placebo and felzartamab arms, as well as the differnce in those medians (i.e., &#916;&#916; median - this is our summarized treatment effect).</strong></span>
+
+
+```{r}
+options(pillar.max_columns = Inf)
+options(pillar.width = Inf)
 data_02 %>%
     dplyr::filter(variable == "ABMRpm") %>%
     pull(medians_delta)
+```
 
 
+## CARRY OUT ALIGNED-RANK TRANSFORM ANOVA
+<br>
+<span style="font-family: Helvetica; font-size: 20px;">&#8226; Now we carry out the analysis. This includes testing the specific contrasts for the interaction of treatment and time (i.e., our effect of treatment).</strong></span>
+
+
+```{r, message=FALSE}
 # UNIVARIATE NONPARAMETRIC TESTS ####
 artANOVA <- data_02 %>%
     mutate(
@@ -227,17 +310,12 @@ artANOVA <- data_02 %>%
             }
         )
     )
-
-names(artANOVA$art_aov_tidy) <- artANOVA$variable %>% as.character()
-names(artANOVA$art_aov_contrast_tidy) <- artANOVA$variable %>% as.character()
-names(artANOVA$art_aov_contrast_cld) <- artANOVA$variable %>% as.character()
+```
 
 
-# SAVE ART TEST RESULTS ####
-saveDir <- "natmed/results/"
-save(artANOVA, file = paste(saveDir, "artANOVA.RData", sep = ""))
+## CREATE A SUMMARY TABLE OF ANOVA RESULTS FOR EACH SCORE
 
-
+```{r}
 # CREATE FLEXTABLE SUMMARY OF ART MODELS ####
 title_art <- paste("Table i. Non-parametric ANOVA (ART) of molecular scores in biopsies from treated vs untreated patients")
 artANOVA %>%
@@ -259,9 +337,16 @@ artANOVA %>%
     flextable::border_remove() %>%
     flextable::bold(part = "header") %>%
     flextable::padding(padding = 0, part = "all") %>%
-    flextable::border(border = officer::fp_border(), part = "all") %>%
+    flextable::border(border = officer::fp_border(), part = "all")  %>%
     flextable::autofit()
+```
 
 
+## SUMMARISE THE EFFECT OF TREATMENT FOR EACH SCORE ACROSS ALL TIME PERIODS
+<br>
+<span style="font-family: Helvetica; font-size: 20px;">&#8226; Here we present the effect of treatment (&#916;&#916;) for each score, along with the effect of time (&#916;) for placebo and felzartmab arms.</strong></span>
 
-# END ####
+
+```{r}
+flextable_pairwise
+```
