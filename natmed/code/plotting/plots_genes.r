@@ -2,6 +2,7 @@
 # CRAN libraries
 library(tidyverse) # install.packages("tidyverse")
 library(patchwork) # install.packages("patchwork")
+library(ggsci) # install.packages("ggsci")
 # load DE results
 load("natmed/data/tables_genesets_abmr.RData")
 
@@ -48,8 +49,9 @@ plots_deg00 <- tables_genesets_abmr %>%
 
 
 # UNIVERSAL PLOTTING PARAMETERS ####
-col_dn <- "#005eff"
-col_up <- "#ff0040"
+# scales::show_col(pal_npg()(9))
+col_dn <- pal_npg()(9)[2]
+col_up <- pal_npg()(9)[1]
 
 
 # MAKE DOT PLOTS ####
@@ -73,7 +75,7 @@ plots_deg <- plots_deg00 %>%
                 data %>%
                     dplyr::mutate(Symb = Symb %>% factor(levels = order_symb)) %>%
                     ggplot2::ggplot(mapping = ggplot2::aes(y = Symb, x = logFC)) +
-                    ggplot2::geom_vline(xintercept = 0, linetype = "solid", col = "grey10", size = 0.1) +
+                    ggplot2::geom_vline(xintercept = 0, linetype = "solid", col = "grey10", linewidth = 0.1) +
                     ggplot2::geom_point(col = data$col) +
                     ggplot2::geom_errorbar(
                         mapping = ggplot2::aes(xmin = logFC - se, xmax = logFC + se),
@@ -83,7 +85,7 @@ plots_deg <- plots_deg00 %>%
                     ) +
                     ggplot2::geom_segment(
                         mapping = ggplot2::aes(x = 0, xend = logFC, y = Symb),
-                        col = data$col, size = 0.25
+                        col = data$col, linewidth = 0.25
                     ) +
                     ggplot2::labs(
                         x = "\u0394\u0394 logFC",

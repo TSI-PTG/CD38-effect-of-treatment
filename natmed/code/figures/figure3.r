@@ -63,8 +63,8 @@ panel_volcano_timeseries2 <- panel_volcano_timeseries %>%
 
 # MAKE THE VOLCANO ENRICHMENT PANELS ####
 panel_volcano <- wrap_plots(
-    A = plot_volcano$plot_volcano[[1]],
-    B = plot_volcano$plot_volcano[[2]],
+    A = plot_volcano$plot_volcano_enrichment[[1]],
+    B = plot_volcano$plot_volcano_enrichment[[2]],
     design = "AB"
 ) +
     plot_annotation(tag_levels = list(c("A", "B"))) +

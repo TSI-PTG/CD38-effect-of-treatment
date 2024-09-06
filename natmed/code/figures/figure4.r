@@ -45,7 +45,7 @@ plots_violin <- plots_artANOVA %>%
 # DEFINE VOLCANO ENRICHMENT PLOT ####
 plot_volcano <- plot_volcano %>%
     dplyr::filter(design == "Baseline_vs_Week52") %>%
-    pull(plot_volcano) %>%
+    pull(plot_volcano_enrichment) %>%
     pluck(1) %>% 
     wrap_plots(
         A = plot_spacer(),

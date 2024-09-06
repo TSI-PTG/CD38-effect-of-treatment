@@ -6,6 +6,7 @@ library(ggpubr) # install.packages("ggpubr")
 library(patchwork) # install.packages("patchwork")
 library(ggforce) # install.packages("ggforce")
 library(readxl) # install.packages("readxl")
+library(ggsci) # install.packages("ggsci")
 # Bioconductor libraries
 library(clusterProfiler) # BiocManager::install("clusterProfiler")
 # Custom operators and functions
@@ -132,6 +133,12 @@ xlim <- c(0, data_volcano %>%
     pull(p) %>%
     max() * 1.3)
 x_end <- 3.25
+# scales::show_col(pal_npg()(9))
+col_dn <- pal_npg()(9)[2]
+col_up <- pal_npg()(9)[1]
+col_baseline_vs_week24_immune_response <- pal_npg()(9)[4]
+col_baseline_vs_week52_immune_response <- pal_npg()(9)[9]
+col_baseline_vs_week52_injury_response <- pal_npg()(9)[3]
 
 
 # MAKE VOLCANO PLOTS ####
@@ -140,7 +147,8 @@ plot_volcano <- data_volcano %>%
         plot_volcano = pmap(
             list(data_plot, design),
             gg_volcano,
-            ylim = ylim, xlim = xlim
+            ylim = ylim, xlim = xlim,
+            col_dn = col_dn, col_up = col_up
         )
     )
 # plot_volcano$plot_volcano[[1]]
@@ -186,7 +194,7 @@ curves_baseline_vs_week24_immune_response <- ggplot2::geom_curve(
         xend = 3.1,
         yend = 0.15,
     ),
-    col = "#5d00ff",
+    col = col_baseline_vs_week24_immune_response,
     curvature = 0.325,
     angle = 45,
     linewidth = 0.1,
@@ -207,7 +215,7 @@ curves_baseline_vs_week52_immune_response <- ggplot2::geom_curve(
         xend = 2.95,
         yend = -0.75,
     ),
-    col = "#d300ffff",
+    col = col_baseline_vs_week52_immune_response,
     curvature = 0.65,
     angle = 45,
     linewidth = 0.1,
@@ -228,7 +236,7 @@ curves_baseline_vs_week52_injury_response <- ggplot2::geom_curve(
         xend = 3,
         yend = 0.45,
     ),
-    col = "#ff9900",
+    col = col_baseline_vs_week52_injury_response,
     curvature = -0.15,
     angle = 90,
     linewidth = 0.1,
@@ -287,18 +295,18 @@ plot_volcano_baseline_vs_week52 <- plot_volcano_baseline_vs_week52 +
     ggplot2::scale_colour_gradient(low = "#ffffff95", high = "#ffffff00")
 
 
-
 # MAKE PLOT PANELS ####
-plot_volcano_enrichment <- tibble(
-    plot_volcano_enrichment = list(
-        plot_volcano_baseline_vs_week24 %>%
-            ggpubr::ggarrange(., NULL, ncol = 2, widths = c(1, 0)),
-        plot_volcanoweek24_vs_week52 %>%
-            ggpubr::ggarrange(., NULL, ncol = 2, widths = c(1, 0)),
-        plot_volcano_baseline_vs_week52 %>%
-            ggpubr::ggarrange(., NULL, ncol = 2, widths = c(1, 0))
+plot_volcano <- plot_volcano %>%
+    mutate(
+        plot_volcano_enrichment = list(
+            plot_volcano_baseline_vs_week24 %>%
+                ggpubr::ggarrange(., NULL, ncol = 2, widths = c(1, 0)),
+            plot_volcanoweek24_vs_week52 %>%
+                ggpubr::ggarrange(., NULL, ncol = 2, widths = c(1, 0)),
+            plot_volcano_baseline_vs_week52 %>%
+                ggpubr::ggarrange(., NULL, ncol = 2, widths = c(1, 0))
+        )
     )
-)
 
 
 # SAVE THE PLOT DATA ####

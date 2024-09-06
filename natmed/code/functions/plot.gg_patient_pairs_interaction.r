@@ -2,6 +2,7 @@ gg_patient_pairs_interaction <- function(data, variable, score) {
     require(tidyverse)
     require(gghalves)
     require(ggprism)
+    require(ggsci)
     log10zero <- scales::trans_new(
         name = "log10zero",
         transform = function(x) log10(x + 0.15),
@@ -36,6 +37,11 @@ gg_patient_pairs_interaction <- function(data, variable, score) {
             variable = variable,
             Felzartamab = Felzartamab %>% factor(labels = c("Placebo", "Felzartamab"))
         )
+    n <- data %>%
+        dplyr::distinct(Patient) %>%
+        nrow()
+    cols <- c(ggsci::pal_npg()(10), ggsci::pal_npg(alpha = 0.7)(10), ggsci::pal_npg(alpha = 0.4)(10))[1:n]
+
     plot <- data %>%
         ggplot2::ggplot(
             mapping = ggplot2::aes(
@@ -78,6 +84,7 @@ gg_patient_pairs_interaction <- function(data, variable, score) {
             col = "patient",
             parse = TRUE
         ) +
+        ggplot2::scale_color_manual(values = cols) +
         ggplot2::scale_x_discrete(labels = xlabels) +
         ggplot2::coord_cartesian(xlim = c(1.3, 2.7)) +
         ggplot2::theme_bw() +

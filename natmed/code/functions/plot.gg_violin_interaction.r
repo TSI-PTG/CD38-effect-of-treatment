@@ -1,4 +1,7 @@
-gg_violin_interaction <- function(data, variable, score, medians_delta, art_con_interaction_default_tidy, patient_label) {
+gg_violin_interaction <- function(
+    data, variable, score, medians_delta, art_con_interaction_default_tidy, patient_label,
+    col_low = "red", col_mid = "grey80", col_high = "#00ff00bc"
+    ) {
     require(tidyverse)
     require(gghalves)
     require(ggprism)
@@ -36,7 +39,6 @@ gg_violin_interaction <- function(data, variable, score, medians_delta, art_con_
         dplyr::mutate(Felzartamab = Felzartamab %>% factor(labels = c("Placebo", "Felzartamab")))
     delta_delta <- medians_delta %>%
         dplyr::distinct(Followup_pairwise, .keep_all = TRUE) %>%
-        # dplyr::mutate(Followup_pairwise = c("Week24 - Baseline", "Week52 - Baseline", "Week52 - Week24"))
     dplyr::mutate(Followup_pairwise = c("Baseline - Week 24", "Baseline - Week 52", "Week 24 - Week 52"))
 
     delta_delta_p <- art_con_interaction_default_tidy %>%
@@ -85,8 +87,6 @@ gg_violin_interaction <- function(data, variable, score, medians_delta, art_con_
         dplyr::mutate(
             Followup = Followup %>% factor(levels = c("Baseline", "Week24", "Week52")),
             shape = 21,
-            # stroke = 0,
-            # shape = ifelse(Patient == 9, 24, 21),
             stroke = ifelse(Patient %in% patient_label, 0.5, 0)
         )
     if (variable %>% stringr::str_detect("cfDNA")) {
@@ -104,12 +104,12 @@ gg_violin_interaction <- function(data, variable, score, medians_delta, art_con_
     if (variable %in% c("KT1", "KT2", "InjPC2_5086Set")) {
         gradient_labels <- c("Worsened", "Improved")
         gradient_labels_hjust <- c(-0.075, 1.55)
-        col_low <- "red"
-        col_high <- "#00ff00bc"
+        col_Worsened <- col_low
+        col_Improved <- col_high
     } else {
         gradient_labels <- c("Improved", "Worsened")
-        col_low <- "#00ff00bc"
-        col_high <- "red"
+        col_Worsened <- col_high
+        col_Improved <- col_low
         gradient_labels_hjust <- c(-0.075, 1.85)
     }
     plot <- data %>%
@@ -255,15 +255,9 @@ gg_violin_interaction <- function(data, variable, score, medians_delta, art_con_
             segment.color = "black",
             min.segment.length = 0.01,
             segment.size = 0.25,
-            # direction = "y",
             max.overlaps = Inf,
             box.padding = 0.5,
             point.padding = 0.25,
-            # nudge_x = dplyr::case_when(
-            #     data_patient_labels$Followup == "Baseline" ~ 0.1,
-            #     data_patient_labels$Followup == "Week24" ~ 0,
-            #     data_patient_labels$Followup == "Week52" ~ -0.1
-            # ),
             show.legend = FALSE
         ) +
         ggplot2::labs(
@@ -294,13 +288,12 @@ gg_violin_interaction <- function(data, variable, score, medians_delta, art_con_
             parse = TRUE
         ) +
         ggplot2::scale_fill_gradient2(
-            low = col_low,
-            mid = "grey60",
-            high = col_high,
+            low = col_Worsened,
+            mid = col_mid,
+            high = col_Improved,
             midpoint = midpoint,
             breaks = c(min(data$delta), max(data$delta)),
             labels = gradient_labels,
-            # labels = c("fuck", "you"),
             guide = ggplot2::guide_colorbar(
                 title.position = "top",
                 barwidth = 20,
@@ -312,13 +305,12 @@ gg_violin_interaction <- function(data, variable, score, medians_delta, art_con_
             )
         ) +
         ggplot2::scale_color_gradient2(
-            low = col_low,
-            mid = "grey60",
-            high = col_high,
+            low = col_Worsened,
+            mid = col_mid,
+            high = col_Improved,
             midpoint = midpoint,
             breaks = c(min(data$delta), max(data$delta)),
             labels = gradient_labels,
-            # labels = c("fuck", "you"),
             guide = "none"
         ) +
         ggplot2::scale_x_discrete(labels = xlabels) +

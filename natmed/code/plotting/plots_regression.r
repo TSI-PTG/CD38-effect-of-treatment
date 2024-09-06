@@ -3,9 +3,18 @@
 library(tidyverse) # install.packages("tidyverse")
 library(flextable) # install.packages("flextable")
 library(ggpubr) # install.packages("ggpubr")
+library(ggsci) # install.packages("ggsci")
 # load regression results
 loadDir <- "natmed/results/"
 load(paste(loadDir, "regression_injury.RData", sep = ""))
+
+
+# UNIVERSAL PLOTTING PARAMETERS ####
+# scales::show_col(pal_npg()(9))
+col_placebo <- pal_npg()(9)[4]
+col_felzartamab <- pal_npg()(9)[5]
+fill_placebo <- pal_npg(alpha = 0.4)(9)[4]
+fill_felzartamab <- pal_npg(alpha = 0.4)(9)[5]
 
 
 # MAKE PLOTS ####
@@ -25,31 +34,25 @@ plots_regression <- regression_injury %>%
                     variable == "IRITD5" ~ c(-0.20, 0.8)
                 )
                 plot_data %>%
-                    ggplot(aes(x = x, y = predicted, color = group)) +
+                    ggplot(aes(x = x, y = predicted, col = group)) +
                     geom_line(aes(group = group), alpha = 1, linewidth = 1.2) +
-                    geom_ribbon(aes(ymin = conf.low, ymax = conf.high, fill = group), alpha = 0.4, color = NA) +
-                    geom_point(
-                        data = reference_data,
-                        aes_string(x = "time", y = variable, color = factor("Felzartamab"), group = "Patient"),
-                        alpha = 0,
-                        size = 0.1
-                    ) +
+                    geom_ribbon(aes(ymin = conf.low, ymax = conf.high, fill = group), color = NA) +
                     geom_line(
                         data = reference_data,
-                        aes_string(x = "time", y = variable, color = factor("Felzartamab"), group = "Patient", linetype = "linetype"),
+                        aes_string(x = "time", y = variable, col = "Felzartamab", group = "Patient", linetype = "linetype"),
                         stat = "smooth",
                         method = "lm",
                         alpha = 0.3,
                         show.legend = FALSE
                     ) +
                     scale_color_manual(
-                        name = "Treatment",
-                        values = c("Placebo" = "black", "Felzartamab" = "#bc3c29"),
+                        name = "Felzartamab",
+                        values = c("Placebo" = col_placebo, "Felzartamab" = col_felzartamab),
                         labels = c("Placebo", "Felzartamab")
                     ) +
                     scale_fill_manual(
-                        name = "Treatment",
-                        values = c("Placebo" = "#b3b3b3", "Felzartamab" = "#bc3c29"),
+                        name = "Felzartamab",
+                        values = c("Placebo" = fill_placebo, "Felzartamab" = fill_felzartamab),
                         labels = c("Placebo", "Felzartamab")
                     ) +
                     scale_x_continuous(
