@@ -1,0 +1,587 @@
+---
+title: "Analysing the effect of treatment on gene expression."
+author: "Patrick T Gauthier"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
+    code_folding: show
+---
+<style>
+pre code {
+  font-size: 10px; 
+}
+</style>
+
+
+## INTRODUCTION
+
+<span style="font-family: Helvetica; font-size: 20px;">This analysis assesses how felzartamab therapy affects gene expression from biopsies from kidney allografts taken from patients with antibody mediated rejection. We use the Linear Models for Microarray Data (limma) pipeline for applying empirical Bayes mediated t-tests on individual genes. Specific contrasts to assessed the interaction between treatment and time are specified to estimate the effect of treatemnt on each gene. </span>
+<br>
+
+<span style="font-family: Helvetica; font-size: 20px; ">References:</strong></span>
+
+<span style="font-family: Helvetica; font-size: 15px; font-style: italic;">&#8226; Ritchie, M.E., et al. limma powers differential expression analyses for RNA-sequencing and microarray studies. Nucleic Acids Res 43, e47 (2015).</strong></span>
+
+
+## DATA WRANGLING
+<br>
+<span style="font-family: Helvetica; font-size: 20px;">First we need to load the necessary R packages and data.</strong></span>
+
+```{r}
+
+# HOUSEKEEPING ####
+# CRAN libraries
+library(tidyverse) 
+library(flextable) 
+library(officer)
+# Bioconductor libraries
+library(Biobase) 
+library(limma) 
+library(genefilter) 
+# Custom operators and functions
+"%nin%" <- function(a, b) match(a, b, nomatch = 0) == 0
+# Load data
+load("C:/R/CD38-effect-of-treatment/natmed/data/cd38_3Sept24.RData")
+load("C:/R/CD38-effect-of-treatment/natmed/data/affymap219.RData")
+
+# Seed for reproducibility
+set.seed(42)
+
+# DEFINE THE SET ####
+set00 <- set[, set$Patient %nin% c(15, 18)]
+
+
+```
+<br>
+
+<span style="font-family: Helvetica; font-size: 20px;">&#8226; We filter the gene expression data by to remove genes with minimal variance across the population (IQR filtering).</strong></span>
+
+
+```{r}
+# IQR FILTER THE DATA ####
+f1 <- function(x) (IQR(x) > 0.5)
+ff <- filterfun(f1)
+if (!exists("selected")) {
+    selected <- genefilter(set00, ff)
+}
+set01 <- set00[selected, ]
+
+```
+
+
+<span style="font-family: Helvetica; font-size: 20px;">&#8226; We then retain a single probeset for each gene based on whichever has the highest mean expression in the population.</strong></span>
+
+
+```{r}
+# KEEP UNIQUE GENES (keep probe with highest mean expression) ####
+mean_exprs_by_probe <- set01 %>%
+    exprs() %>%
+    as_tibble(rownames = "AffyID") %>%
+    right_join(affymap219 %>% dplyr::select(AffyID, Symb) %>% tibble(), ., by = "AffyID") %>%
+    mutate(mean_exprs = set01 %>%
+        exprs() %>% rowMeans(), .after = Symb)
+
+genes <- mean_exprs_by_probe %>%
+    group_by(Symb) %>%
+    dplyr::slice_max(mean_exprs) %>%
+    dplyr::filter(Symb != "") %>%
+    distinct(Symb, .keep_all = TRUE) %>%
+    pull(AffyID)
+
+set <- set01[featureNames(set01) %in% genes, ]
+
+```
+
+
+
+## REMOVE GENES THAT DIFFER AT BASELINE BETWEEN PLACEBO AND FELZARTAMAB ARMS
+<br>
+<span style="font-family: Helvetica; font-size: 20px;">The felzartamab trial was a phase II randomize control trial (RCT). While RCTs are the 'gold standard' for establishing causality (i.e., the effect of treatment), they are not perfect, particularly when the number of study participants is low. Thus, we pre-screened gene expression data to remove any genes that differed between placebo and felzartamab arm as baseline. This was done to reduce the potential for interpreting the effect of treatment on genes with dissimilar baseline profiles.</strong></span>
+
+
+```{r}
+# DEFINE FACTOR FOR CONTRASTS ####
+Felzartamab_Followup <- set$Felzartamab_Followup %>% droplevels()
+
+
+# BLOCK DESIGN week24 - baseline ####
+design_block01 <- model.matrix(~ 0 + Felzartamab_Followup)
+contrast_block_01 <- makeContrasts(
+    "x =  (Felzartamab_FollowupBaseline_Felzartamab) -(Felzartamab_FollowupBaseline_Placebo)",
+    levels = design_block01
+)
+
+# FIT BLOCK week24 - baseline LIMMA MODEL ####
+fit_block_1 <- limma::lmFit(set, design_block01)
+cfit_block_1 <- limma::contrasts.fit(fit_block_1, contrast_block_01)
+ebayes_block_1 <- limma::eBayes(cfit_block_1)
+tab_block_1 <- limma::topTable(ebayes_block_1, adjust = "fdr", sort.by = "p", number = "all")
+
+# CALCULATE MEAN GENE EXPRESSION FOR EACH PROBE BETWEEN GROUPINGS ####
+means_baseline <- fit_block_1 %>%
+    avearrays() %>%
+    data.frame() %>%
+    rownames_to_column("AffyID") %>%
+    tibble() %>%
+    mutate_if(is.numeric, ~ 2^. %>% round(0)) %>%
+    rename_at(vars(contains("Felz")), ~ str_remove(., "Felzartamab_Followup")) %>%
+    dplyr::select(AffyID, contains("Baseline"))
+
+```
+
+<br>
+<span style="font-family: Helvetica; font-size: 20px;">The top 20 genes that differ at baseline (sorted by p-value) between placebo and felzartamab arms are summarized below.</strong></span>
+
+<span style="font-family: Helvetica; font-size: 15px;font-style: italic;">(Note that all FDR > 0.05. This is a consequence of differential expression among with n = 10 by treatment group across a large selection of genes (5,267 in this case). Nonetheless, genes with p < 0.05 will be excluded from subsequent analyses).</span>
+
+```{r}
+# FORMAT TOPTABLES ####
+baseline_deg <- tab_block_1 %>%
+    as_tibble(rownames = "AffyID") %>%
+    right_join(affymap219 %>% dplyr::select(AffyID, Symb, Gene, PBT), ., by = "AffyID") %>%
+    arrange(P.Value) %>%
+    mutate_at(c("P.Value", "adj.P.Val"), as.numeric) %>%
+    tibble() %>%
+    left_join(means_baseline, by = "AffyID") %>%
+    dplyr::select(
+        AffyID, Symb,
+        Baseline_Placebo, Baseline_Felzartamab,
+        t, logFC, P.Value, adj.P.Val,
+    ) %>%
+    dplyr::rename(p = P.Value, FDR = adj.P.Val)
+
+baseline_deg %>%
+    dplyr::slice_min(p, n = 20) %>%
+    mutate_at(vars(t, logFC, FDR), ~ formatC(.x, format = "f", digits = 2)) %>%
+    mutate_at(vars(p), ~ formatC(.x, format = "f", digits = 5)) %>%
+    flextable::flextable()
+
+```
+
+
+## ESTIMATING TREATMENT EFFECT ON GENE EXPRESSION
+
+<br>
+<span style="font-family: Helvetica; font-size: 20px;">We now carry out differential expression analysis to estimate the treatment effect on individual genes.</strong></span>
+
+
+```{r}
+# DEFINE GENES SIMILAR AT BASELINE ####
+genes_baseline <- baseline_deg %>%
+    dplyr::filter(p > 0.05) %>%
+    pull(AffyID)
+
+# WRANGLE THE MEAN EXPRESSION DATA ####
+mean_exprs_by_probe <- set01 %>%
+    exprs() %>%
+    as_tibble(rownames = "AffyID") %>%
+    right_join(affymap219 %>% dplyr::select(AffyID, Symb) %>% tibble(), ., by = "AffyID") %>%
+    mutate(
+        mean_exprs = set01 %>%
+            exprs() %>%
+            rowMeans(),
+        .after = Symb
+    )
+
+genes <- mean_exprs_by_probe %>%
+    group_by(Symb) %>%
+    dplyr::slice_max(mean_exprs) %>%
+    dplyr::filter(Symb != "", AffyID %in% genes_baseline) %>%
+    distinct(Symb, .keep_all = TRUE) %>%
+    pull(AffyID)
+
+set02 <- set01[featureNames(set01) %in% genes, ]
+
+```
+
+<br>
+<span style="font-family: Helvetica; font-size: 20px;">We need to define the model structure for the contrasts we intend to make. Here we will define 3 major contrast groups; 1) effect of time in placebo group, 2) effect of time in felzartamab group, and 3) the interactive effect of time and treatment. We do this for each time window (baseline to week 24, week 24 to week 52, and baseline to week 52)</strong></span>
+
+
+```{r}
+
+# DEFINE FACTOR FOR CONTRASTS ####
+Felzartamab_Followup <- set02$Felzartamab_Followup %>% droplevels()
+cortex <- set02$Cortexprob
+
+
+# DESIGN ####
+design <- model.matrix(~ 0 + Felzartamab_Followup + cortex)
+
+
+# CONTRAST DESIGN week24 - baseline ####
+contrast_interaction_01 <- makeContrasts(
+    "x =  (Felzartamab_FollowupWeek24_Felzartamab-Felzartamab_FollowupBaseline_Felzartamab)/2 -(Felzartamab_FollowupWeek24_Placebo-Felzartamab_FollowupBaseline_Placebo)/2",
+    levels = design
+)
+contrast_felzartamab_01 <- makeContrasts(
+    "x =  (Felzartamab_FollowupWeek24_Felzartamab-Felzartamab_FollowupBaseline_Felzartamab)/2",
+    levels = design
+)
+contrast_placebo_01 <- makeContrasts(
+    "x =  (Felzartamab_FollowupWeek24_Placebo-Felzartamab_FollowupBaseline_Placebo)/2",
+    levels = design
+)
+
+
+# CONTRAST DESIGN week52 - week24 ####
+contrast_interaction_02 <- makeContrasts(
+    "x =  (Felzartamab_FollowupWeek52_Felzartamab-Felzartamab_FollowupWeek24_Felzartamab)/2 - (Felzartamab_FollowupWeek52_Placebo-Felzartamab_FollowupWeek24_Placebo)/2",
+    levels = design
+)
+contrast_felzartamab_02 <- makeContrasts(
+    "x =  (Felzartamab_FollowupWeek52_Felzartamab-Felzartamab_FollowupWeek24_Felzartamab)/2",
+    levels = design
+)
+contrast_placebo_02 <- makeContrasts(
+    "x =  (Felzartamab_FollowupWeek52_Placebo-Felzartamab_FollowupWeek24_Placebo)/2",
+    levels = design
+)
+
+
+# CONTRAST DESIGN week52 - baseline####
+contrast_interaction_03 <- makeContrasts(
+    "x =  (Felzartamab_FollowupWeek52_Felzartamab-Felzartamab_FollowupBaseline_Felzartamab)/2 - (Felzartamab_FollowupWeek52_Placebo-Felzartamab_FollowupBaseline_Placebo)/2",
+    levels = design
+)
+contrast_felzartamab_03 <- makeContrasts(
+    "x =  (Felzartamab_FollowupWeek52_Felzartamab-Felzartamab_FollowupBaseline_Felzartamab)/2",
+    levels = design
+)
+contrast_placebo_03 <- makeContrasts(
+    "x =  (Felzartamab_FollowupWeek52_Placebo-Felzartamab_FollowupBaseline_Placebo)/2",
+    levels = design
+)
+```
+
+<br>
+<span style="font-family: Helvetica; font-size: 20px;">We now fit the models we've specified</strong></span>
+
+```{r}
+
+# FIT BLOCK week24 - baseline LIMMA MODEL ####
+fit_interaction_1 <- limma::lmFit(set02, design)
+cfit_interaction_1 <- limma::contrasts.fit(fit_interaction_1, contrast_interaction_01)
+ebayes_interaction_1 <- limma::eBayes(cfit_interaction_1)
+tab_interaction_1 <- limma::topTable(ebayes_interaction_1, adjust = "fdr", sort.by = "p", number = "all") %>%
+    as_tibble(rownames = "AffyID") %>%
+    mutate(se = (ebayes_interaction_1$stdev.unscaled * sqrt(ebayes_interaction_1$s2.post)) %>% as.vector(), .after = logFC) %>%
+    right_join(affymap219 %>% dplyr::select(AffyID, Symb, Gene, PBT), ., by = "AffyID")
+
+fit_felzartamab_1 <- limma::lmFit(set02, design)
+cfit_felzartamab_1 <- limma::contrasts.fit(fit_felzartamab_1, contrast_felzartamab_01)
+ebayes_felzartamab_1 <- limma::eBayes(cfit_felzartamab_1)
+tab_felzartamab_1 <- limma::topTable(ebayes_felzartamab_1, adjust = "fdr", sort.by = "p", number = "all") %>%
+    as_tibble(rownames = "AffyID") %>%
+    mutate(se = (ebayes_felzartamab_1$stdev.unscaled * sqrt(ebayes_felzartamab_1$s2.post)) %>% as.vector(), .after = logFC) %>%
+    right_join(affymap219 %>% dplyr::select(AffyID, Symb, Gene, PBT), ., by = "AffyID")
+
+fit_placebo_1 <- limma::lmFit(set02, design)
+cfit_placebo_1 <- limma::contrasts.fit(fit_placebo_1, contrast_placebo_01)
+ebayes_placebo_1 <- limma::eBayes(cfit_placebo_1)
+tab_placebo_1 <- limma::topTable(ebayes_placebo_1, adjust = "fdr", sort.by = "p", number = "all") %>%
+    as_tibble(rownames = "AffyID") %>%
+    mutate(se = (ebayes_placebo_1$stdev.unscaled * sqrt(ebayes_placebo_1$s2.post)) %>% as.vector(), .after = logFC) %>%
+    right_join(affymap219 %>% dplyr::select(AffyID, Symb, Gene, PBT), ., by = "AffyID")
+
+
+# FIT BLOCK week52 - week24 LIMMA MODEL ####
+fit_interaction_2 <- limma::lmFit(set02, design)
+cfit_interaction_2 <- limma::contrasts.fit(fit_interaction_2, contrast_interaction_02)
+ebayes_interaction_2 <- limma::eBayes(cfit_interaction_2)
+tab_interaction_2 <- limma::topTable(ebayes_interaction_2, adjust = "fdr", sort.by = "p", number = "all") %>%
+    as_tibble(rownames = "AffyID") %>%
+    mutate(se = (ebayes_interaction_2$stdev.unscaled * sqrt(ebayes_interaction_2$s2.post)) %>% as.vector(), .after = logFC) %>%
+    right_join(affymap219 %>% dplyr::select(AffyID, Symb, Gene, PBT), ., by = "AffyID")
+
+fit_felzartamab_2 <- limma::lmFit(set02, design)
+cfit_felzartamab_2 <- limma::contrasts.fit(fit_felzartamab_2, contrast_felzartamab_02)
+ebayes_felzartamab_2 <- limma::eBayes(cfit_felzartamab_2)
+tab_felzartamab_2 <- limma::topTable(ebayes_felzartamab_2, adjust = "fdr", sort.by = "p", number = "all") %>%
+    as_tibble(rownames = "AffyID") %>%
+    mutate(se = (ebayes_felzartamab_2$stdev.unscaled * sqrt(ebayes_felzartamab_2$s2.post)) %>% as.vector(), .after = logFC) %>%
+    right_join(affymap219 %>% dplyr::select(AffyID, Symb, Gene, PBT), ., by = "AffyID")
+
+fit_placebo_2 <- limma::lmFit(set02, design)
+cfit_placebo_2 <- limma::contrasts.fit(fit_placebo_2, contrast_placebo_02)
+ebayes_placebo_2 <- limma::eBayes(cfit_placebo_2)
+tab_placebo_2 <- limma::topTable(ebayes_placebo_2, adjust = "fdr", sort.by = "p", number = "all") %>%
+    as_tibble(rownames = "AffyID") %>%
+    mutate(se = (ebayes_placebo_2$stdev.unscaled * sqrt(ebayes_placebo_2$s2.post)) %>% as.vector(), .after = logFC) %>%
+    right_join(affymap219 %>% dplyr::select(AffyID, Symb, Gene, PBT), ., by = "AffyID")
+
+
+# FIT BLOCK week52 - baseline LIMMA MODEL ####
+fit_interaction_3 <- limma::lmFit(set02, design)
+cfit_interaction_3 <- limma::contrasts.fit(fit_interaction_3, contrast_interaction_03)
+ebayes_interaction_3 <- limma::eBayes(cfit_interaction_3)
+tab_interaction_3 <- limma::topTable(ebayes_interaction_3, adjust = "fdr", sort.by = "p", number = "all") %>%
+    as_tibble(rownames = "AffyID") %>%
+    mutate(se = (ebayes_interaction_3$stdev.unscaled * sqrt(ebayes_interaction_3$s2.post)) %>% as.vector(), .after = logFC) %>%
+    right_join(affymap219 %>% dplyr::select(AffyID, Symb, Gene, PBT), ., by = "AffyID")
+
+fit_felzartamab_3 <- limma::lmFit(set02, design)
+cfit_felzartamab_3 <- limma::contrasts.fit(fit_felzartamab_3, contrast_felzartamab_03)
+ebayes_felzartamab_3 <- limma::eBayes(cfit_felzartamab_3)
+tab_felzartamab_3 <- limma::topTable(ebayes_felzartamab_3, adjust = "fdr", sort.by = "p", number = "all") %>%
+    as_tibble(rownames = "AffyID") %>%
+    mutate(se = (ebayes_felzartamab_3$stdev.unscaled * sqrt(ebayes_felzartamab_3$s2.post)) %>% as.vector(), .after = logFC) %>%
+    right_join(affymap219 %>% dplyr::select(AffyID, Symb, Gene, PBT), ., by = "AffyID")
+
+fit_placebo_3 <- limma::lmFit(set02, design)
+cfit_placebo_3 <- limma::contrasts.fit(fit_placebo_3, contrast_placebo_03)
+ebayes_placebo_3 <- limma::eBayes(cfit_placebo_3)
+tab_placebo_3 <- limma::topTable(ebayes_placebo_3, adjust = "fdr", sort.by = "p", number = "all") %>%
+    as_tibble(rownames = "AffyID") %>%
+    mutate(se = (ebayes_placebo_3$stdev.unscaled * sqrt(ebayes_placebo_3$s2.post)) %>% as.vector(), .after = logFC) %>%
+    right_join(affymap219 %>% dplyr::select(AffyID, Symb, Gene, PBT), ., by = "AffyID")
+
+```
+
+## ORAGNIZE THE RESULTS
+<br>
+<span style="font-family: Helvetica; font-size: 20px;">The results are now organized for tabulation </strong></span>
+
+```{r}
+# MERGE BLOCKS ####
+tab_block_1 <- tab_interaction_1 %>%
+    left_join(
+        tab_felzartamab_1 %>%
+            dplyr::select(AffyID, logFC) %>%
+            rename(flogFC = logFC),
+        by = "AffyID"
+    ) %>%
+    left_join(
+        tab_placebo_1 %>%
+            dplyr::select(AffyID, logFC) %>%
+            rename(plogFC = logFC),
+        by = "AffyID"
+    ) %>%
+    relocate(plogFC, flogFC, .before = logFC) %>%
+    arrange(P.Value)
+
+tab_block_2 <- tab_interaction_2 %>%
+    left_join(
+        tab_felzartamab_2 %>%
+            dplyr::select(AffyID, logFC) %>%
+            rename(flogFC = logFC),
+        by = "AffyID"
+    ) %>%
+    left_join(
+        tab_placebo_2 %>%
+            dplyr::select(AffyID, logFC) %>%
+            rename(plogFC = logFC),
+        by = "AffyID"
+    ) %>%
+    relocate(plogFC, flogFC, .before = logFC) %>%
+    arrange(P.Value)
+
+tab_block_3 <- tab_interaction_3 %>%
+    left_join(
+        tab_felzartamab_3 %>%
+            dplyr::select(AffyID, logFC) %>%
+            rename(flogFC = logFC),
+        by = "AffyID"
+    ) %>%
+    left_join(
+        tab_placebo_3 %>%
+            dplyr::select(AffyID, logFC) %>%
+            rename(plogFC = logFC),
+        by = "AffyID"
+    ) %>%
+    relocate(plogFC, flogFC, .before = logFC) %>%
+    arrange(P.Value)
+
+
+# CALCULATE MEAN GENE EXPRESSION FOR EACH PROBE BETWEEN GROUPINGS ####
+means <- fit_interaction_1 %>%
+    avearrays() %>%
+    as_tibble(rownames = "AffyID") %>%
+    mutate_if(is.numeric, ~ 2^. %>% round(0)) %>%
+    rename_at(vars(contains("Felz")), ~ str_remove(., "Felzartamab_Followup")) %>%
+    dplyr::select(-contains("Week12"), -any_of(c("cortex")))
+
+
+# FORMAT TOPTABLES ####
+table_interaction_1 <- tab_block_1 %>%
+    arrange(P.Value) %>%
+    mutate_at(c("P.Value", "adj.P.Val"), as.numeric) %>%
+    tibble() %>%
+    left_join(means, by = "AffyID") %>%
+    dplyr::select(
+        AffyID, Symb, Gene, PBT,
+        t, plogFC, flogFC, logFC, se, P.Value, adj.P.Val,
+        all_of(colnames(means))
+    ) %>%
+    dplyr::rename(
+        p = P.Value,
+        FDR = adj.P.Val
+    )
+
+table_interaction_2 <- tab_block_2 %>%
+    arrange(P.Value) %>%
+    mutate_at(c("P.Value", "adj.P.Val"), as.numeric) %>%
+    tibble() %>%
+    left_join(means, by = "AffyID") %>%
+    dplyr::select(
+        AffyID, Symb, Gene, PBT,
+        t, plogFC, flogFC, logFC, se, P.Value, adj.P.Val,
+        all_of(colnames(means))
+    ) %>%
+    dplyr::rename(
+        p = P.Value,
+        FDR = adj.P.Val
+    )
+
+table_interaction_3 <- tab_block_3 %>%
+    arrange(P.Value) %>%
+    mutate_at(c("P.Value", "adj.P.Val"), as.numeric) %>%
+    tibble() %>%
+    left_join(means, by = "AffyID") %>%
+    dplyr::select(
+        AffyID, Symb, Gene, PBT,
+        t, plogFC, flogFC, logFC, se, P.Value, adj.P.Val,
+        all_of(colnames(means))
+    ) %>%
+    dplyr::rename(
+        p = P.Value,
+        FDR = adj.P.Val
+    )
+
+deg <- tibble(
+    design = c(
+        "Baseline_vs_Week24",
+        "Week24_vs_Week52",
+        "Baseline_vs_Week52"
+    ),
+    table = list(
+        table_interaction_1,
+        table_interaction_2,
+        table_interaction_3
+    )
+)
+```
+
+## SUMMARIZE THE RESULTS
+
+```{r}
+# FORMAT TABLES TO MAKE FLEXTABLES ####
+table_deg <- deg %>%
+    expand_grid(direction = c("all", "increased", "decreased")) %>%
+    relocate(direction, .after = design) %>%
+    mutate(
+        gene_tables = pmap(
+            list(direction, table),
+            function(direction, table) {
+                if (direction == "increased") {
+                    table <- table %>%
+                        dplyr::filter(logFC > 0) %>%
+                        arrange(p)
+                } else if (direction == "decreased") {
+                    table <- table %>%
+                        dplyr::filter(logFC < 0) %>%
+                        arrange(p)
+                }
+                table %>%
+                    dplyr::select(-t, -se, -FDR, -contains("AffyID"), -contains("MMDx")) %>%
+                    dplyr::slice(1:20) %>%
+                    mutate(
+                        Gene = Gene %>% str_remove("///.*"),
+                        plogFC = plogFC %>% round(2),
+                        flogFC = flogFC %>% round(2),
+                        logFC = logFC %>% round(2),
+                        p = case_when(
+                            p < 0.0001 ~ p %>% formatC(digits = 0, format = "e"),
+                            TRUE ~ p %>% formatC(digits = 4, format = "f")
+                        )
+                    )
+            }
+        )
+    )
+
+
+# GLOBAL PARAMETERS FOR FLEXTABLES ####
+header1 <- c(
+    "Gene\nsymbol", "Gene", "PBT",
+    rep("Differential expression", 4),
+    rep("Mean expression by group", 6)
+)
+header2 <- c(
+    "Gene\nsymbol", "Gene", "PBT",
+    "\u394\nplacebo\nlogFC", "\u394\nfelzartamab\nlogFC",
+    "\u394\u394\nlogFC", "\u394\u394\nP",
+    rep("Placebo", 3), rep("Felzartamab", 3)
+)
+header3 <- c(
+    "Gene\nsymbol", "Gene", "PBT",
+    "\u394\nplacebo\nlogFC", "\u394\nfelzartamab\nlogFC",
+    "\u394\u394\nlogFC", "\u394\u394\nP",
+    "Baseline\n(N=10)", "Week24\n(N=10)", "Week52\n(N=10)", "Baseline\n(N=10)", "Week24\n(N=10)", "Week52\n(N=10)"
+)
+
+# MAKE FORMATTED FLEXTABLES ####
+flextables <- table_deg %>%
+    mutate(
+        flextable = pmap(
+            list(design, gene_tables),
+            function(design, gene_tables) {
+                if (design == "Baseline_vs_Week24") {
+                    title <- paste("Table i. Top 20 differentially expressed genes between baseline and week24 in biopsies from placebo and Felzartamab treated patients (by P-value)", sep = "")
+                } else if (design == "Week24_vs_Week52") {
+                    title <- paste("Table i. Top 20 differentially expressed genes between week24 and week52 in biopsies from placebo and Felzartamab treated patients (by P-value)", sep = "")
+                } else if (design == "Baseline_vs_Week52") {
+                    title <- paste("Table i. Top 20 differentially expressed genes between baseline and week52 in biopsies from placebo and Felzartamab treated patients (by P-value)", sep = "")
+                }
+                gene_tables %>%
+                    arrange(logFC) %>%
+                    flextable::flextable() %>%
+                    flextable::delete_part("header") %>%
+                    flextable::add_header_row(top = TRUE, values = header3) %>%
+                    flextable::add_header_row(top = TRUE, values = header2) %>%
+                    flextable::add_header_row(top = TRUE, values = header1) %>%
+                    flextable::add_header_row(top = TRUE, values = rep(title, ncol_keys(.))) %>%
+                    flextable::merge_v(part = "header") %>%
+                    flextable::merge_h(part = "header") %>%
+                    flextable::border_remove() %>%
+                    flextable::border(part = "header", border = officer::fp_border()) %>%
+                    flextable::border(part = "body", border = officer::fp_border()) %>%
+                    flextable::align(align = "center") %>%
+                    flextable::align(align = "center", part = "header") %>%
+                    flextable::font(fontname = "Arial", part = "all") %>%
+                    flextable::fontsize(size = 7, part = "all") %>%
+                    flextable::fontsize(size = 7, part = "footer") %>%
+                    flextable::fontsize(i = 1, size = 12, part = "header") %>%
+                    flextable::bold(part = "header") %>%
+                    flextable::bg(bg = "white", part = "all") %>%
+                    flextable::padding(padding = 0, part = "all") %>%
+                    flextable::autofit()
+            }
+        )
+    )
+```
+
+<br>
+<span style="font-family: Helvetica; font-size: 20px;">Genes suppressed by felzartamab in week 24 compared to baseline </strong></span>
+<br>
+<span style="font-family: Helvetica; font-size: 15px;font-style: italic;">(Note that all &#916;&#916;FDR > 0.05. This is a consequence of differential expression among with n = 10 by treatment group across a large selection of genes (5,267 in this case). Thus, treatment effects on individual genes should not be interpreted. Instead, geneset enrichment analysis (GSEA) will be used to assess bulk trends).</span>
+
+```{r}
+flextables %>%
+    dplyr::filter(design == "Baseline_vs_Week24", direction == "decreased") %>%
+    pull(flextable) %>%
+    pluck(1)
+```
+<br>
+<span style="font-family: Helvetica; font-size: 20px;">Genes suppressed by felzartamab in week 52 compared to baseline </strong></span>
+<br>
+<span style="font-family: Helvetica; font-size: 15px;font-style: italic;">(Note that all &#916;&#916;FDR > 0.05. This is a consequence of differential expression among with n = 10 by treatment group across a large selection of genes (5,267 in this case). Thus, treatment effects on individual genes should not be interpreted. Instead, geneset enrichment analysis (GSEA) will be used to assess bulk trends).</span>
+
+```{r}
+flextables %>%
+    dplyr::filter(design == "Baseline_vs_Week52", direction == "decreased") %>%
+    pull(flextable) %>%
+    pluck(1)
+```

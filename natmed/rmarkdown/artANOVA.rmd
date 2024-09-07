@@ -1,5 +1,5 @@
 ---
-title: "Analysing the effect of treatment on molecular scores using aligned-rank transformed analysis of variance"
+title: "Analysing the effect of treatment on molecular scores using aligned-rank transformed analysis of variance."
 author: "Patrick T Gauthier"
 date: "`r Sys.Date()`"
 output: 
@@ -15,9 +15,10 @@ pre code {
 }
 </style>
 
+
 ## INTRODUCTION
 
-<span style="font-family: Helvetica; font-size: 20px;">This analysis assesses how felzartamab therapy affects molecular sores measured with gene expression data from biopsies from kidney allografts taken from patient with antibody mediated rejection. The assumptions of normality and heterogeneity of variance differ across molecular scores, thus we avail to alinged-rank transformation to carry out a non-parametric ANOVA. This is powerful in this context because it allows us to test for the interactive effect of treatment (i.e., placebo vs felzartamab) and time (i.e., change in scores from biopsy to biopsy).</span>
+<span style="font-family: Helvetica; font-size: 20px;">This analysis assesses how felzartamab therapy affects molecular sores measured with gene expression data from biopsies from kidney allografts taken from patients with antibody mediated rejection. The assumptions of normality and heterogeneity of variance differ across molecular scores, thus we avail to alinged-rank transformation to carry out a non-parametric ANOVA. This is powerful in this context because it allows us to test for the interactive effect of treatment (i.e., placebo vs felzartamab) and time (i.e., change in scores from biopsy to biopsy). Aligned-rank transformation also allows for us to specify a mixed-model to handle repeated measurements (i.e., biopsies) across patients.</span>
 <br>
 
 <span style="font-family: Helvetica; font-size: 20px; ">References:</strong></span>
@@ -29,12 +30,12 @@ pre code {
 <span style="font-family: Helvetica; font-size: 15px; font-style: italic;">&#8226; Elkin, L.A., Kay, M., Higgins, J.J. & Wobbrock, J.O. An Aligned Rank Transform Procedure for Multifactor Contrast Tests. in The 34th Annual ACM Symposium on User Interface Software and Technology 754–768 (Association for Computing Machinery, Virtual Event, USA, 2021).</strong></span>
 
 
-## HOUSEKEEPING
+## DATA WRANGLING
 <br>
-<span style="font-family: Helvetica; font-size: 20px;">&#8226; First we need to load the necessary R packages and data.</strong></span>
+<span style="font-family: Helvetica; font-size: 20px;">First we need to load the necessary R packages and data.</strong></span>
 
 ```{r}
-
+# HOUSEKEEPING ####
 # Load necessary libraries
 library(tidyverse)
 library(broom)
@@ -67,8 +68,7 @@ set.seed(42)
 
 ```
 <br>
-
-<span style="font-family: Helvetica; font-size: 20px;">&#8226; Now we define the categories of molecular scores for easier organization downstream.</strong></span>
+<span style="font-family: Helvetica; font-size: 20px;">Now we define the categories of molecular scores for easier organization downstream.</strong></span>
 
 ```{r}
 # Feature categories
@@ -83,10 +83,8 @@ vars_macrophage <- c("AMAT1", "QCMAT")
 vars <- c(vars_cfDNA, vars_abmr, vars_tcmr, vars_macrophage, vars_injury, vars_parenchyma)
 
 ```
-
-## DATA WRANGLING
 <br>
-<span style="font-family: Helvetica; font-size: 20px;">&#8226; Now we process the data so we can iteratively carry out the analyses on each score.</strong></span>
+<span style="font-family: Helvetica; font-size: 20px;"> Now we process the data so we can iteratively carry out the analyses on each score.</strong></span>
 
 ```{r}
 # DEFINE THE DATA ####
@@ -208,20 +206,21 @@ data_01 <- data_00 %>%
 
 ```
 <br>
-<span style="font-family: Helvetica; font-size: 20px;">&#8226; This is what the data look like after we have organized them. Each row of the dataframe contains the data for each score, the category it belongs to, it's category annotation, it's long-format name, and the name of the variable in the data.</strong></span>
-
+<span style="font-family: Helvetica; font-size: 20px;"> This is what the data look like after we have organized them. Each row of the dataframe contains the data for each score, the category it belongs to, its category annotation, its long-format name, and the name of the variable in the data.</strong></span>
 
 
 ```{r}
-options(pillar.max_columns = NULL)
-options(pillar.width = NULL)
 data_01 %>% print(n="all")
 ```
 
 
+
 ## CALCULATE MEDIAN SCORES AND MEDIAN EFFECT OF TREATMENT
 <br>
-<span style="font-family: Helvetica; font-size: 20px;">&#8226; At this stage we can summarize the median values for each score by treatment and follow-up.</strong></span>
+<span style="font-family: Helvetica; font-size: 20px;"> At this stage we can summarize the median values for each score by treatment and follow-up.</strong></span>
+
+<br>
+<span style="font-family: Helvetica; font-size: 15px; font-style: italic">  (Note that the median scores are used for general interpretation of treatment effects because aligned-ranks, the data being assessed for inference regarding the effects of treatment, are not easily interpretable.)</span>
 
 
 ```{r}
@@ -267,30 +266,32 @@ data_02 <- data_01 %>%
     )
 ```
 <br>
-<span style="font-family: Helvetica; font-size: 20px;">&#8226; Let's take a look at what the median summaries look like for the ABMRprob score.</strong></span>
+<span style="font-family: Helvetica; font-size: 20px;"> Let's take a look at what the median summaries look like for the ABMRprob score.</strong></span>
 
 
 ```{r}
 data_02 %>%
     dplyr::filter(variable == "ABMRpm") %>%
-    pull(medians)
+    pull(medians) %>%
+    pluck(1) %>%
+    flextable::flextable()
 ```
 <br>
-<span style="font-family: Helvetica; font-size: 20px;">&#8226; Now we can look at the change in median ABMRprob scores in the placebo and felzartamab arms, as well as the differnce in those medians (i.e., &#916;&#916; median - this is our summarized treatment effect).</strong></span>
+<span style="font-family: Helvetica; font-size: 20px;"> Now we can look at the change in median ABMRprob scores in the placebo and felzartamab arms, as well as the differnce in those medians (i.e., &#916;&#916; median - this is our summarized treatment effect).</strong></span>
 
 
 ```{r}
-options(pillar.max_columns = Inf)
-options(pillar.width = Inf)
 data_02 %>%
     dplyr::filter(variable == "ABMRpm") %>%
-    pull(medians_delta)
+    pull(medians_delta) %>%
+    pluck(1) %>%
+    flextable::flextable()
 ```
 
 
 ## CARRY OUT ALIGNED-RANK TRANSFORM ANOVA
 <br>
-<span style="font-family: Helvetica; font-size: 20px;">&#8226; Now we carry out the analysis. This includes testing the specific contrasts for the interaction of treatment and time (i.e., our effect of treatment).</strong></span>
+<span style="font-family: Helvetica; font-size: 20px;"> Now we carry out the analysis. This includes testing the specific contrasts for the interaction of treatment and time (i.e., our effect of treatment).</strong></span>
 
 
 ```{r, message=FALSE}
@@ -349,7 +350,7 @@ artANOVA %>%
 
 ## SUMMARISE THE EFFECT OF TREATMENT FOR EACH SCORE ACROSS ALL TIME PERIODS
 <br>
-<span style="font-family: Helvetica; font-size: 20px;">&#8226; Here we present the effect of treatment (&#916;&#916;) for each score, along with the effect of time (&#916;) for placebo and felzartmab arms.</strong></span>
+<span style="font-family: Helvetica; font-size: 20px;"> Here we present the effect of treatment (&#916;&#916;) for each score, along with the effect of time (&#916;) for placebo and felzartmab arms.</strong></span>
 
 
 ```{r}

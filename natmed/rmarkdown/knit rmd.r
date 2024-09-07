@@ -1,1 +1,2 @@
-rmarkdown::render("natmed/rmarkdown/artANOVA.Rmd")
+rmarkdown::render("natmed/rmarkdown/guide.Rmd")
+
