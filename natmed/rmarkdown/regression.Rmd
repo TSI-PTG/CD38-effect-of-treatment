@@ -1,0 +1,295 @@
+---
+title: "Slope analysis of the effect of felzartamab on injury scores"
+author: "Patrick T Gauthier"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
+    code_folding: show
+---
+<style>
+pre code {
+  font-size: 10px; 
+}
+</style>
+
+
+## INTRODUCTION
+
+<span style="font-family: Helvetica; font-size: 20px;">This analysis assesses the slopes for injury scores over time between placebo and felzartamab arms. We used a linear mixed-model to account for repeated measurements over time. </span>
+<br>
+
+
+## DATA WRANGLING
+<br>
+<span style="font-family: Helvetica; font-size: 20px;">First we need to load the necessary R packages and data.</strong></span>
+
+```{r}
+
+# HOUSEKEEPING ####
+# CRAN packages
+library(tidyverse)
+library(lme4)
+library(lmerTest)
+library(performance)
+library(ggeffects)
+library(flextable)
+library(ggpubr) 
+library(patchwork) 
+library(ggprism) 
+# Bioconductor libraries
+library(Biobase) # BiocManager::install("Biobase")
+# Custom operators and functions
+"%nin%" <- function(a, b) match(a, b, nomatch = 0) == 0
+source("C:/R/CD38-effect-of-treatment/natmed/code/functions/get_slope_function.r")
+# load reference set
+load("C:/R/CD38-effect-of-treatment/natmed/data/cd38_3Sept24.RData")
+# load refression plots
+load("C:/R/CD38-effect-of-treatment/natmed/results/plots_regression.RData")
+# load violin plots
+load("C:/R/CD38-effect-of-treatment/natmed/results/plots_artANOVA.RData")
+
+# Seed for reproducibility
+set.seed(42)
+
+
+# DEFINE THE DATA ####
+data <- set %>%
+    pData() %>%
+    dplyr::select(Center, Patient, Felzartamab, Group, IRRAT30, IRITD3, IRITD5) %>%
+    dplyr::filter(Patient %nin% c(15, 18)) %>%
+    mutate(
+        time = case_when(
+            Group == "Index" ~ 0,
+            Group == "FU1" ~ 0.46,
+            Group == "FU2" ~ 0.99
+        ),
+        linetype = "solid" %>% factor()
+    )
+
+
+```
+
+<br>
+<span style="font-family: Helvetica; font-size: 20px;">Now we fit the linear mixed-models.</strong></span>
+
+```{r, message=FALSE}
+# FIT MODELS ####
+fit_IRRAT30 <- lmer(IRRAT30 ~ Felzartamab * time + (time | Patient), data)
+fit_IRITD3 <- lmer(IRITD3 ~ Felzartamab * time + (time | Patient), data)
+fit_IRITD5 <- lmer(IRITD5 ~ Felzartamab * time + (time | Patient), data)
+
+```
+
+<br>
+<span style="font-family: Helvetica; font-size: 20px;">We check the validatity of the model assumptions for IRRAT30.</strong></span>
+```{r, fig.width=8, fig.height=12, dpi=300}
+# test model assumptions
+performance::check_model(fit_IRRAT30)
+performance::check_normality(fit_IRRAT30)
+```
+
+<br>
+<span style="font-family: Helvetica; font-size: 20px;">We check the validatity of the model assumptions for IRITD3.</strong></span>
+
+```{r, fig.width=8, fig.height=12, dpi=300}
+# test model assumptions
+performance::check_model(fit_IRITD3)
+performance::check_normality(fit_IRITD3)
+```
+
+<br>
+<span style="font-family: Helvetica; font-size: 20px;">We check the validatity of the model assumptions for IRITD5.</strong></span>
+
+```{r, fig.width=8, fig.height=12, dpi=300}
+# test model assumptions
+performance::check_model(fit_IRITD5)
+performance::check_normality(fit_IRITD5)
+
+```
+
+
+## ORGANIZE THE RESULTS 
+
+<br>
+<span style="font-family: Helvetica; font-size: 20px;">The next step is to extract and summarize the model results.</strong></span>
+
+```{r}
+# EXTRACT THE SLOPES FROM THE MODEL FITS ####
+# IRRAT30
+# Create list object into which to place model results
+slopes_IRRAT30 <- list()
+# Acute slopes
+slopes_IRRAT30[[1]] <- get_slope(
+    .model_obj = fit_IRRAT30, .name = "Placebo",
+    .contrasts = c(0, 0, 1, 0) #
+)
+slopes_IRRAT30[[2]] <- get_slope(
+    .model_obj = fit_IRRAT30, .name = "Felzartamab",
+    .contrasts = c(0, 0, 1, 1)
+)
+slopes_IRRAT30[[3]] <- get_slope(
+    .model_obj = fit_IRRAT30, .name = "Intergroup Difference",
+    .contrasts = c(0, 0, 0, 1)
+)
+model_IRRAT30 <- slopes_IRRAT30 %>%
+    bind_rows() %>%
+    mutate(p_adjusted = p.adjust(p_value, method = "fdr")) %>%
+    dplyr::select(name, result, p_value, p_adjusted)
+
+# IRITD3
+# Create list object into which to place model results
+slopes_IRITD3 <- list()
+# Acute slopes
+slopes_IRITD3[[1]] <- get_slope(
+    .model_obj = fit_IRITD3, .name = "Placebo",
+    .contrasts = c(0, 0, 1, 0) #
+)
+slopes_IRITD3[[2]] <- get_slope(
+    .model_obj = fit_IRITD3, .name = "Felzartamab",
+    .contrasts = c(0, 0, 1, 1)
+)
+slopes_IRITD3[[3]] <- get_slope(
+    .model_obj = fit_IRITD3, .name = "Intergroup Difference",
+    .contrasts = c(0, 0, 0, 1)
+)
+model_IRITD3 <- slopes_IRITD3 %>%
+    bind_rows() %>%
+    mutate(p_adjusted = p.adjust(p_value, method = "fdr")) %>%
+    dplyr::select(name, result, p_value, p_adjusted)
+
+# IRITD5
+# Create list object into which to place model results
+slopes_IRITD5 <- list()
+# Acute slopes
+slopes_IRITD5[[1]] <- get_slope(
+    .model_obj = fit_IRITD5, .name = "Placebo",
+    .contrasts = c(0, 0, 1, 0) #
+)
+slopes_IRITD5[[2]] <- get_slope(
+    .model_obj = fit_IRITD5, .name = "Felzartamab",
+    .contrasts = c(0, 0, 1, 1)
+)
+slopes_IRITD5[[3]] <- get_slope(
+    .model_obj = fit_IRITD5, .name = "Intergroup Difference",
+    .contrasts = c(0, 0, 0, 1)
+)
+model_IRITD5 <- slopes_IRITD5 %>%
+    bind_rows() %>%
+    mutate(p_adjusted = p.adjust(p_value, method = "fdr")) %>%
+    dplyr::select(name, result, p_value, p_adjusted)
+```
+
+## SUMMARIZE RESULTS
+
+# CREATE TABLE SUMMARIES OF SLOPES ####
+
+<br>
+<span style="font-family: Helvetica; font-size: 20px;">IRRAT30</strong></span>
+
+```{r}
+size_font <- 10
+model_IRRAT30 %>%
+    dplyr::select(-p_value) %>%
+    flextable::qflextable() %>%
+    flextable::set_table_properties(layout = "autofit") %>%
+    flextable::set_header_labels(
+        name = "Group", result = "IRRAT30 Slope (95%CI)",
+        "p_adjusted" = "FDR"
+    ) %>%
+    flextable::bold(i = NULL, part = "header") %>%
+    flextable::fontsize(size = size_font, part = "all")
+```
+
+<br>
+<span style="font-family: Helvetica; font-size: 20px;">IRITD3</strong></span>
+
+```{r}
+model_IRITD3 %>%
+    dplyr::select(-p_value) %>%
+    flextable::qflextable() %>%
+    flextable::set_table_properties(layout = "autofit") %>%
+    flextable::set_header_labels(
+        name = "Group", result = "IRITD3 Slope (95%CI)",
+        "p_adjusted" = "FDR"
+    ) %>%
+    flextable::bold(i = NULL, part = "header") %>%
+    flextable::fontsize(size = size_font, part = "all")
+```
+
+<br>
+<span style="font-family: Helvetica; font-size: 20px;">IRITD5</strong></span>
+
+```{r}
+model_IRITD5 %>%
+    dplyr::select(-p_value) %>%
+    flextable::qflextable() %>%
+    flextable::set_table_properties(layout = "autofit") %>%
+    flextable::set_header_labels(
+        name = "Group", result = "IRITD5 Slope (95%CI)",
+        "p_adjusted" = "FDR"
+    ) %>%
+    flextable::bold(i = NULL, part = "header") %>%
+    flextable::fontsize(size = size_font, part = "all")
+```
+
+
+## PLOT THE RESULTS
+
+```{r, fig.width=15, fig.height=10, dpi=300, message = FALSE, warning = FALSE}
+
+# DEFINE LEGEND FOR VIOLIN PLOTS ####
+panel_legend_violin <- plots_artANOVA %>%
+    dplyr::filter(variable == "AMAT1") %>%
+    pull(plot_violin) %>%
+    ggpubr::get_legend() %>%
+    ggpubr::as_ggplot() +
+    theme(plot.margin = unit(c(0, 0, -1, 0), "cm"))
+
+
+# DEFINE LEGEND FOR REGRESSION PLOTS ####
+panel_legend_regression <- plots_regression %>%
+    dplyr::filter(variable == "IRRAT30") %>%
+    pull(plot) %>%
+    ggpubr::get_legend() %>%
+    ggpubr::as_ggplot()
+
+
+# DEFIN JOINT LEGEND FOR REGRESSION AND VIOLIN PLOTS ####
+panel_legend_all_injury <- panel_legend_violin + panel_legend_regression
+
+
+# DEFINE INJURY VIOLIN PLOTS ####
+plots_violin <- plots_artANOVA %>%
+    dplyr::filter(category %in% c("injury")) %>%
+    pull(plot_violin)
+
+
+# MAKE PANEL OF SLOPE AND VIOLIN PLOTS ####
+plot_panels_all_injury <- patchwork::wrap_plots(
+    plots_violin[[1]], plots_violin[[2]], plots_violin[[3]],
+    plots_regression$plot[[1]], plots_regression$plot[[2]], plots_regression$plot[[3]],
+    plots_regression$grob_table[[1]], plots_regression$grob_table[[2]], plots_regression$grob_table[[3]],
+    nrow = 3,
+    ncol = 3,
+    guides = "collect",
+    heights = c(1, 1, 0.5)
+) +
+    patchwork::plot_annotation(tag_levels = list(c(LETTERS[1:6], rep("", 3)))) &
+    theme(
+        legend.position = "none",
+        # plot.title = element_blank(),
+        axis.text = element_text(size = 10, colour = "black"),
+        axis.title = element_text(size = 12, colour = "black"),
+        plot.tag = element_text(size = 20, face = "bold", vjust = 1)
+    )
+
+ggarrange(
+    panel_legend_all_injury,
+    plot_panels_all_injury,
+    nrow = 2,
+    heights = c(0.15, 1.5)
+)
+```

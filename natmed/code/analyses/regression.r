@@ -6,6 +6,8 @@ library(lmerTest) # install.packages("lmerTest")
 library(performance) # install.packages("performance")
 library(ggeffects) # install.packages("ggeffects")
 library(flextable) # install.packages("flextable")
+# Bioconductor libraries
+library(Biobase) # BiocManager::install("Biobase")
 # Custom operators and functions
 "%nin%" <- function(a, b) match(a, b, nomatch = 0) == 0
 source("natmed/code/functions/get_slope_function.r")

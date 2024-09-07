@@ -1,5 +1,5 @@
 ---
-title: "Effect of felzartamab anti-CD38 treatment on the molecular phenotype of antibody-mediated rejection in kidney transplant biopsies."
+title: "Guide to the effect of felzartamab anti-CD38 treatment on the molecular phenotype of antibody-mediated rejection in kidney transplant biopsies."
 author: "Patrick T Gauthier"
 date: "`r Sys.Date()`"
 output: 
@@ -14,6 +14,11 @@ pre code {
   font-size: 10px; 
 }
 </style>
+
+## Foreword
+
+<span style="font-family: Helvetica; font-size: 20px;">This guide is meant to assist the interpretation of analyses carried out within</span> <span style="font-family: Helvetica; font-size: 20px;font-style: italic;">"Diebold and Gauthier et al. Effect of felzartamab anti-CD38 treatment on the molecular phenotype of antibody-mediated rejection in kidney transplant biopsies. under review. Nature Medicine".</span><span style="font-family: Helvetica; font-size: 20px;"> This manusript is currently under peer-review and has not yet been accepted for publication. This guide is a companion to the GitHub repository (https://github.com/TSI-PTG/CD38-effect-of-treatment)</span>
+
 
 # Analysing the effect of treatment on molecular scores using aligned-rank transformed analysis of variance {.tabset}
 
@@ -440,12 +445,292 @@ ggarrange(
 
 ```
 
+
+# Slope analysis of the effect of felzartamab on injury scores {.tabset}
+
+
+## INTRODUCTION
+
+<span style="font-family: Helvetica; font-size: 20px;">This analysis assesses the slopes for injury scores over time between placebo and felzartamab arms. We used a linear mixed-model to account for repeated measurements over time. </span>
+<br>
+
+
+## DATA WRANGLING
+<br>
+<span style="font-family: Helvetica; font-size: 20px;">First we need to load the necessary R packages and data.</strong></span>
+
+```{r}
+
+# HOUSEKEEPING ####
+# CRAN packages
+library(tidyverse)
+library(lme4)
+library(lmerTest)
+library(performance)
+library(ggeffects)
+library(flextable)
+library(ggpubr) 
+library(patchwork) 
+library(ggprism) 
+# Bioconductor libraries
+library(Biobase) # BiocManager::install("Biobase")
+# Custom operators and functions
+"%nin%" <- function(a, b) match(a, b, nomatch = 0) == 0
+source("C:/R/CD38-effect-of-treatment/natmed/code/functions/get_slope_function.r")
+# load reference set
+load("C:/R/CD38-effect-of-treatment/natmed/data/cd38_3Sept24.RData")
+# load refression plots
+load("C:/R/CD38-effect-of-treatment/natmed/results/plots_regression.RData")
+# load violin plots
+load("C:/R/CD38-effect-of-treatment/natmed/results/plots_artANOVA.RData")
+
+# Seed for reproducibility
+set.seed(42)
+
+
+# DEFINE THE DATA ####
+data <- set %>%
+    pData() %>%
+    dplyr::select(Center, Patient, Felzartamab, Group, IRRAT30, IRITD3, IRITD5) %>%
+    dplyr::filter(Patient %nin% c(15, 18)) %>%
+    mutate(
+        time = case_when(
+            Group == "Index" ~ 0,
+            Group == "FU1" ~ 0.46,
+            Group == "FU2" ~ 0.99
+        ),
+        linetype = "solid" %>% factor()
+    )
+
+
+```
+
+<br>
+<span style="font-family: Helvetica; font-size: 20px;">Now we fit the linear mixed-models.</strong></span>
+
+```{r, message=FALSE}
+# FIT MODELS ####
+fit_IRRAT30 <- lmer(IRRAT30 ~ Felzartamab * time + (time | Patient), data)
+fit_IRITD3 <- lmer(IRITD3 ~ Felzartamab * time + (time | Patient), data)
+fit_IRITD5 <- lmer(IRITD5 ~ Felzartamab * time + (time | Patient), data)
+
+```
+
+<br>
+<span style="font-family: Helvetica; font-size: 20px;">We check the validatity of the model assumptions for IRRAT30.</strong></span>
+```{r, fig.width=8, fig.height=12, dpi=300}
+# test model assumptions
+performance::check_model(fit_IRRAT30)
+performance::check_normality(fit_IRRAT30)
+```
+
+<br>
+<span style="font-family: Helvetica; font-size: 20px;">We check the validatity of the model assumptions for IRITD3.</strong></span>
+
+```{r, fig.width=8, fig.height=12, dpi=300}
+# test model assumptions
+performance::check_model(fit_IRITD3)
+performance::check_normality(fit_IRITD3)
+```
+
+<br>
+<span style="font-family: Helvetica; font-size: 20px;">We check the validatity of the model assumptions for IRITD5.</strong></span>
+
+```{r, fig.width=8, fig.height=12, dpi=300}
+# test model assumptions
+performance::check_model(fit_IRITD5)
+performance::check_normality(fit_IRITD5)
+
+```
+
+
+## ORGANIZE THE RESULTS 
+
+<br>
+<span style="font-family: Helvetica; font-size: 20px;">The next step is to extract and summarize the model results.</strong></span>
+
+```{r}
+# EXTRACT THE SLOPES FROM THE MODEL FITS ####
+# IRRAT30
+# Create list object into which to place model results
+slopes_IRRAT30 <- list()
+# Acute slopes
+slopes_IRRAT30[[1]] <- get_slope(
+    .model_obj = fit_IRRAT30, .name = "Placebo",
+    .contrasts = c(0, 0, 1, 0) #
+)
+slopes_IRRAT30[[2]] <- get_slope(
+    .model_obj = fit_IRRAT30, .name = "Felzartamab",
+    .contrasts = c(0, 0, 1, 1)
+)
+slopes_IRRAT30[[3]] <- get_slope(
+    .model_obj = fit_IRRAT30, .name = "Intergroup Difference",
+    .contrasts = c(0, 0, 0, 1)
+)
+model_IRRAT30 <- slopes_IRRAT30 %>%
+    bind_rows() %>%
+    mutate(p_adjusted = p.adjust(p_value, method = "fdr")) %>%
+    dplyr::select(name, result, p_value, p_adjusted)
+
+# IRITD3
+# Create list object into which to place model results
+slopes_IRITD3 <- list()
+# Acute slopes
+slopes_IRITD3[[1]] <- get_slope(
+    .model_obj = fit_IRITD3, .name = "Placebo",
+    .contrasts = c(0, 0, 1, 0) #
+)
+slopes_IRITD3[[2]] <- get_slope(
+    .model_obj = fit_IRITD3, .name = "Felzartamab",
+    .contrasts = c(0, 0, 1, 1)
+)
+slopes_IRITD3[[3]] <- get_slope(
+    .model_obj = fit_IRITD3, .name = "Intergroup Difference",
+    .contrasts = c(0, 0, 0, 1)
+)
+model_IRITD3 <- slopes_IRITD3 %>%
+    bind_rows() %>%
+    mutate(p_adjusted = p.adjust(p_value, method = "fdr")) %>%
+    dplyr::select(name, result, p_value, p_adjusted)
+
+# IRITD5
+# Create list object into which to place model results
+slopes_IRITD5 <- list()
+# Acute slopes
+slopes_IRITD5[[1]] <- get_slope(
+    .model_obj = fit_IRITD5, .name = "Placebo",
+    .contrasts = c(0, 0, 1, 0) #
+)
+slopes_IRITD5[[2]] <- get_slope(
+    .model_obj = fit_IRITD5, .name = "Felzartamab",
+    .contrasts = c(0, 0, 1, 1)
+)
+slopes_IRITD5[[3]] <- get_slope(
+    .model_obj = fit_IRITD5, .name = "Intergroup Difference",
+    .contrasts = c(0, 0, 0, 1)
+)
+model_IRITD5 <- slopes_IRITD5 %>%
+    bind_rows() %>%
+    mutate(p_adjusted = p.adjust(p_value, method = "fdr")) %>%
+    dplyr::select(name, result, p_value, p_adjusted)
+```
+
+## SUMMARIZE RESULTS
+
+<br>
+<span style="font-family: Helvetica; font-size: 20px;">IRRAT30</strong></span>
+
+```{r}
+size_font <- 10
+model_IRRAT30 %>%
+    dplyr::select(-p_value) %>%
+    flextable::qflextable() %>%
+    flextable::set_table_properties(layout = "autofit") %>%
+    flextable::set_header_labels(
+        name = "Group", result = "IRRAT30 Slope (95%CI)",
+        "p_adjusted" = "FDR"
+    ) %>%
+    flextable::bold(i = NULL, part = "header") %>%
+    flextable::fontsize(size = size_font, part = "all")
+```
+
+<br>
+<span style="font-family: Helvetica; font-size: 20px;">IRITD3</strong></span>
+
+```{r}
+model_IRITD3 %>%
+    dplyr::select(-p_value) %>%
+    flextable::qflextable() %>%
+    flextable::set_table_properties(layout = "autofit") %>%
+    flextable::set_header_labels(
+        name = "Group", result = "IRITD3 Slope (95%CI)",
+        "p_adjusted" = "FDR"
+    ) %>%
+    flextable::bold(i = NULL, part = "header") %>%
+    flextable::fontsize(size = size_font, part = "all")
+```
+
+<br>
+<span style="font-family: Helvetica; font-size: 20px;">IRITD5</strong></span>
+
+```{r}
+model_IRITD5 %>%
+    dplyr::select(-p_value) %>%
+    flextable::qflextable() %>%
+    flextable::set_table_properties(layout = "autofit") %>%
+    flextable::set_header_labels(
+        name = "Group", result = "IRITD5 Slope (95%CI)",
+        "p_adjusted" = "FDR"
+    ) %>%
+    flextable::bold(i = NULL, part = "header") %>%
+    flextable::fontsize(size = size_font, part = "all")
+```
+
+
+## PLOT THE RESULTS
+
+```{r, fig.width=15, fig.height=10, dpi=300, message = FALSE, warning = FALSE}
+
+# DEFINE LEGEND FOR VIOLIN PLOTS ####
+panel_legend_violin <- plots_artANOVA %>%
+    dplyr::filter(variable == "AMAT1") %>%
+    pull(plot_violin) %>%
+    ggpubr::get_legend() %>%
+    ggpubr::as_ggplot() +
+    theme(plot.margin = unit(c(0, 0, -1, 0), "cm"))
+
+
+# DEFINE LEGEND FOR REGRESSION PLOTS ####
+panel_legend_regression <- plots_regression %>%
+    dplyr::filter(variable == "IRRAT30") %>%
+    pull(plot) %>%
+    ggpubr::get_legend() %>%
+    ggpubr::as_ggplot()
+
+
+# DEFIN JOINT LEGEND FOR REGRESSION AND VIOLIN PLOTS ####
+panel_legend_all_injury <- panel_legend_violin + panel_legend_regression
+
+
+# DEFINE INJURY VIOLIN PLOTS ####
+plots_violin <- plots_artANOVA %>%
+    dplyr::filter(category %in% c("injury")) %>%
+    pull(plot_violin)
+
+
+# MAKE PANEL OF SLOPE AND VIOLIN PLOTS ####
+plot_panels_all_injury <- patchwork::wrap_plots(
+    plots_violin[[1]], plots_violin[[2]], plots_violin[[3]],
+    plots_regression$plot[[1]], plots_regression$plot[[2]], plots_regression$plot[[3]],
+    plots_regression$grob_table[[1]], plots_regression$grob_table[[2]], plots_regression$grob_table[[3]],
+    nrow = 3,
+    ncol = 3,
+    guides = "collect",
+    heights = c(1, 1, 0.5)
+) +
+    patchwork::plot_annotation(tag_levels = list(c(LETTERS[1:6], rep("", 3)))) &
+    theme(
+        legend.position = "none",
+        # plot.title = element_blank(),
+        axis.text = element_text(size = 10, colour = "black"),
+        axis.title = element_text(size = 12, colour = "black"),
+        plot.tag = element_text(size = 20, face = "bold", vjust = 1)
+    )
+
+ggarrange(
+    panel_legend_all_injury,
+    plot_panels_all_injury,
+    nrow = 2,
+    heights = c(0.15, 1.5)
+)
+```
+
 # Analysing the effect of treatment on gene expression {.tabset}
 
 
 ## INTRODUCTION
 
-<span style="font-family: Helvetica; font-size: 20px;">This analysis assesses how felzartamab therapy affects gene expression from biopsies from kidney allografts taken from patients with antibody mediated rejection. We use the Linear Models for Microarray Data (limma) pipeline for applying empirical Bayes mediated t-tests on individual genes. Specific contrasts to assessed the interaction between treatment and time are specified to estimate the effect of treatemnt on each gene. </span>
+<span style="font-family: Helvetica; font-size: 20px;">This analysis assesses how felzartamab therapy affects gene expression measured in kidney allograft biopsies taken from patients with antibody mediated rejection. We use the Linear Models for Microarray Data (limma) pipeline for applying empirical Bayes mediated t-tests on individual genes. Specific contrasts to assess the interaction between treatment and time are specified to estimate the effect of treatment on each gene. </span>
 <br>
 
 <span style="font-family: Helvetica; font-size: 20px; ">References:</strong></span>
@@ -526,7 +811,7 @@ set <- set01[featureNames(set01) %in% genes, ]
 
 ## REMOVE GENES THAT DIFFER AT BASELINE BETWEEN PLACEBO AND FELZARTAMAB ARMS
 <br>
-<span style="font-family: Helvetica; font-size: 20px;">The felzartamab trial was a phase II randomize control trial (RCT). While RCTs are the 'gold standard' for establishing causality (i.e., the effect of treatment), they are not perfect, particularly when the number of study participants is low. Thus, we pre-screened gene expression data to remove any genes that differed between placebo and felzartamab arm as baseline. This was done to reduce the potential for interpreting the effect of treatment on genes with dissimilar baseline profiles.</strong></span>
+<span style="font-family: Helvetica; font-size: 20px;">The felzartamab trial was a phase II randomize control trial (RCT). While RCTs are the 'gold standard' for accounting for confounders while establishing causality (i.e., the effect of treatment), they are not perfect, particularly when the number of study participants is low. Thus, we pre-screened gene expression data to remove any genes that differed between placebo and felzartamab arms at baseline. This was done to reduce the potential for interpreting the effect of treatment on genes with dissimilar baseline profiles.</strong></span>
 
 
 ```{r}
@@ -562,7 +847,7 @@ means_baseline <- fit_block_1 %>%
 <br>
 <span style="font-family: Helvetica; font-size: 20px;">The top 20 genes that differ at baseline (sorted by p-value) between placebo and felzartamab arms are summarized below.</strong></span>
 
-<span style="font-family: Helvetica; font-size: 15px;font-style: italic;">(Note that all FDR > 0.05. This is a consequence of differential expression among with n = 10 by treatment group across a large selection of genes (5,267 in this case). Nonetheless, genes with p < 0.05 will be excluded from subsequent analyses).</span>
+<span style="font-family: Helvetica; font-size: 15px;font-style: italic;">(Note that all FDR are > 0.05. This is a consequence of differential expression across a large selection of genes (5,267 in this case) with small samples sizes (i.e., n = 10 by treatment group). Nonetheless, genes with p < 0.05 will be excluded from subsequent analyses).</span>
 
 ```{r}
 # FORMAT TOPTABLES ####
@@ -625,7 +910,7 @@ set02 <- set01[featureNames(set01) %in% genes, ]
 ```
 
 <br>
-<span style="font-family: Helvetica; font-size: 20px;">We need to define the model structure for the contrasts we intend to make. Here we will define 3 major contrast groups; 1) effect of time in placebo group, 2) effect of time in felzartamab group, and 3) the interactive effect of time and treatment. We do this for each time window (baseline to week 24, week 24 to week 52, and baseline to week 52)</strong></span>
+<span style="font-family: Helvetica; font-size: 20px;">We need to define the model structure for the contrasts we intend to make. Here we will define 3 major contrast groups; 1) effect of time in placebo group, 2) effect of time in felzartamab group, and 3) the interactive effect of time and treatment. We do this for each time window (baseline to week 24, week 24 to week 52, and baseline to week 52). We also include a molecular estimate for % cortex as a covariate to adjust for difference in biopsy composition.</strong></span>
 
 
 ```{r}
@@ -652,7 +937,6 @@ contrast_placebo_01 <- makeContrasts(
     "x =  (Felzartamab_FollowupWeek24_Placebo-Felzartamab_FollowupBaseline_Placebo)/2",
     levels = design
 )
-
 
 # CONTRAST DESIGN week52 - week24 ####
 contrast_interaction_02 <- makeContrasts(
@@ -683,6 +967,22 @@ contrast_placebo_03 <- makeContrasts(
     levels = design
 )
 ```
+
+
+<br>
+<span style="font-family: Helvetica; font-size: 20px;">We can check the specified contrast matrix for interaction terms. This is for the baseline to week 24 window.</strong></span>
+
+```{r}
+contrast_interaction_01 %>% as_tibble(rownames = "level")
+```
+
+<br>
+<span style="font-family: Helvetica; font-size: 20px;"> and this is for the baseline to week 52 window.</strong></span>
+
+```{r}
+contrast_interaction_03 %>% as_tibble(rownames = "level")
+```
+
 
 <br>
 <span style="font-family: Helvetica; font-size: 20px;">We now fit the models we've specified</strong></span>
@@ -993,7 +1293,8 @@ flextables <- table_deg %>%
 <br>
 <span style="font-family: Helvetica; font-size: 20px;">Genes suppressed by felzartamab in week 24 compared to baseline </strong></span>
 <br>
-<span style="font-family: Helvetica; font-size: 15px;font-style: italic;">(Note that all &#916;&#916;FDR > 0.05. This is a consequence of differential expression among with n = 10 by treatment group across a large selection of genes (5,267 in this case). Thus, treatment effects on individual genes should not be interpreted. Instead, geneset enrichment analysis (GSEA) will be used to assess bulk trends).</span>
+<span style="font-family: Helvetica; font-size: 15px;font-style: italic;">(Note that all &#916;&#916;FDR are > 0.05. This is a consequence of differential expression across a large selection of genes (5,267 in this case) with small samples sizes (i.e., n = 10 by treatment group). Thus, treatment effects on individual genes should not be interpreted. Instead, geneset enrichment analysis (GSEA) will be used to assess bulk trends).</span>
+
 
 ```{r}
 flextables %>%
@@ -1004,7 +1305,8 @@ flextables %>%
 <br>
 <span style="font-family: Helvetica; font-size: 20px;">Genes suppressed by felzartamab in week 52 compared to baseline </strong></span>
 <br>
-<span style="font-family: Helvetica; font-size: 15px;font-style: italic;">(Note that all &#916;&#916;FDR > 0.05. This is a consequence of differential expression among with n = 10 by treatment group across a large selection of genes (5,267 in this case). Thus, treatment effects on individual genes should not be interpreted. Instead, geneset enrichment analysis (GSEA) will be used to assess bulk trends).</span>
+<span style="font-family: Helvetica; font-size: 15px;font-style: italic;">(Note that all &#916;&#916;FDR are > 0.05. This is a consequence of differential expression across a large selection of genes (5,267 in this case) with small samples sizes (i.e., n = 10 by treatment group). Thus, treatment effects on individual genes should not be interpreted. Instead, geneset enrichment analysis (GSEA) will be used to assess bulk trends).</span>
+
 
 ```{r}
 flextables %>%
@@ -1012,3 +1314,4 @@ flextables %>%
     pull(flextable) %>%
     pluck(1)
 ```
+
