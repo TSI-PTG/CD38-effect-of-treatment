@@ -182,7 +182,6 @@ title_art_pairwise <- paste("Table 1. Effect of felzartamab on molecular scores"
 footnoteText <- c(
     paste(
         "Grey shading denotes ANOVA interactive effect FDR < 0.05\n",
-        "Bold denotes FDR < 0.05\n",
         "FDR correction was carried out within each annotation grouping",
         sep = ""
     ) # ,

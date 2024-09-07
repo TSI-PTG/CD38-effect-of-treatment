@@ -46,6 +46,9 @@ library(multcomp)
 library(ARTool)
 library(rcompanion)
 library(Biobase)
+library(ggpubr) 
+library(patchwork) 
+library(ggprism) 
 
 # Custom operators
 "%nin%" <- function(a, b) match(a, b, nomatch = 0) == 0
@@ -56,6 +59,8 @@ options(dplyr.reframe.inform = FALSE)
 # Load data
 load("C:/R/CD38-effect-of-treatment/natmed/data/cd38_3Sept24.RData")
 load("C:/R/CD38-effect-of-treatment/natmed/results/flextable_artANOVA.RData")
+# load plot data
+load("C:/R/CD38-effect-of-treatment/natmed/results/plots_artANOVA.RData")
 
 # Seed for reproducibility
 set.seed(42)
@@ -349,4 +354,85 @@ artANOVA %>%
 
 ```{r}
 flextable_pairwise
+```
+
+## PLOT THE RESULTS
+
+```{r, fig.width=85/3.54, fig.height=25/2.54, dpi=300}
+
+# EXTRACT LEGEND FOR PLOTS ####
+panel_legend <- plots_artANOVA %>%
+    dplyr::filter(variable == "AMAT1") %>%
+    pull(plot_violin) %>%
+    ggpubr::get_legend() %>%
+    ggpubr::as_ggplot() +
+    theme(plot.margin = unit(c(0, 0, -1, 0), "cm"))
+
+
+# MOLECULAR ABMR PANELS ####
+panel_violin_abmr <- plots_artANOVA %>%
+    dplyr::filter(category %in% c("ABMR")) %>%
+    pull(plot_violin) %>%
+    wrap_plots(nrow = 1, ncol = 5) &
+    theme(
+        axis.text = element_text(size = 10, colour = "black"),
+        legend.position = "none",
+        plot.background = element_rect(fill = "grey95", colour = " white")
+    )
+
+panel_violin_abmr <- panel_violin_abmr %>%
+    ggarrange(
+        labels = "B",
+        font.label = list(size = 25, face = "bold"),
+        legend = "none"
+    ) %>%
+    ggpubr::annotate_figure(
+        top = text_grob("Effect of felzartamab on molecular ABMR activity scores",
+            face = "bold.italic",
+            size = 25,
+            hjust = 1.27
+        )
+    )
+
+
+# MOLECULAR TCMR PANELS ####
+panel_violin_tcmr <- plots_artANOVA %>%
+    dplyr::filter(category %in% c("TCMR")) %>%
+    pull(plot_violin) %>%
+    wrap_plots(nrow = 1, ncol = 5) &
+    theme(
+        axis.text = element_text(size = 10, colour = "black"),
+        legend.position = "none",
+    )
+
+panel_violin_tcmr <- panel_violin_tcmr %>%
+    ggarrange(
+        labels = "C",
+        font.label = list(size = 25, face = "bold"),
+        legend = "none"
+    ) %>%
+    ggpubr::annotate_figure(
+        top = text_grob("Effect of felzartamab on molecular TCMR activity scores",
+            face = "bold.italic",
+            size = 25,
+            hjust = 1.27
+        )
+    )
+
+
+# COMBINED VIOLIN PANELS ####
+panels_violin <- ggarrange(
+    panel_violin_abmr,
+    panel_violin_tcmr,
+    nrow = 2,
+    heights = c(1, 1)
+)
+
+ggarrange(
+    panel_legend,
+    panels_violin,
+    nrow = 2,
+    heights = c(0.125, 1)
+) 
+
 ```
