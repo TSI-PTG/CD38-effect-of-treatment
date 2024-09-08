@@ -1,7 +1,7 @@
 ---
 title: "Guide to the effect of felzartamab anti-CD38 treatment on the molecular phenotype of antibody-mediated rejection in kidney transplant biopsies."
 author: "Patrick T Gauthier"
-date: "`r Sys.Date()`"
+date: "2024-09-08"
 output: 
   html_document:
     toc: true
@@ -17,10 +17,10 @@ pre code {
 
 ## Foreword
 
-<span style="font-family: Helvetica; font-size: 20px;">This guide is meant to assist the interpretation of analyses carried out within</span> <span style="font-family: Helvetica; font-size: 20px;font-style: italic;">"Diebold and Gauthier et al. Effect of felzartamab anti-CD38 treatment on the molecular phenotype of antibody-mediated rejection in kidney transplant biopsies. under review. Nature Medicine".</span><span style="font-family: Helvetica; font-size: 20px;"> This manusript is currently under peer-review and has not yet been accepted for publication. This guide is a companion to the GitHub repository (https://github.com/TSI-PTG/CD38-effect-of-treatment)</span>
+<span style="font-family: Helvetica; font-size: 20px;">This guide is meant to assist the interpretation of analyses carried out within</span> <span style="font-family: Helvetica; font-size: 20px;font-style: italic;">"Diebold and Gauthier et al. Effect of felzartamab anti-CD38 treatment on the molecular phenotype of antibody-mediated rejection in kidney transplant biopsies. under review. Nature Medicine".</span><span style="font-family: Helvetica; font-size: 20px;"> This manusript is currently under peer-review and has not yet been accepted for publication. This guide is a companion to the GitHub repository (https://github.com/TSI-PTG/CD38-effect-of-treatment). The manuscript describes how felzartamab therapy affects gene expression measured in kidney allograft biopsies taken from patients with antibody mediated rejection. Biospies were taken at baseline, as well as 24 and 52 weeks post-baseline. The efficacy of felzartamab in resolving antibody-mediated rejection was compared to the progression of molecular activity in biopsies collected from patients receiving a placebo.</span>
 
 
-# Analysing the effect of treatment on molecular scores using aligned-rank transformed analysis of variance {.tabset}
+# Analysing the effect of treatment on molecular scores using aligned-rank transformed analysis of variance (artANOVA) {.tabset}
 
 
 ## INTRODUCTION
@@ -221,7 +221,6 @@ data_01 %>% print(n="all")
 ```
 
 
-
 ## MEDIAN SCORES AND MEDIAN EFFECT OF TREATMENT
 <br>
 <span style="font-family: Helvetica; font-size: 20px;"> At this stage we can summarize the median values for each score by treatment and follow-up.</strong></span>
@@ -296,7 +295,7 @@ data_02 %>%
 ```
 
 
-## ALIGNED-RANK TRANSFORM ANOVA
+## FIT THE MODELS
 <br>
 <span style="font-family: Helvetica; font-size: 20px;"> Now we carry out the analysis. This includes testing the specific contrasts for the interaction of treatment and time (i.e., our effect of treatment).</strong></span>
 
@@ -326,7 +325,10 @@ artANOVA <- data_02 %>%
 ```
 
 
-## SUMMARIZE RESULTS FOR EACH SCORE
+## SUMMARIZE RESULTS
+<br>
+<span style="font-family: Helvetica; font-size: 20px;"> The artANOVA effects are observed to reject or confirm a treatment effect on the interactive effect for each score (i.e., to support the interpretation of post-hoc tests for effect of treatment).</strong></span>
+
 
 ```{r}
 # CREATE FLEXTABLE SUMMARY OF ART MODELS ####
@@ -355,7 +357,7 @@ artANOVA %>%
 ```
 
 
-## SUMMARISE THE EFFECT OF TREATMENT FOR EACH SCORE ACROSS ALL TIME PERIODS
+## SUMMARIZE POST-HOC TESTS
 <br>
 <span style="font-family: Helvetica; font-size: 20px;"> Here we present the effect of treatment (&#916;&#916;) for each score, along with the effect of time (&#916;) for placebo and felzartmab arms.</strong></span>
 
@@ -446,13 +448,17 @@ ggarrange(
 ```
 
 
-# Slope analysis of the effect of felzartamab on injury scores {.tabset}
+# Analysing the effect of treatment on injury scores using linear-mixed model {.tabset}
 
 
 ## INTRODUCTION
 
-<span style="font-family: Helvetica; font-size: 20px;">This analysis assesses the slopes for injury scores over time between placebo and felzartamab arms. We used a linear mixed-model to account for repeated measurements over time. </span>
+<span style="font-family: Helvetica; font-size: 20px;">While ABMR-related scores changed monotonically over time, dipping at week 24 then rising again by week 52, initial observations of injury scores over time alluded to a different relationship. Injury scores appeared to gradual increase overtime in the placebo arm and a gradual decrease overtime in the felzartamab arm. However, the use of artANOVA, a non-parametric rank-based, test failed to detect such a relationship. This led us to ask if estimating the slopes of injury curves over time would be a more informative interrogation of these data. We applied a linear mixed-model to answer this question. </span>
 <br>
+
+<span style="font-family: Helvetica; font-size: 20px; ">References:</strong></span>
+
+<span style="font-family: Helvetica; font-size: 15px; font-style: italic;">&#8226; Vonesh, E., et al. Mixed-effects models for slope-based endpoints in clinical trials of chronic kidney disease. Stat Med 38, 4218-4239 (2019).</strong></span>
 
 
 ## DATA WRANGLING
@@ -501,9 +507,10 @@ data <- set %>%
         ),
         linetype = "solid" %>% factor()
     )
-
-
 ```
+
+
+## FIT THE MODELS
 
 <br>
 <span style="font-family: Helvetica; font-size: 20px;">Now we fit the linear mixed-models.</strong></span>
@@ -540,11 +547,10 @@ performance::check_normality(fit_IRITD3)
 # test model assumptions
 performance::check_model(fit_IRITD5)
 performance::check_normality(fit_IRITD5)
-
 ```
 
 
-## ORGANIZE THE RESULTS 
+## SUMMARIZE THE RESULTS
 
 <br>
 <span style="font-family: Helvetica; font-size: 20px;">The next step is to extract and summarize the model results.</strong></span>
@@ -614,8 +620,6 @@ model_IRITD5 <- slopes_IRITD5 %>%
     mutate(p_adjusted = p.adjust(p_value, method = "fdr")) %>%
     dplyr::select(name, result, p_value, p_adjusted)
 ```
-
-## SUMMARIZE RESULTS
 
 <br>
 <span style="font-family: Helvetica; font-size: 20px;">IRRAT30</strong></span>
@@ -730,7 +734,7 @@ ggarrange(
 
 ## INTRODUCTION
 
-<span style="font-family: Helvetica; font-size: 20px;">This analysis assesses how felzartamab therapy affects gene expression measured in kidney allograft biopsies taken from patients with antibody mediated rejection. We use the Linear Models for Microarray Data (limma) pipeline for applying empirical Bayes mediated t-tests on individual genes. Specific contrasts to assess the interaction between treatment and time are specified to estimate the effect of treatment on each gene. </span>
+<span style="font-family: Helvetica; font-size: 20px;">In addition to molecular scores, we had the opportunity to carry out genome-wide assessement of the effect of felzartamab. We use the Linear Models for Microarray Data (limma) pipeline for applying empirical Bayes mediated t-tests on individual genes. Specific contrasts to assess the interaction between treatment and time are specified to estimate the effect of treatment on each gene. </span>
 <br>
 
 <span style="font-family: Helvetica; font-size: 20px; ">References:</strong></span>
@@ -866,7 +870,7 @@ baseline_deg %>%
 ```
 
 
-## ESTIMATING TREATMENT EFFECT ON GENE EXPRESSION
+## FIT THE MODELS
 
 <br>
 <span style="font-family: Helvetica; font-size: 20px;">We now carry out differential expression analysis to estimate the treatment effect on individual genes.</strong></span>
@@ -902,7 +906,7 @@ set02 <- set01[featureNames(set01) %in% genes, ]
 ```
 
 <br>
-<span style="font-family: Helvetica; font-size: 20px;">We need to define the model structure for the contrasts we intend to make. Here we will define 3 major contrast groups; 1) effect of time in placebo group, 2) effect of time in felzartamab group, and 3) the interactive effect of time and treatment. We do this for each time window (baseline to week 24, week 24 to week 52, and baseline to week 52). We also include a molecular estimate for % cortex as a covariate to adjust for difference in biopsy composition.</strong></span>
+<span style="font-family: Helvetica; font-size: 20px;">We need to define the model structure for the contrasts we intend to make. Here we will define 3 major contrast blocks; 1) effect of time in placebo group, 2) effect of time in felzartamab group, and 3) the interactive effect of time and treatment. Blocks 1 and 2 are assessed purely for descriptive reasons as we are primarily concerned with block 3. We do this for each time window (baseline to week 24, week 24 to week 52, and baseline to week 52). We also include a molecular estimate for % cortex as a covariate to adjust for difference in biopsy composition.</strong></span>
 
 
 ```{r}
@@ -1060,7 +1064,7 @@ tab_placebo_3 <- limma::topTable(ebayes_placebo_3, adjust = "fdr", sort.by = "p"
 
 ```
 
-## ORGANIZE THE RESULTS
+## SUMMARIZE THE RESULTS
 <br>
 <span style="font-family: Helvetica; font-size: 20px;">The results are now organized for tabulation </strong></span>
 
@@ -1184,7 +1188,6 @@ deg <- tibble(
 )
 ```
 
-## SUMMARIZE THE RESULTS
 
 ```{r}
 # FORMAT TABLES TO MAKE FLEXTABLES ####
@@ -1313,7 +1316,7 @@ flextables %>%
 
 ## INTRODUCTION
 
-<span style="font-family: Helvetica; font-size: 20px;">We applied geneset enrichment analysis (GSEA) to identify pathways affected by felzartamab treatment. Multiple libraries were screened to encompass a broad spectrum of biological pathways, including Gene Ontology (GO), Disease Ontology Semantic and Enrichment analysis (DOSE), Kyoto Encyclopedia of Genes and Genomes (KEGG), Reactome, Molecular Signatures Database (MsigDB), and WikiPathways (wiki) libraries. An additional de-novo injury geneset was also assesed. This injury geneset was based on single-nuclei transcriptomics assessed from healthy and injury kidney allografts. Geneset enrichment was chosen specifcally because it is a rank-based test and does not require cutoffs based on p-values or t-values. Nonetheless, here we decided apriori that we would pre-screen genes based on their p-values from differential expression analyses described in Section 3. Note that there are many ways for carrying out pathway and functional enrichment analyses. Also note that gene libraries are frequently updated and you may find slightly different results based on the packge version being used. For example, here we encountered such a difference in the DOSE library, where versions later than 3.30.1 identified two pathways that were not identified using version 3.30.1. Thus, we have included a tarball of the package version (v3.30.1) used for the original analyses in this paper for convenient installation and replication of the presented findings.</span>
+<span style="font-family: Helvetica; font-size: 20px;">We applied geneset enrichment analysis (GSEA) to identify pathways affected by felzartamab treatment. Multiple libraries were screened to encompass a broad spectrum of biological pathways, including Gene Ontology (GO), Disease Ontology Semantic and Enrichment analysis (DOSE), Kyoto Encyclopedia of Genes and Genomes (KEGG), Reactome, Molecular Signatures Database (MsigDB), and WikiPathways (wiki) libraries. An additional de-novo injury geneset was also assesed. This injury geneset was based on single-nuclei transcriptomics assessed from healthy and injury kidney allografts. Geneset enrichment was chosen specifcally because it is a rank-based test and does not require cutoffs based on p-values or t-values. Nonetheless, here we decided apriori that we would pre-screen genes based on their p-values from differential expression analyses described in Section 3. The intent for this pre-screening was to limit interpretation from GSEA to genes which had the greatest measured difference between placebo and felzartamab arms over time. Note that there are many ways for carrying out pathway and functional enrichment analyses. Also note that gene libraries are frequently updated and you may find slightly different results based on the packge version being used. For example, here we encountered such a difference in the DOSE library, where versions later than 3.30.1 identified two pathways that were not identified using version 3.30.1. Thus, we have included a tarball of the package version (v3.30.1) used for the original analyses in this paper for convenient installation and replication of the presented findings.</span>
 <br>
 
 <span style="font-family: Helvetica; font-size: 20px; ">References:</strong></span>
@@ -1883,7 +1886,7 @@ names(gsea_reactome$gsea_flextables) <- gsea_reactome$design
 ```
 
 <br>
-<span style="font-family: Helvetica; font-size: 20px;">wikiPathways library</strong></span>
+<span style="font-family: Helvetica; font-size: 20px;">WikiPathways library</strong></span>
 
 ```{r, message = FALSE, warning = FALSE}
 # WRANGLE GENE DATA FOR GSEA ####
@@ -2096,7 +2099,7 @@ gsea_aki <- gsea_aki_tables %>%
 names(gsea_aki$gsea_flextables) <- gsea_aki$design
 ```
 
-## COLLATE AND SUMMARIZE GSEA RESULTS
+## SUMMARIZE THE RESULTS
 
 <br>
 <span style="font-family: Helvetica; font-size: 20px;">GSEA results from each library can now be combined and summarised. Note that pathway annotations need to be interpreted in light of their developement in combination with how GSEA determines their enrichment, and the relevance of enriched pathways must be evaluated in the context of transplantation. For our interpretation, we avail to the pathway annotation as well as core enrichment genes contributing to enrichment via GSEA. We have simplified the interpretation of enriched pathways based on the overlap in biological function of their core enrichement genes.</strong></span>
