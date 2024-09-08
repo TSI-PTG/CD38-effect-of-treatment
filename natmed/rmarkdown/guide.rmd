@@ -25,7 +25,7 @@ pre code {
 
 ## INTRODUCTION
 
-<span style="font-family: Helvetica; font-size: 20px;">This analysis assesses how felzartamab therapy affects molecular sores measured with gene expression data from biopsies from kidney allografts taken from patients with antibody mediated rejection. The assumptions of normality and heterogeneity of variance differ across molecular scores, thus we avail to alinged-rank transformation to carry out a non-parametric ANOVA. This is powerful in this context because it allows us to test for the interactive effect of treatment (i.e., placebo vs felzartamab) and time (i.e., change in scores from biopsy to biopsy). Aligned-rank transformation also allows for us to specify a mixed-model to handle repeated measurements (i.e., biopsies) across patients.</span>
+<span style="font-family: Helvetica; font-size: 20px;">This analysis assesses how felzartamab therapy affects molecular scores measured with gene expression data from biopsies from kidney allografts taken from patients with antibody-mediated rejection. The assumptions of normality and heterogeneity of variance differ across molecular scores, thus we avail to aligned-rank transformation to carry out a non-parametric ANOVA. This is powerful in this context because it allows us to test for the interactive effect of treatment (i.e., placebo vs felzartamab) and time (i.e., change in scores from biopsy to biopsy). Aligned-rank transformation also allows for us to specify a mixed-model to handle repeated measurements (i.e., biopsies) across patients.</span>
 <br>
 
 <span style="font-family: Helvetica; font-size: 20px; ">References:</strong></span>
@@ -222,7 +222,7 @@ data_01 %>% print(n="all")
 
 
 
-## CALCULATE MEDIAN SCORES AND MEDIAN EFFECT OF TREATMENT
+## MEDIAN SCORES AND MEDIAN EFFECT OF TREATMENT
 <br>
 <span style="font-family: Helvetica; font-size: 20px;"> At this stage we can summarize the median values for each score by treatment and follow-up.</strong></span>
 
@@ -284,7 +284,7 @@ data_02 %>%
     flextable::flextable()
 ```
 <br>
-<span style="font-family: Helvetica; font-size: 20px;"> Now we can look at the change in median ABMRprob scores in the placebo and felzartamab arms, as well as the differnce in those medians (i.e., &#916;&#916; median - this is our summarized treatment effect).</strong></span>
+<span style="font-family: Helvetica; font-size: 20px;"> Now we can look at the change in median ABMRprob scores in the placebo and felzartamab arms, as well as the difference in those medians (i.e., &#916;&#916; median - this is our summarized treatment effect).</strong></span>
 
 
 ```{r}
@@ -296,7 +296,7 @@ data_02 %>%
 ```
 
 
-## CARRY OUT ALIGNED-RANK TRANSFORM ANOVA
+## ALIGNED-RANK TRANSFORM ANOVA
 <br>
 <span style="font-family: Helvetica; font-size: 20px;"> Now we carry out the analysis. This includes testing the specific contrasts for the interaction of treatment and time (i.e., our effect of treatment).</strong></span>
 
@@ -326,7 +326,7 @@ artANOVA <- data_02 %>%
 ```
 
 
-## CREATE A SUMMARY TABLE OF ANOVA RESULTS FOR EACH SCORE
+## SUMMARIZE RESULTS FOR EACH SCORE
 
 ```{r}
 # CREATE FLEXTABLE SUMMARY OF ART MODELS ####
@@ -764,11 +764,9 @@ set.seed(42)
 
 # DEFINE THE SET ####
 set00 <- set[, set$Patient %nin% c(15, 18)]
-
-
 ```
-<br>
 
+<br>
 <span style="font-family: Helvetica; font-size: 20px;">&#8226; We filter the gene expression data by to remove genes with minimal variance across the population (IQR filtering).</strong></span>
 
 
@@ -780,10 +778,9 @@ if (!exists("selected")) {
     selected <- genefilter(set00, ff)
 }
 set01 <- set00[selected, ]
-
 ```
 
-
+<br>
 <span style="font-family: Helvetica; font-size: 20px;">&#8226; We then retain a single probeset for each gene based on whichever has the highest mean expression in the population.</strong></span>
 
 
@@ -804,15 +801,12 @@ genes <- mean_exprs_by_probe %>%
     pull(AffyID)
 
 set <- set01[featureNames(set01) %in% genes, ]
-
 ```
-
 
 
 ## REMOVE GENES THAT DIFFER AT BASELINE BETWEEN PLACEBO AND FELZARTAMAB ARMS
 <br>
-<span style="font-family: Helvetica; font-size: 20px;">The felzartamab trial was a phase II randomize control trial (RCT). While RCTs are the 'gold standard' for accounting for confounders while establishing causality (i.e., the effect of treatment), they are not perfect, particularly when the number of study participants is low. Thus, we pre-screened gene expression data to remove any genes that differed between placebo and felzartamab arms at baseline. This was done to reduce the potential for interpreting the effect of treatment on genes with dissimilar baseline profiles.</strong></span>
-
+<span style="font-family: Helvetica; font-size: 20px;">The felzartamab trial was a phase II randomized control trial (RCT). While RCTs are the 'gold standard' for accounting for confounders while establishing causality (i.e., the effect of treatment), they are not perfect, particularly when the number of study participants is low. Thus, we pre-screened gene expression data to remove any genes that differed between placebo and felzartamab arms at baseline. This was done to reduce the potential for interpreting the effect of treatment on genes with dissimilar baseline profiles.</strong></span>
 
 ```{r}
 # DEFINE FACTOR FOR CONTRASTS ####
@@ -841,7 +835,6 @@ means_baseline <- fit_block_1 %>%
     mutate_if(is.numeric, ~ 2^. %>% round(0)) %>%
     rename_at(vars(contains("Felz")), ~ str_remove(., "Felzartamab_Followup")) %>%
     dplyr::select(AffyID, contains("Baseline"))
-
 ```
 
 <br>
@@ -870,7 +863,6 @@ baseline_deg %>%
     mutate_at(vars(t, logFC, FDR), ~ formatC(.x, format = "f", digits = 2)) %>%
     mutate_at(vars(p), ~ formatC(.x, format = "f", digits = 5)) %>%
     flextable::flextable()
-
 ```
 
 
@@ -1068,7 +1060,7 @@ tab_placebo_3 <- limma::topTable(ebayes_placebo_3, adjust = "fdr", sort.by = "p"
 
 ```
 
-## ORAGNIZE THE RESULTS
+## ORGANIZE THE RESULTS
 <br>
 <span style="font-family: Helvetica; font-size: 20px;">The results are now organized for tabulation </strong></span>
 
@@ -1313,5 +1305,958 @@ flextables %>%
     dplyr::filter(design == "Baseline_vs_Week52", direction == "decreased") %>%
     pull(flextable) %>%
     pluck(1)
+```
+
+
+# Geneset enrichment analysis to identify pathways affected by felzartamab treatment {.tabset}
+
+
+## INTRODUCTION
+
+<span style="font-family: Helvetica; font-size: 20px;">Geneset enrichment analysis (GSEA) is applied to identify pathways affected by felzartamab treatment. Multiple libraries were screened to encompass a broad spectrum of biological pathways, including Gene Ontology (GO), Disease Ontology Semantic and Enrichment analysis (DOSE), Kyoto Encyclopedia of Genes and Genomes (KEGG), Reactome, Molecular Signatures Database (MsigDB), and WikiPathways (wiki) libraries. An additional de-novo injury geneset was also assesed. This injury geneset was based on single-nuclei transcriptomics assessed from healthy and injury kidney allografts. Geneset enrichment was chosen specifcally because it is a rank-based test and does not require cutoffs based on p-values or t-values. Nonetheless, here we decided apriori that we would pre-screen genes based on their p-values from differential expression analyses described in Section 3. Note that there are many ways for carrying out pathway and functional enrichment analyses. Also note that gene libraries are frequently updated and you may find slightly different results based on the packge version being used. For example, here we encountered such a difference in the DOSE library, where versions later than 3.30.1 identified two different pathways. Thus, we have included a tarball of the package version used for the original analyses in this paper for convenient installation and replication of the presented findings.</span>
+<br>
+
+<span style="font-family: Helvetica; font-size: 20px; ">References:</strong></span>
+
+<span style="font-family: Helvetica; font-size: 15px; font-style: italic;">&#8226; Yu, G., Wang, L.G., Han, Y. & He, Q.Y. clusterProfiler: an R package for comparing biological themes among gene clusters. OMICS 16, 284-287 (2012).</strong></span>
+
+<span style="font-family: Helvetica; font-size: 15px; font-style: italic;">&#8226; Wu, T., et al. clusterProfiler 4.0: A universal enrichment tool for interpreting omics data. Innovation (Camb) 2, 100141 (2021).</strong></span>
+
+<span style="font-family: Helvetica; font-size: 15px; font-style: italic;">&#8226; Hinze, C., et al. Single-cell transcriptomics reveals common epithelial response patterns in human acute kidney injury. Genome Med 14, 103 (2022).</strong></span>
+
+
+
+## DATA WRANGLING
+<br>
+<span style="font-family: Helvetica; font-size: 20px;">First we need to load the necessary R packages and data.</strong></span>
+
+```{r, warnings = FALSE, message = FALSE}
+# HOUSEKEEPING ####
+# CRAN libraries
+library(tidyverse)
+library(flextable) 
+library(officer) 
+library(msigdbr)
+# Bioconductor libraries
+# DOSE v 3.30.1 required for reproducibility
+# install.packages("natmed/data/DOSE_3.30.1.tar.gz", repos = NULL, type = "source")
+library(DOSE)
+library(ReactomePA)
+library(Biobase) 
+library(clusterProfiler)
+library(org.Hs.eg.db) 
+library(pRoloc) 
+# Custom operators and functions
+"%nin%" <- function(a, b) match(a, b, nomatch = 0) == 0
+# load DE data
+load("C:/R/CD38-effect-of-treatment/natmed/results/deg.RData")
+
+# Seed for reproducibility
+set.seed(42)
+```
+
+
+## GENESET ENRICHMENT ANALYSES
+
+<br>
+<span style="font-family: Helvetica; font-size: 20px;">Geneset enrichment analyses using the ClusterProfiler package have simlar, but not identical implementation. This section will carry out GSEA on all described libraries, after which the results will be collated and summarized.</strong></span>
+
+<br>
+<span style="font-family: Helvetica; font-size: 20px;">GO library</strong></span>
+
+```{r, message = FALSE, warning = FALSE}
+
+# WRANGLE GENE DATA FOR GSEA ####
+data <- deg %>%
+    mutate(
+        genes_gsea = map(
+            table,
+            function(table) {
+                table %>%
+                    dplyr::filter(p < 0.05) %>%
+                    arrange(t %>% dplyr::desc()) %>%
+                    dplyr::mutate(
+                        ENTREZID = bitr(Symb,
+                            fromType = "SYMBOL",
+                            toType = c("ENTREZID"),
+                            OrgDb = org.Hs.eg.db,
+                            drop = FALSE
+                        ) %>% pull(ENTREZID)
+                    ) %>%
+                    drop_na(ENTREZID) %>%
+                    dplyr::select(t, ENTREZID) %>%
+                    pull(t, ENTREZID)
+            }
+        )
+    )
+
+
+# GENESET ENRICHMENT ANALYSES (GSEA) ####
+set.seed(42)
+gsea_go <- data %>%
+    mutate(
+        gsea = map(
+            genes_gsea,
+            function(genes_gsea) {
+                clusterProfiler::gseGO(
+                    gene = genes_gsea, ont = "BP", OrgDb = org.Hs.eg.db,
+                    minGSSize = 10, maxGSSize = 200,
+                    pvalueCutoff = 0.001, pAdjustMethod = "fdr", seed = TRUE
+                ) %>% clusterProfiler::setReadable(OrgDb = org.Hs.eg.db, keyType = "ENTREZID")
+            }
+        )
+    )
+
+
+# SIMPLIFY GO TERMS ####
+set.seed(42)
+gsea_go_simplified <- gsea_go %>%
+    mutate(gsea_simplified = map(gsea, clusterProfiler::simplify))
+
+
+# FORMAT TABLES FOR GENESET ENRICHMENT ANALYSES (GSEA) ####
+gsea_go_simplified_formatted <- gsea_go_simplified %>%
+    mutate(
+        gsea_tables = map(
+            gsea_simplified,
+            function(gsea_simplified) {
+                gsea_simplified %>%
+                    as_tibble() %>%
+                    arrange(pvalue) %>%
+                    mutate(
+                        sign = case_when(NES < 0 ~ "Down Regulated", NES > 0 ~ "Up Regulated"),
+                        Description = factor(Description, levels = Description, ordered = TRUE)
+                    ) 
+            }
+        )
+    )
+
+
+# FORMAT TABLES FOR GENESET ENRICHMENT ANALYSES (GSEA) ####
+gsea_go_tables <- gsea_go_simplified_formatted %>%
+    mutate(
+        gsea_flextables = map(
+            gsea_tables,
+            function(gsea_tables) {
+                gsea_tables %>%
+                    slice_min(pvalue, n = 20) %>%
+                    mutate(
+                        NES = NES %>% round(2),
+                        pvalue = case_when(
+                            pvalue < 0.0001 ~ pvalue %>% formatC(digits = 0, format = "e"),
+                            TRUE ~ pvalue %>% formatC(digits = 4, format = "f")
+                        ),
+                        FDR = case_when(
+                            p.adjust < 0.0001 ~ p.adjust %>% formatC(digits = 0, format = "e"),
+                            TRUE ~ p.adjust %>% formatC(digits = 4, format = "f")
+                        ),
+                    ) %>%
+                    dplyr::select(Description, setSize, NES, pvalue, FDR, dplyr::any_of("core_enrichment")) %>%
+                    flextable::flextable() %>%
+                    flextable::border_remove() %>%
+                    flextable::border(border = officer::fp_border(), part = "all") %>%
+                    flextable::align(align = "center", part = "all") %>%
+                    flextable::align(j = "core_enrichment", align = "left", part = "body") %>%
+                    flextable::bg(bg = "white", part = "all") %>%
+                    flextable::autofit()
+            }
+        )
+    )
+
+# PREPARE THE RESULTS FOR EXPORT ####
+gsea_go <- gsea_go_tables %>%
+    mutate(db = "GO", .before = 1)
+names(gsea_go$gsea_flextables) <- gsea_go$design
+```
+
+<br>
+<span style="font-family: Helvetica; font-size: 20px;">DOSE library</strong></span>
+
+```{r, message = FALSE, warning = FALSE}
+
+# WRANGLE GENE DATA FOR GSEA ####
+data <- deg %>%
+    mutate(
+        genes_gsea = map(
+            table,
+            function(table) {
+                table %>%
+                    dplyr::filter(p < 0.05) %>%
+                    arrange(t %>% dplyr::desc()) %>%
+                    dplyr::mutate(
+                        ENTREZID = clusterProfiler::bitr(Symb,
+                            fromType = "SYMBOL",
+                            toType = c("ENTREZID"),
+                            OrgDb = org.Hs.eg.db,
+                            drop = FALSE
+                        ) %>% pull(ENTREZID)
+                    ) %>%
+                    drop_na(ENTREZID) %>%
+                    dplyr::select(t, ENTREZID) %>%
+                    pull(t, ENTREZID)
+            }
+        )
+    )
+
+
+# GENESET ENRICHMENT ANALYSES (GSEA) ####
+set.seed(42)
+gsea_dose <- data %>%
+    mutate(
+        gsea = map(
+            genes_gsea,
+            function(genes_gsea) {
+                DOSE::gseDO(
+                    gene = genes_gsea,
+                    minGSSize = 10, maxGSSize = 200,
+                    pvalueCutoff = 0.001, pAdjustMethod = "fdr", seed = TRUE
+                ) %>% clusterProfiler::setReadable(OrgDb = org.Hs.eg.db, keyType = "ENTREZID")
+            }
+        )
+    )
+
+
+# FORMAT TABLES FOR GENESET ENRICHMENT ANALYSES (GSEA) ####
+gsea_dose_formatted <- gsea_dose %>%
+    mutate(
+        gsea_tables = map(
+            gsea,
+            function(gsea) {
+                gsea %>%
+                    as_tibble() %>%
+                    arrange(pvalue) %>%
+                    mutate(sign = case_when(NES < 0 ~ "Down Regulated", NES > 0 ~ "Up Regulated")) 
+            }
+        )
+    )
+
+
+
+# FORMAT TABLES FOR GENESET ENRICHMENT ANALYSES (GSEA) ####
+gsea_dose_tables <- gsea_dose_formatted %>%
+    mutate(
+        gsea_flextables = map(
+            gsea_tables,
+            function(gsea_tables) {
+                gsea_tables %>%
+                    slice_min(pvalue, n = 20) %>%
+                    mutate(
+                        NES = NES %>% round(2),
+                        pvalue = case_when(
+                            pvalue < 0.0001 ~ pvalue %>% formatC(digits = 0, format = "e"),
+                            TRUE ~ pvalue %>% formatC(digits = 4, format = "f")
+                        ),
+                        FDR = case_when(
+                            p.adjust < 0.0001 ~ p.adjust %>% formatC(digits = 0, format = "e"),
+                            TRUE ~ p.adjust %>% formatC(digits = 4, format = "f")
+                        ),
+                    ) %>%
+                    dplyr::select(Description, setSize, NES, pvalue, FDR,  dplyr::any_of("core_enrichment")) %>%
+                    flextable::flextable() %>%
+                    flextable::border_remove() %>%
+                    flextable::border(border = officer::fp_border(), part = "all") %>%
+                    flextable::align(align = "center", part = "all") %>%
+                    flextable::align(j = "core_enrichment", align = "left", part = "body") %>%
+                    flextable::bg(bg = "white", part = "all") %>%
+                    flextable::autofit()
+            }
+        )
+    )
+
+# PREPARE THE RESULTS FOR EXPORT ####
+gsea_dose <- gsea_dose_tables %>%
+    mutate(db = "DOSE", .before = 1)
+names(gsea_dose$gsea_flextables) <- gsea_dose$design
+```
+
+<br>
+<span style="font-family: Helvetica; font-size: 20px;">KEGG library</strong></span>
+
+```{r, message = FALSE, warning = FALSE}
+
+# WRANGLE GENE DATA FOR GSEA ####
+data <- deg %>%
+    mutate(
+        genes_gsea = map(
+            table,
+            function(table) {
+                table %>%
+                    dplyr::filter(p < 0.05) %>%
+                    arrange(t %>% dplyr::desc()) %>%
+                    dplyr::mutate(
+                        ENTREZID = bitr(Symb,
+                            fromType = "SYMBOL",
+                            toType = c("ENTREZID"),
+                            OrgDb = org.Hs.eg.db,
+                            drop = FALSE
+                        ) %>% pull(ENTREZID)
+                    ) %>%
+                    drop_na(ENTREZID) %>%
+                    dplyr::select(t, ENTREZID) %>%
+                    pull(t, ENTREZID)
+            }
+        )
+    )
+
+
+# GENESET ENRICHMENT ANALYSES (GSEA) ####
+set.seed(42)
+gsea_kegg <- data %>%
+    mutate(
+        gsea = map(
+            genes_gsea,
+            function(genes_gsea) {
+                clusterProfiler::gseKEGG(
+                    gene = genes_gsea, organism = "hsa",
+                    minGSSize = 10, maxGSSize = 200,
+                    pvalueCutoff = 0.001, pAdjustMethod = "fdr", seed = TRUE
+                ) %>% clusterProfiler::setReadable(OrgDb = org.Hs.eg.db, keyType = "ENTREZID")
+            }
+        )
+    )
+
+
+# FORMAT TABLES FOR GENESET ENRICHMENT ANALYSES (GSEA) ####
+gsea_kegg_formatted <- gsea_kegg %>%
+    mutate(
+        gsea_tables = map(
+            gsea,
+            function(gsea) {
+                gsea %>%
+                    as_tibble() %>%
+                    arrange(pvalue) %>%
+                    mutate(
+                        sign = case_when(NES < 0 ~ "Down Regulated", NES > 0 ~ "Up Regulated"),
+                        Description = factor(Description, levels = Description, ordered = TRUE)
+                    )
+            }
+        )
+    )
+
+
+# FORMAT TABLES FOR GENESET ENRICHMENT ANALYSES (GSEA) ####
+gsea_kegg_tables <- gsea_kegg_formatted %>%
+    mutate(
+        gsea_flextables = map(
+            gsea_tables,
+            function(gsea_tables) {
+                gsea_tables %>%
+                    slice_min(pvalue, n = 20) %>%
+                    mutate(
+                        NES = NES %>% round(2),
+                        pvalue = case_when(
+                            pvalue < 0.0001 ~ pvalue %>% formatC(digits = 0, format = "e"),
+                            TRUE ~ pvalue %>% formatC(digits = 4, format = "f")
+                        ),
+                        FDR = case_when(
+                            p.adjust < 0.0001 ~ p.adjust %>% formatC(digits = 0, format = "e"),
+                            TRUE ~ p.adjust %>% formatC(digits = 4, format = "f")
+                        ),
+                    ) %>%
+                    dplyr::select(Description, setSize, NES, pvalue, FDR, dplyr::any_of("core_enrichment")) %>%
+                    flextable::flextable() %>%
+                    flextable::border_remove() %>%
+                    flextable::border(border = officer::fp_border(), part = "all") %>%
+                    flextable::align(align = "center", part = "all") %>%
+                    flextable::align(j = "core_enrichment", align = "left", part = "body") %>%
+                    flextable::bg(bg = "white", part = "all") %>%
+                    flextable::autofit()
+            }
+        )
+    )
+
+
+# PREPARE THE RESULTS FOR EXPORT ####
+gsea_kegg <- gsea_kegg_tables %>%
+    mutate(db = "kegg", .before = 1)
+names(gsea_kegg$gsea_flextables) <- gsea_kegg$design
+```
+
+<br>
+<span style="font-family: Helvetica; font-size: 20px;">MSigDB library</strong></span>
+
+```{r, message = FALSE, warning = FALSE}
+
+# WRANGLE GENE DATA FOR GSEA ####
+data <- deg %>%
+    mutate(
+        genes_gsea = map(
+            table,
+            function(table) {
+                table %>%
+                    dplyr::filter(p < 0.05) %>%
+                    arrange(t %>% dplyr::desc()) %>%
+                    dplyr::mutate(
+                        ENTREZID = bitr(Symb,
+                            fromType = "SYMBOL",
+                            toType = c("ENTREZID"),
+                            OrgDb = org.Hs.eg.db,
+                            drop = FALSE
+                        ) %>% pull(ENTREZID)
+                    ) %>%
+                    drop_na(ENTREZID) %>%
+                    dplyr::select(t, ENTREZID) %>%
+                    pull(t, ENTREZID)
+            }
+        )
+    )
+
+
+# DEFINE MSigDB PATHWAYS ####
+gene_sets <- msigdbr(category = "H")
+map <- gene_sets[, c("gs_name", "entrez_gene")]
+map$entrez_gene <- as.character(map$entrez_gene)
+
+
+# GENESET ENRICHMENT ANALYSES (GSEA) ####
+set.seed(42)
+gsea_msigdb <- data %>%
+    mutate(
+        gsea = map(
+            genes_gsea,
+            function(genes_gsea) {
+                clusterProfiler::GSEA(
+                    gene = genes_gsea, TERM2GENE = map,
+                    minGSSize = 10, maxGSSize = 200,
+                    pvalueCutoff = 0.001, pAdjustMethod = "fdr", seed = TRUE
+                ) %>% clusterProfiler::setReadable(OrgDb = org.Hs.eg.db, keyType = "ENTREZID")
+            }
+        )
+    )
+
+
+# FORMAT TABLES FOR GENESET ENRICHMENT ANALYSES (GSEA) ####
+gsea_msigdb_formatted <- gsea_msigdb %>%
+    mutate(
+        gsea_tables = map(
+            gsea,
+            function(gsea) {
+                gsea %>%
+                    as_tibble() %>%
+                    arrange(pvalue) %>%
+                    mutate(
+                        sign = case_when(NES < 0 ~ "Down Regulated", NES > 0 ~ "Up Regulated"),
+                        Description = factor(Description, levels = Description, ordered = TRUE)
+                    ) 
+            }
+        )
+    )
+
+
+# FORMAT TABLES FOR GENESET ENRICHMENT ANALYSES (GSEA) ####
+gsea_msigdb_tables <- gsea_msigdb_formatted %>%
+    mutate(
+        gsea_flextables = map(
+            gsea_tables,
+            function(gsea_tables) {
+                gsea_tables %>%
+                    # slice_min(pvalue, n = 20) %>%
+                    mutate(
+                        NES = NES %>% round(2),
+                        pvalue = case_when(
+                            pvalue < 0.0001 ~ pvalue %>% formatC(digits = 0, format = "e"),
+                            TRUE ~ pvalue %>% formatC(digits = 4, format = "f")
+                        ),
+                        FDR = case_when(
+                            p.adjust < 0.0001 ~ p.adjust %>% formatC(digits = 0, format = "e"),
+                            TRUE ~ p.adjust %>% formatC(digits = 4, format = "f")
+                        ),
+                    ) %>%
+                    dplyr::select(Description, setSize, NES, pvalue, FDR, dplyr::any_of("core_enrichment")) %>%
+                    flextable::flextable() %>%
+                    flextable::border_remove() %>%
+                    flextable::border(border = officer::fp_border(), part = "all") %>%
+                    flextable::align(align = "center", part = "all") %>%
+                    flextable::align(j = "core_enrichment", align = "left", part = "body") %>%
+                    flextable::bg(bg = "white", part = "all") %>%
+                    flextable::autofit()
+            }
+        )
+    )
+
+
+# PREPARE THE RESULTS FOR EXPORT ####
+gsea_msigdb <- gsea_msigdb_tables %>%
+    mutate(db = "msigdb", .before = 1)
+names(gsea_msigdb$gsea_flextables) <- gsea_msigdb$design
+```
+
+<br>
+<span style="font-family: Helvetica; font-size: 20px;">REACTOME library</strong></span>
+
+```{r, message = FALSE, warning = FALSE}
+# WRANGLE GENE DATA FOR GSEA ####
+data <- deg %>%
+    mutate(
+        genes_gsea = map(
+            table,
+            function(table) {
+                table %>%
+                    dplyr::filter(p < 0.05) %>%
+                    arrange(t %>% dplyr::desc()) %>%
+                    dplyr::mutate(
+                        ENTREZID = bitr(Symb,
+                            fromType = "SYMBOL",
+                            toType = c("ENTREZID"),
+                            OrgDb = org.Hs.eg.db,
+                            drop = FALSE
+                        ) %>% pull(ENTREZID)
+                    ) %>%
+                    drop_na(ENTREZID) %>%
+                    dplyr::select(t, ENTREZID) %>%
+                    pull(t, ENTREZID)
+            }
+        )
+    )
+
+
+# GENESET ENRICHMENT ANALYSES (GSEA) ####
+set.seed(42)
+gsea_reactome <- data %>%
+    mutate(
+        gsea = map(
+            genes_gsea,
+            function(genes_gsea) {
+                ReactomePA::gsePathway(
+                    gene = genes_gsea, organism = "human",
+                    minGSSize = 10, maxGSSize = 200,
+                    pvalueCutoff = 0.001, pAdjustMethod = "fdr", seed = TRUE
+                ) %>% clusterProfiler::setReadable(OrgDb = org.Hs.eg.db, keyType = "ENTREZID")
+            }
+        )
+    )
+
+
+# FORMAT TABLES FOR GENESET ENRICHMENT ANALYSES (GSEA) ####
+gsea_reactome_formatted <- gsea_reactome %>%
+    mutate(
+        gsea_tables = map(
+            gsea,
+            function(gsea) {
+                gsea %>%
+                    as_tibble() %>%
+                    arrange(pvalue) %>%
+                    mutate(
+                        sign = case_when(NES < 0 ~ "Down Regulated", NES > 0 ~ "Up Regulated"),
+                        Description = factor(Description, levels = Description, ordered = TRUE)
+                    ) 
+            }
+        )
+    )
+
+
+# FORMAT TABLES FOR GENESET ENRICHMENT ANALYSES (GSEA) ####
+gsea_reactome_tables <- gsea_reactome_formatted %>%
+    mutate(
+        gsea_flextables = map(
+            gsea_tables,
+            function(gsea_tables) {
+                gsea_tables %>%
+                    slice_min(pvalue, n = 20) %>%
+                    mutate(
+                        NES = NES %>% round(2),
+                        pvalue = case_when(
+                            pvalue < 0.0001 ~ pvalue %>% formatC(digits = 0, format = "e"),
+                            TRUE ~ pvalue %>% formatC(digits = 4, format = "f")
+                        ),
+                        FDR = case_when(
+                            p.adjust < 0.0001 ~ p.adjust %>% formatC(digits = 0, format = "e"),
+                            TRUE ~ p.adjust %>% formatC(digits = 4, format = "f")
+                        ),
+                    ) %>%
+                    dplyr::select(Description, setSize, NES, pvalue, FDR, dplyr::any_of("core_enrichment")) %>%
+                    flextable::flextable() %>%
+                    flextable::border_remove() %>%
+                    flextable::border(border = officer::fp_border(), part = "all") %>%
+                    flextable::align(align = "center", part = "all") %>%
+                    flextable::align(j = "core_enrichment", align = "left", part = "body") %>%
+                    flextable::bg(bg = "white", part = "all") %>%
+                    flextable::autofit()
+            }
+        )
+    )
+
+
+# PREPARE THE RESULTS FOR EXPORT ####
+gsea_reactome <- gsea_reactome_tables %>%
+    mutate(db = "Reactome", .before = 1)
+names(gsea_reactome$gsea_flextables) <- gsea_reactome$design
+```
+
+<br>
+<span style="font-family: Helvetica; font-size: 20px;">wikiPathways library</strong></span>
+
+```{r, message = FALSE, warning = FALSE}
+# WRANGLE GENE DATA FOR GSEA ####
+data <- deg %>%
+    mutate(
+        genes_gsea = map(
+            table,
+            function(table) {
+                table %>%
+                    dplyr::filter(p < 0.05) %>%
+                    arrange(t %>% dplyr::desc()) %>%
+                    dplyr::mutate(
+                        ENTREZID = bitr(Symb,
+                            fromType = "SYMBOL",
+                            toType = c("ENTREZID"),
+                            OrgDb = org.Hs.eg.db,
+                            drop = FALSE
+                        ) %>% pull(ENTREZID)
+                    ) %>%
+                    drop_na(ENTREZID) %>%
+                    dplyr::select(t, ENTREZID) %>%
+                    pull(t, ENTREZID)
+            }
+        )
+    )
+
+
+# GENESET ENRICHMENT ANALYSES (GSEA) ####
+set.seed(42)
+gsea_wiki <- data %>%
+    mutate(
+        gsea = map(
+            genes_gsea,
+            function(genes_gsea) {
+                clusterProfiler::gseWP(
+                    gene = genes_gsea, organism = "Homo sapiens",
+                    minGSSize = 10, maxGSSize = 200,
+                    pvalueCutoff = 0.001, pAdjustMethod = "fdr", seed = TRUE
+                ) %>% clusterProfiler::setReadable(OrgDb = org.Hs.eg.db, keyType = "ENTREZID")
+            }
+        )
+    )
+
+
+# FORMAT TABLES FOR GENESET ENRICHMENT ANALYSES (GSEA) ####
+gsea_wiki_formatted <- gsea_wiki %>%
+    mutate(
+        gsea_tables = map(
+            gsea,
+            function(gsea) {
+                gsea %>%
+                    as_tibble() %>%
+                    arrange(pvalue) %>%
+                    mutate(
+                        sign = case_when(NES < 0 ~ "Down Regulated", NES > 0 ~ "Up Regulated"),
+                        Description = factor(Description, levels = Description, ordered = TRUE)
+                    ) 
+            }
+        )
+    )
+
+
+# FORMAT TABLES FOR GENESET ENRICHMENT ANALYSES (GSEA) ####
+gsea_wiki_tables <- gsea_wiki_formatted %>%
+    mutate(
+        gsea_flextables = map(
+            gsea_tables,
+            function(gsea_tables) {
+                gsea_tables %>%
+                    # slice_min(pvalue, n = 20) %>%
+                    mutate(
+                        NES = NES %>% round(2),
+                        pvalue = case_when(
+                            pvalue < 0.0001 ~ pvalue %>% formatC(digits = 0, format = "e"),
+                            TRUE ~ pvalue %>% formatC(digits = 4, format = "f")
+                        ),
+                        FDR = case_when(
+                            p.adjust < 0.0001 ~ p.adjust %>% formatC(digits = 0, format = "e"),
+                            TRUE ~ p.adjust %>% formatC(digits = 4, format = "f")
+                        ),
+                    ) %>%
+                    dplyr::select(Description, setSize, NES, pvalue, FDR, dplyr::any_of("core_enrichment")) %>%
+                    flextable::flextable() %>%
+                    flextable::border_remove() %>%
+                    flextable::border(border = officer::fp_border(), part = "all") %>%
+                    flextable::align(align = "center", part = "all") %>%
+                    flextable::align(j = "core_enrichment", align = "left", part = "body") %>%
+                    flextable::bg(bg = "white", part = "all") %>%
+                    flextable::autofit()
+            }
+        )
+    )
+
+
+# PREPARE THE RESULTS FOR EXPORT ####
+gsea_wiki <- gsea_wiki_tables %>%
+    mutate(db = "wiki", .before = 1)
+names(gsea_wiki$gsea_flextables) <- gsea_wiki$design
+```
+
+<br>
+<span style="font-family: Helvetica; font-size: 20px;">AKI geneset</strong></span>
+
+```{r, message = FALSE, warning = FALSE}
+# load gene lists
+load("C:/R/CD38-effect-of-treatment/natmed/data/hinze2022_injury_markers.RData")
+
+
+# DEFINE INJURY PATHWAYS ####
+map_aki <- injury_markers %>% dplyr::select(gs_name, entrez_gene)
+map_aki_joined <- injury_markers %>%
+    dplyr::select(gs_name, entrez_gene) %>%
+    mutate(gs_name = "AKI")
+
+
+# WRANGLE GENE DATA FOR GSEA ####
+data <- deg %>%
+    mutate(
+        genes_gsea = map(
+            table,
+            function(table) {
+                table %>%
+                    dplyr::filter(p < 0.05) %>%
+                    arrange(t %>% dplyr::desc()) %>%
+                    dplyr::mutate(
+                        ENTREZID = bitr(Symb,
+                            fromType = "SYMBOL",
+                            toType = c("ENTREZID"),
+                            OrgDb = org.Hs.eg.db,
+                            drop = FALSE
+                        ) %>% pull(ENTREZID)
+                    ) %>%
+                    drop_na(ENTREZID) %>%
+                    dplyr::select(t, ENTREZID) %>%
+                    pull(t, ENTREZID)
+            }
+        )
+    )
+
+
+# GENESET ENRICHMENT ANALYSES (GSEA) ####
+set.seed(42)
+gsea_aki <- data %>%
+    mutate(
+        gsea = map(
+            genes_gsea,
+            function(genes_gsea) {
+                clusterProfiler::GSEA(
+                    gene = genes_gsea, TERM2GENE = map_aki_joined,
+                    minGSSize = 5, maxGSSize = Inf,
+                    pvalueCutoff = 0.001, pAdjustMethod = "fdr", seed = TRUE
+                ) %>% clusterProfiler::setReadable(OrgDb = org.Hs.eg.db, keyType = "ENTREZID")
+            }
+        )
+    )
+
+
+# FORMAT TABLES FOR GENESET ENRICHMENT ANALYSES (GSEA) ####
+gsea_aki_formatted <- gsea_aki %>%
+    mutate(
+        gsea_tables = map(
+            gsea,
+            function(gsea) {
+                gsea %>%
+                    as_tibble() %>%
+                    arrange(pvalue) %>%
+                    mutate(
+                        sign = case_when(NES < 0 ~ "Down Regulated", NES > 0 ~ "Up Regulated"),
+                        Description = "Cellular response to acute kidney injury"
+                    )
+            }
+        )
+    )
+
+
+# FORMAT TABLES FOR GENESET ENRICHMENT ANALYSES (GSEA) ####
+gsea_aki_tables <- gsea_aki_formatted %>%
+    mutate(
+        gsea_flextables = map(
+            gsea_tables,
+            function(gsea_tables) {
+                gsea_tables %>%
+                    mutate(
+                        NES = NES %>% round(2),
+                        pvalue = case_when(
+                            pvalue < 0.0001 ~ pvalue %>% formatC(digits = 0, format = "e"),
+                            TRUE ~ pvalue %>% formatC(digits = 4, format = "f")
+                        ),
+                        FDR = case_when(
+                            p.adjust < 0.0001 ~ p.adjust %>% formatC(digits = 0, format = "e"),
+                            TRUE ~ p.adjust %>% formatC(digits = 4, format = "f")
+                        ),
+                    ) %>%
+                    dplyr::select(Description, setSize, NES, pvalue, FDR, dplyr::any_of("core_enrichment")) %>%
+                    flextable::flextable() %>%
+                    flextable::border_remove() %>%
+                    flextable::border(border = officer::fp_border(), part = "all") %>%
+                    flextable::align(align = "center", part = "all") %>%
+                    flextable::align(j = "core_enrichment", align = "left", part = "body") %>%
+                    flextable::bg(bg = "white", part = "all") %>%
+                    flextable::autofit()
+            }
+        )
+    )
+
+
+# PREPARE THE RESULTS FOR EXPORT ####
+gsea_aki <- gsea_aki_tables %>%
+    mutate(db = "Hinze", .before = 1)
+names(gsea_aki$gsea_flextables) <- gsea_aki$design
+```
+
+## COLLATE AND SUMMARIZE GSEA RESULTS
+
+<br>
+<span style="font-family: Helvetica; font-size: 20px;">All GSEA results are com</strong></span>
+
+
+```{r}
+# JOIN THE GSEA RESULTS ####
+gsea <- purrr::reduce(
+    list(
+        gsea_go,
+        gsea_msigdb,
+        gsea_wiki,
+        gsea_dose,
+        gsea_kegg,
+        gsea_reactome,
+        gsea_aki
+    ), bind_rows
+) %>%
+    mutate(keep = map_dbl(gsea_tables, nrow)) %>%
+    dplyr::filter(keep > 0) %>%
+    dplyr::select(db, design, genes_gsea, gsea_tables) %>%
+    mutate(gsea_tables = map(gsea_tables, mutate, Description = Description %>% as.character()))
+
+
+# DEFINE INTERPREATION BASED ON PATHWAYS ####
+pathway_interpretation <- gsea %>%
+    dplyr::select(design, gsea_tables) %>%
+    unnest(everything()) %>%
+    mutate(
+        interpretation = case_when(
+            ID %in% c(
+                "GO:0006952",
+                "GO:0009605",
+                "GO:0009607",
+                "GO:0043207",
+                "GO:0044419",
+                "GO:0051707",
+                "GO:0006955",
+                "GO:0002376",
+                "DOID:2914",
+                "DOID:77",
+                "DOID:1579",
+                "R-HSA-168256"
+            ) & design == "Baseline_vs_Week24" ~ "immune response",
+            ID %in% c(
+                "R-HSA-168256",
+                "R-HSA-168249",
+                "R-HSA-1643685",
+                "R-HSA-5663205"
+            ) & design == "Baseline_vs_Week52" ~ "immune-related response to injury",
+            ID %in% c("AKI", "R-HSA-109582") ~ "response to injury",
+            ID %in% c(
+                "R-HSA-9006934",
+                "R-HSA-597592",
+                "R-HSA-5653656",
+                "R-HSA-392499"
+            ) ~ "response to injury",
+            ID %in% c(
+                "R-HSA-2262752",
+                "R-HSA-8953897"
+            ) ~ "response to injury",
+        )
+    ) %>%
+    dplyr::select(design, ID, Description, interpretation)
+
+
+# WRANGLE THE GSEA TABLES ####
+gsea_tables <- gsea %>%
+    mutate(
+        gsea_tables = pmap(
+            list(design, gsea_tables),
+            function(design, gsea_tables) {
+                gsea_tables %>%
+                    mutate(
+                        design = design,
+                        Description = Description %>% as.character()
+                    ) %>%
+                    left_join(pathway_interpretation, by = c("ID", "Description", "design")) %>%
+                    dplyr::select(ID, Description, interpretation, setSize, NES, p.adjust, core_enrichment) %>%
+                    distinct(ID, setSize, interpretation, .keep_all = TRUE)
+            }
+        )
+    ) %>%
+    unnest(gsea_tables) %>%
+    arrange(p.adjust) %>%
+    dplyr::filter(p.adjust < 0.001) %>%
+    nest(.by = design, gsea_table = c(-design, -genes_gsea)) %>%
+    left_join(gsea %>% dplyr::select(design, genes_gsea) %>% distinct(design, .keep_all = TRUE),
+        by = "design"
+    )
+
+
+# MAKE FLEXTABLES ####
+gsea_flextables <- gsea_tables %>%
+    mutate(
+        flextable = pmap(
+            list(design, gsea_table),
+            function(design, gsea_table) {
+                cellWidths <- c(2, 3, 7, 4, 1.5, 1.5, 1.5, 13) # for individual tables up or down
+                if (design == "Baseline_vs_Week24") {
+                    title <- paste("Table Si. Functional enrichment analysis of genes affects by felzartamab treatment between baseline and week24 (by FDR)", sep = "")
+                } else if (design == "Week24_vs_Week52") {
+                    title <- paste("Table Si. Functional enrichment analysis of genes affects by felzartamab treatment between week24 and week52 (by FDR)", sep = "")
+                } else if (design == "Baseline_vs_Week52") {
+                    title <- paste("Table Si. Functional enrichment analysis of genes affects by felzartamab treatment between baseline and week52 (by FDR)", sep = "")
+                }
+                gsea_table %>%
+                    mutate(
+                        library = db,
+                        pathway = Description,
+                        "core enrichment genes" = core_enrichment %>% str_replace_all("/", ", "),
+                        "n genes" = setSize,
+                        NES = NES %>% round(2),
+                        FDR = case_when(
+                            p.adjust < 0.0001 ~ p.adjust %>% formatC(digits = 0, format = "e"),
+                            TRUE ~ p.adjust %>% formatC(digits = 4, format = "f")
+                        ),
+                    ) %>%
+                    dplyr::select(library, ID, pathway, interpretation, "n genes", NES, FDR, "core enrichment genes") %>%
+                    flextable::flextable() %>%
+                    flextable::add_header_row(top = TRUE, values = rep(title, ncol_keys(.))) %>%
+                    flextable::merge_v(part = "header") %>%
+                    flextable::merge_h(part = "header") %>%
+                    flextable::border_remove() %>%
+                    flextable::border(border = officer::fp_border(), part = "all") %>%
+                    flextable::padding(padding = 0) %>%
+                    flextable::padding(j = "core enrichment genes", padding.left = 5) %>%
+                    flextable::align(align = "center", part = "all") %>%
+                    flextable::align(j = "core enrichment genes", align = "left", part = "body") %>%
+                    flextable::font(fontname = "Arial", part = "all") %>%
+                    flextable::fontsize(size = 10, part = "body") %>%
+                    flextable::fontsize(size = 12, part = "header") %>%
+                    flextable::bg(bg = "white", part = "all") %>%
+                    flextable::width(width = cellWidths, unit = "cm")
+            }
+        )
+    )
+```
+
+<br>
+<span style="font-family: Helvetica; font-size: 20px;">Summary of all enriched pathways at week 24 (compared to baseline)</strong></span>
+
+
+```{r}
+# PRINT FLETABLES TO POWERPOINT ####
+gsea_flextables %>%
+    dplyr::filter(design == "Baseline_vs_Week24") %>%
+    pull(flextable) %>%
+    pluck(1) 
+```
+
+<br>
+<span style="font-family: Helvetica; font-size: 20px;">Summary of all enriched pathways at week 52 (compared to baseline)</strong></span>
+
+
+```{r}
+gsea_flextables %>%
+    dplyr::filter(design == "Baseline_vs_Week52") %>%
+    pull(flextable) %>%
+    pluck(1) 
 ```
 
