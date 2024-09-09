@@ -1,5 +1,8 @@
-# A repository for reproducing the analyses presented in “Diebold and Gauthier et al. Effect of felzartamab anti-CD38 treatment on the molecular phenotype of antibody-mediated rejection in kidney transplant biopsies. under review. Nature Medicine”.
+This repository describes the comprenhensive molecular assessment of the efficacy and mechanisms of felzartamab, a CD38 monoclonal antibody, for use as therapy to treat antibody-mediated rejection in kidney allografts. 
 
-You can view the GitHub Pages site for this project here: [GitHub Wiki](https://tsi-ptg.github.io/CD38-effect-of-treatment/)
+This is part of the clinical trial: Safety, Tolerability and Efficacy of Monoclonal CD38 Antibody Felzartamab in Late Antibody-Mediated Renal Allograft Rejection - A Phase 2 Pilot Trial
+(https://clinicaltrials.gov/study/NCT05021484)
+
+A friendly user guide to the analyses carried out in this project can be found here: [GitHub Wiki](https://tsi-ptg.github.io/CD38-effect-of-treatment/)
 
 ![GitHub Pages](https://img.shields.io/badge/Website-Visit-blue?style=flat-square&logo=github&link=https://tsi-ptg.github.io/CD38-effect-of-treatment/)
