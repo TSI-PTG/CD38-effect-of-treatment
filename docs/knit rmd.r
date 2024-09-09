@@ -1,3 +1,3 @@
-rmarkdown::render("natmed/docs/guide.Rmd")
+rmarkdown::render("natmed/docs/index.Rmd")
 
 
