@@ -26,7 +26,7 @@ pre code {
 ## INTRODUCTION
 
 <span style="font-family: Helvetica; font-size: 20px;">Transcriptomics assessment of biopsies from kidney allografts enables the interrogation of a multitude of endpoints beyond indivudal gene expression. For example, multiple gene expression-based machine learning classifiers have been trained to predict the probability of histology lesion scores indicative of antibody-mediated rejection (ABMR), T cell-mediated rejection (TCMR), and overall ABMR and TCMR diagnoses. Predicted probabilities from these classifiers can be used as a continuous variable to assess the molecular activity of ABMR and TCMR. There are also numerous gene lists have been annotated in the transplantation space to describe molecular profiles of rejection, cellular activity, and responses to injury (https://www.ualberta.ca/en/medicine/institutes-centres-groups/atagc/research/gene-lists.html). These gene lists have been translated into pathogenesis-based transcript set scores, and have been widely applied to depict gradients of molecular activity related to allograft rejection and injury.</span> 
-
+<br>
 ```{r, warning = FALSE, message = FALSE, echo = FALSE}
 # Load necessary library
 library(flextable)
@@ -54,7 +54,8 @@ supplementary_table_3 <- data.frame(
     ),
     Description = c(
         "TCMR-associated (1)", 
-        "Cytotoxic T cell associated 2", "T-cell burden related (3)",
+        "Cytotoxic T cell associated (2)", 
+        "T-cell burden related (3)",
         "Top 20 transcripts in classifier of probability of histologic kidney i-lesion score > 1 (4)",
         "Top 20 transcripts in classifier of probability of histologic kidney t-lesion score > 1 (4)",
         "Top 20 transcripts in classifier of probability of histologic kidney TCMR diagnosis (4)",
