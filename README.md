@@ -4,5 +4,3 @@ This is part of the clinical trial: Safety, Tolerability and Efficacy of Monoclo
 (https://clinicaltrials.gov/study/NCT05021484)
 
 A friendly user guide to the analyses carried out in this project can be found here: [GitHub Wiki](https://tsi-ptg.github.io/CD38-effect-of-treatment/)
-
-![GitHub Pages](https://img.shields.io/badge/Website-Visit-blue?style=flat-square&logo=github&link=https://tsi-ptg.github.io/CD38-effect-of-treatment/)
