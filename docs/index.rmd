@@ -20,7 +20,7 @@ pre code {
 <span style="font-family: Helvetica; font-size: 20px;">This guide is meant to assist the interpretation of analyses carried out within</span> <span style="font-family: Helvetica; font-size: 20px;font-style: italic;">"Diebold and Gauthier et al. Effect of felzartamab anti-CD38 treatment on the molecular phenotype of antibody-mediated rejection in kidney transplant biopsies. under review. Nature Medicine".</span><span style="font-family: Helvetica; font-size: 20px;"> This manuscript is currently under peer-review and has not yet been accepted for publication. A pre-print of the manuscript is available for review via Research Sqaure (https://www.researchsquare.com/article/rs-4870641/v1). The manuscript describes a comprehensive transcriptomics assessment of the effect of felzartamab on gene expression in kidney allograft biopsies taken from patients with antibody-mediated rejection (ABMR). The work described herein was part of a randomized controlled trial (ClinicalTrials.gov; NCT05021484). Biospies were taken at baseline, as well as 24 and 52 weeks post-baseline. The efficacy of felzartamab in resolving antibody-mediated rejection was compared to the progression of molecular activity in biopsies collected from patients receiving a placebo. This guide is a companion to the GitHub repository (https://github.com/TSI-PTG/CD38-effect-of-treatment).</span>
 
 
-# The effect of treatment on molecular scores using aligned-rank transformed analysis of variance (artANOVA) {.tabset}
+# The effect of treatment on molecular scores {.tabset}
 
 
 ## INTRODUCTION
@@ -537,7 +537,7 @@ ggarrange(
 ```
 
 
-# The effect of treatment on injury scores using linear-mixed model {.tabset}
+# The effect of treatment on slopes of injury scores {.tabset}
 
 
 ## INTRODUCTION
