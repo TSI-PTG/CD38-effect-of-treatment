@@ -17,10 +17,10 @@ pre code {
 
 ## Foreword
 
-<span style="font-family: Helvetica; font-size: 20px;">This guide is meant to assist the interpretation of analyses carried out within</span> <span style="font-family: Helvetica; font-size: 20px;font-style: italic;">"Diebold and Gauthier et al. Effect of felzartamab anti-CD38 treatment on the molecular phenotype of antibody-mediated rejection in kidney transplant biopsies. under review. Nature Medicine".</span><span style="font-family: Helvetica; font-size: 20px;"> This manuscript is currently under peer-review and has not yet been accepted for publication. A pre-print of the manuscript is available for review via Research Sqaure (https://www.researchsquare.com/article/rs-4870641/v1). The manuscript desribes a comprehensive transcriptomics assessment of the effect of felzartamab on gene expression in kidney allograft biopsies taken from patients with antibody-mediated rejection (ABMR). The work described herein was part of a randomized controlled trial (ClinicalTrials.gov; NCT05021484). Biospies were taken at baseline, as well as 24 and 52 weeks post-baseline. The efficacy of felzartamab in resolving antibody-mediated rejection was compared to the progression of molecular activity in biopsies collected from patients receiving a placebo. This guide is a companion to the GitHub repository (https://github.com/TSI-PTG/CD38-effect-of-treatment).</span>
+<span style="font-family: Helvetica; font-size: 20px;">This guide is meant to assist the interpretation of analyses carried out within</span> <span style="font-family: Helvetica; font-size: 20px;font-style: italic;">"Diebold and Gauthier et al. Effect of felzartamab anti-CD38 treatment on the molecular phenotype of antibody-mediated rejection in kidney transplant biopsies. under review. Nature Medicine".</span><span style="font-family: Helvetica; font-size: 20px;"> This manuscript is currently under peer-review and has not yet been accepted for publication. A pre-print of the manuscript is available for review via Research Sqaure (https://www.researchsquare.com/article/rs-4870641/v1). The manuscript describes a comprehensive transcriptomics assessment of the effect of felzartamab on gene expression in kidney allograft biopsies taken from patients with antibody-mediated rejection (ABMR). The work described herein was part of a randomized controlled trial (ClinicalTrials.gov; NCT05021484). Biospies were taken at baseline, as well as 24 and 52 weeks post-baseline. The efficacy of felzartamab in resolving antibody-mediated rejection was compared to the progression of molecular activity in biopsies collected from patients receiving a placebo. This guide is a companion to the GitHub repository (https://github.com/TSI-PTG/CD38-effect-of-treatment).</span>
 
 
-# Analysing the effect of treatment on molecular scores using aligned-rank transformed analysis of variance (artANOVA) {.tabset}
+# The effect of treatment on molecular scores using aligned-rank transformed analysis of variance (artANOVA) {.tabset}
 
 
 ## INTRODUCTION
@@ -112,7 +112,7 @@ flextable(supplementary_table_3) %>%
 ```
 
 <br>
-<span style="font-family: Helvetica; font-size: 20px;">A primary analysis in the present work assessed how felzartamab therapy affected classifier and PBT scores in patients with ABMR. The study design included two arms, placebo and felzartamab. Patients from both arms were biopsied prior to receiving placebo or felzartamab, and followed up with two additional biopsies at 24 and 52 weeks. The goal of the present work was to determine if felzartamab suppressed the molecular acticity of ABMR. This effect, the effect of treatment, was defined as the interactive effect between treatment (placebo and felzartamab) and follow up (baseline, week 24, and week 52). This design was chosen to account for the confounding effects of time between placebo and felzartamab. While it is statistically straightforward to measure interactive effects using parametric models, the assumptions of normality and heterogeneity of variance were not met across all molecular scores, and thus, for consistency we simply chose to carry out non-parametric tests for all scores. This presented a challenge as standard non-parametric rank-based tests do no allow for testing interactions among independent variables. Thus, we availed to aligned-rank transformation, a technique that rank-orders independent variables while maintaining rankings across independent variables. An analysis of variance (ANOVA) can then be carried out on the aligned-rank transformed data to allow for a fully factorial non-parametric ANOVA. This is powerful in this context because it allows us to test for the interactive effect of treatment (i.e., placebo vs felzartamab) and follow-up (i.e., change in scores from biopsy to biopsy). Moreover, aligned-rank transformation also allows for us to specify random effects terms in the ANOVA to handle repeated measurements (i.e., biopsies) across patients.</span>
+<span style="font-family: Helvetica; font-size: 20px;">A primary analysis in the present work assessed how felzartamab therapy affected classifier and PBT scores in patients with ABMR. The study design included two arms, placebo and felzartamab. Patients from both arms were biopsied prior to receiving placebo or felzartamab, and followed up with two additional biopsies at 24 and 52 weeks. The goal of the present work was to determine if felzartamab suppressed the molecular activity of ABMR. This effect, the effect of treatment, was defined as the interactive effect between treatment (placebo and felzartamab) and follow up (baseline, week 24, and week 52). This design was chosen to account for the confounding effects of time between placebo and felzartamab. While it is statistically straightforward to measure interactive effects using parametric models, the assumptions of normality and heterogeneity of variance were not met across all molecular scores, and thus, for consistency we simply chose to carry out non-parametric tests for all scores. This presented a challenge as standard non-parametric rank-based tests do no allow for testing interactions among independent variables. Thus, we availed to aligned-rank transformation, a technique that rank-orders independent variables while maintaining rankings across independent variables. An analysis of variance (ANOVA) can then be carried out on the aligned-rank transformed data to allow for a fully factorial non-parametric ANOVA. This is powerful in this context because it allows us to test for the interactive effect of treatment (i.e., placebo vs felzartamab) and follow-up (i.e., change in scores from biopsy to biopsy). Moreover, aligned-rank transformation also allows for us to specify random effects terms in the ANOVA to handle repeated measurements (i.e., biopsies) across patients.</span>
 <br>
 
 <span style="font-family: Helvetica; font-size: 20px; ">References:</strong></span>
@@ -537,7 +537,7 @@ ggarrange(
 ```
 
 
-# Analysing the effect of treatment on injury scores using linear-mixed model {.tabset}
+# The effect of treatment on injury scores using linear-mixed model {.tabset}
 
 
 ## INTRODUCTION
@@ -818,7 +818,7 @@ ggarrange(
 )
 ```
 
-# Analysing the effect of treatment on gene expression {.tabset}
+# The effect of treatment on gene expression {.tabset}
 
 
 ## INTRODUCTION
@@ -1377,7 +1377,7 @@ flextables <- table_deg %>%
 <br>
 <span style="font-family: Helvetica; font-size: 20px;">Genes suppressed by felzartamab in week 24 compared to baseline </strong></span>
 <br>
-<span style="font-family: Helvetica; font-size: 15px;font-style: italic;">(Note that all &#916;&#916;FDR are > 0.05. This is a consequence of differential expression across a large selection of genes (5,267 in this case) with small samples sizes (i.e., n = 10 by treatment group). Thus, treatment effects on individual genes should not be interpreted. Instead, geneset enrichment analysis (GSEA) will be used to assess bulk trends).</span>
+<span style="font-family: Helvetica; font-size: 15px;font-style: italic;">(Note that all &#916;&#916;FDR are > 0.05. This is a consequence of differential expression across a large selection of genes (5,267 in this case) with small samples sizes (i.e., n = 10 by treatment group). Thus, treatment effects on individual genes should be interpreted with caution. Instead, geneset enrichment analysis (GSEA) will be used to assess bulk trends).</span>
 
 
 ```{r, message = FALSE, warning = FALSE}
@@ -1389,7 +1389,7 @@ flextables %>%
 <br>
 <span style="font-family: Helvetica; font-size: 20px;">Genes suppressed by felzartamab in week 52 compared to baseline </strong></span>
 <br>
-<span style="font-family: Helvetica; font-size: 15px;font-style: italic;">(Note that all &#916;&#916;FDR are > 0.05. This is a consequence of differential expression across a large selection of genes (5,267 in this case) with small samples sizes (i.e., n = 10 by treatment group). Thus, treatment effects on individual genes should not be interpreted. Instead, geneset enrichment analysis (GSEA) will be used to assess bulk trends).</span>
+<span style="font-family: Helvetica; font-size: 15px;font-style: italic;">(Note that all &#916;&#916;FDR are > 0.05. This is a consequence of differential expression across a large selection of genes (5,267 in this case) with small samples sizes (i.e., n = 10 by treatment group). Thus, treatment effects on individual genes should be interpreted with caution. Instead, geneset enrichment analysis (GSEA) will be used to assess bulk trends).</span>
 
 
 ```{r, message = FALSE, warning = FALSE}
