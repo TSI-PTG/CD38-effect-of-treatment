@@ -154,10 +154,10 @@ library(ggprism)
 options(dplyr.reframe.inform = FALSE)
 
 # Load data
-load("C:/R/CD38-effect-of-treatment/natmed/data/cd38_3Sept24.RData")
-load("C:/R/CD38-effect-of-treatment/natmed/results/flextable_artANOVA.RData")
+load("C:/R/CD38-effect-of-treatment/data/cd38.RData")
+load("C:/R/CD38-effect-of-treatment/results/flextable_artANOVA.RData")
 # load plot data
-load("C:/R/CD38-effect-of-treatment/natmed/results/plots_artANOVA.RData")
+load("C:/R/CD38-effect-of-treatment/results/plots_artANOVA.RData")
 
 # Seed for reproducibility
 set.seed(42)
@@ -571,13 +571,13 @@ library(ggprism)
 library(Biobase) # BiocManager::install("Biobase")
 # Custom operators and functions
 "%nin%" <- function(a, b) match(a, b, nomatch = 0) == 0
-source("C:/R/CD38-effect-of-treatment/natmed/code/functions/get_slope_function.r")
+source("C:/R/CD38-effect-of-treatment/code/functions/get_slope_function.r")
 # load reference set
-load("C:/R/CD38-effect-of-treatment/natmed/data/cd38_3Sept24.RData")
+load("C:/R/CD38-effect-of-treatment/data/cd38.RData")
 # load refression plots
-load("C:/R/CD38-effect-of-treatment/natmed/results/plots_regression.RData")
+load("C:/R/CD38-effect-of-treatment/results/plots_regression.RData")
 # load violin plots
-load("C:/R/CD38-effect-of-treatment/natmed/results/plots_artANOVA.RData")
+load("C:/R/CD38-effect-of-treatment/results/plots_artANOVA.RData")
 
 # Seed for reproducibility
 set.seed(42)
@@ -849,8 +849,8 @@ library(genefilter)
 # Custom operators and functions
 "%nin%" <- function(a, b) match(a, b, nomatch = 0) == 0
 # Load data
-load("C:/R/CD38-effect-of-treatment/natmed/data/cd38_3Sept24.RData")
-load("C:/R/CD38-effect-of-treatment/natmed/data/affymap219.RData")
+load("C:/R/CD38-effect-of-treatment/data/cd38.RData")
+load("C:/R/CD38-effect-of-treatment/data/affymap219.RData")
 
 # Seed for reproducibility
 set.seed(42)
@@ -1430,7 +1430,7 @@ library(officer)
 library(msigdbr)
 # Bioconductor libraries
 # DOSE v 3.30.1 required for reproducibility
-# install.packages("C:/R/CD38-effect-of-treatment/natmed/data/DOSE_3.30.1.tar.gz", repos = NULL, type = "source")
+# install.packages("C:/R/CD38-effect-of-treatment/data/DOSE_3.30.1.tar.gz", repos = NULL, type = "source")
 library(DOSE)
 library(ReactomePA)
 library(Biobase) 
@@ -1440,7 +1440,7 @@ library(pRoloc)
 # Custom operators and functions
 "%nin%" <- function(a, b) match(a, b, nomatch = 0) == 0
 # load DE data
-load("C:/R/CD38-effect-of-treatment/natmed/results/deg.RData")
+load("C:/R/CD38-effect-of-treatment/results/deg.RData")
 
 # Seed for reproducibility
 set.seed(42)
@@ -2081,7 +2081,7 @@ names(gsea_wiki$gsea_flextables) <- gsea_wiki$design
 
 ```{r, message = FALSE, warning = FALSE}
 # load gene lists
-load("C:/R/CD38-effect-of-treatment/natmed/data/hinze2022_injury_markers.RData")
+load("C:/R/CD38-effect-of-treatment/data/hinze2022_injury_markers.RData")
 
 
 # DEFINE INJURY PATHWAYS ####
