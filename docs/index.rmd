@@ -1450,7 +1450,7 @@ set.seed(42)
 ## GENESET ENRICHMENT ANALYSES
 
 <br>
-<span style="font-family: Helvetica; font-size: 20px;">Geneset enrichment analyses using the ClusterProfiler package have simlar, but not identical implementation. This section will carry out GSEA on all described libraries, after which the results will be collated and summarized.</strong></span>
+<span style="font-family: Helvetica; font-size: 20px;">Geneset enrichment analyses using the ClusterProfiler package have simlar, but not identical implementation. This section will carry out GSEA on all described libraries, after which the results will be collated and summarized. For all GSEA, genes are ranked by t-value.</strong></span>
 
 <br>
 <span style="font-family: Helvetica; font-size: 20px;">GO library</strong></span>
